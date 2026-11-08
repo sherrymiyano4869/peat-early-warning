@@ -36,13 +36,15 @@ class PoliteClient:
             time.sleep(self.min_interval - gap)
         self._last_request = time.monotonic()
 
-    def _cache_path(self, url: str, params) -> Path:
+    def _cache_path(self, url: str, params, name=None) -> Path:
+        if name:  # nama berkas yang mudah dibaca, misalnya id stasiun
+            return self.cache_dir / f"{name}.json"
         raw = url + json.dumps(params or {}, sort_keys=True)
         return self.cache_dir / (hashlib.sha256(raw.encode()).hexdigest()[:24] + ".json")
 
-    def get_json(self, url: str, params=None, force: bool = False):
+    def get_json(self, url: str, params=None, force: bool = False, name=None):
         """Ambil JSON dari cache bila ada; jika tidak, unduh dengan jeda dan retry."""
-        path = self._cache_path(url, params)
+        path = self._cache_path(url, params, name)
         if path.exists() and not force:
             return json.loads(path.read_text(encoding="utf-8"))["data"]
 
