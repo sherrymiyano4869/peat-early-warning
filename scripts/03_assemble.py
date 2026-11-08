@@ -21,6 +21,7 @@ from sklearn.cluster import DBSCAN
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.common import path  # noqa: E402
+from src.regions import add_region  # noqa: E402
 
 WL_RANGE = (-400.0, 100.0)
 
@@ -79,15 +80,21 @@ def main() -> None:
     parser.add_argument("--eps", type=float, default=0.25, help="jarak klaster (derajat)")
     parser.add_argument("--rain-source", choices=["auto", "gsmap", "chirps"], default="auto",
                         help="auto = gsmap bila ada (lebih mutakhir), selain itu chirps")
+    parser.add_argument("--keep-other-regions", action="store_true", help="jangan keluarkan stasiun di luar Sumatra/Kalimantan/Papua")
     parser.add_argument("--keep-flat", action="store_true", help="jangan keluarkan sensor datar di sekitar nol")
     args = parser.parse_args()
 
     interim, feats = path("interim"), path("features")
-    st = pd.read_parquet(interim / "stations.parquet")
+    st = add_region(pd.read_parquet(interim / "stations.parquet"))
     target = daily_target(pd.read_parquet(interim / "ts_30min.parquet"), pd.read_parquet(interim / "ts_daily.parquet"))
 
     n_days = target.groupby("station_id")["date"].nunique()
     keep = st[st["coord_ok"] & st["station_id"].isin(n_days[n_days >= args.min_target_days].index)]
+    if not args.keep_other_regions:
+        outside = keep[~keep["region_ok"]]["station_id"].tolist()
+        keep = keep[keep["region_ok"]]
+        if outside:
+            print(f"di luar Sumatra/Kalimantan/Papua dikeluarkan: {outside}")
     if "flat_sensor" in keep and not args.keep_flat:
         dropped = keep[keep["flat_sensor"]]["station_id"].tolist()
         keep = keep[~keep["flat_sensor"]]
@@ -97,7 +104,7 @@ def main() -> None:
     if keep.empty:
         sys.exit("Tidak ada stasiun yang lolos; turunkan --min-target-days.")
     keep = add_clusters(keep, args.eps)
-    df = target.merge(keep[["station_id", "lon", "lat", "cluster"]], on="station_id", how="inner")
+    df = target.merge(keep[["station_id", "lon", "lat", "region", "cluster"]], on="station_id", how="inner")
 
     rain_files = {n: feats / f"gee_{n}.parquet" for n in ("gsmap", "chirps")}
     available = [n for n, f in rain_files.items() if f.exists()]
@@ -128,7 +135,7 @@ def main() -> None:
 
     dictionary = {
         "wl_cm": "muka air harian (cm; negatif = di bawah permukaan), target", "src": "sumber nilai harian: 30min atau hist",
-        "cluster": "klaster spasial (stasiun tunggal = klaster sendiri)", "elev_m": "elevasi Copernicus GLO30 (m)",
+        "cluster": "klaster spasial (stasiun tunggal = klaster sendiri)", "region": "pulau: sumatra, kalimantan, atau papua", "elev_m": "elevasi Copernicus GLO30 (m)",
         "slope_deg": "kemiringan (derajat)", "rain_7d": "hujan CHIRPS 7 hari berakhir di t (mm)",
         "rain_14d": "hujan 14 hari (mm)", "rain_30d": "hujan 30 hari (mm)", "dry_days": "hari kering beruntun (<1 mm) sampai t",
         "vv": "Sentinel-1 VV (dB) komposit terbaru", "vh": "Sentinel-1 VH (dB)", "ndmi": "NDMI Sentinel-2 komposit terbaru",
@@ -136,9 +143,9 @@ def main() -> None:
     pd.DataFrame([{"kolom": c, "keterangan": dictionary.get(c, "")} for c in df.columns]).to_csv(
         feats / "model_table_dictionary.csv", index=False)
 
-    print(f"\nmodel_table: {len(df)} baris | {df['station_id'].nunique()} stasiun | {df['cluster'].nunique()} klaster "
+    print(f"\nmodel_table: {len(df)} baris | {df['station_id'].nunique()} stasiun | {df['cluster'].nunique()} klaster | wilayah {df.groupby('region')['station_id'].nunique().to_dict()} "
           f"| {df['date'].min().date()} .. {df['date'].max().date()}")
-    cols = [c for c in dictionary if c in df.columns and c not in ("wl_cm", "src", "cluster")]
+    cols = [c for c in dictionary if c in df.columns and c not in ("wl_cm", "src", "cluster", "region")]
     print("terisi (%):", {c: round(100 * df[c].notna().mean()) for c in cols})
     print("Tersimpan di", feats)
 

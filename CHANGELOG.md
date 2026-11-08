@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.7
+- 02: Sentinel-1/2 dihitung per jendela dan per kelompok stasiun yang berdekatan (`--batch-size`, `--tile-scale`),
+  `filterBounds` pada titik (bukan kotak batas seluruh stasiun), dan kelompok yang gagal karena memori dibelah dua lalu diulang
+  (perbaikan "User memory limit exceeded" pada S2)
+- 02: stasiun di luar Sumatra/Kalimantan/Papua dan sensor datar tidak diproses
+- Tambah src/regions.py; 01_stations mencetak ringkasan wilayah; pick_pilot dan 03_assemble mengeluarkan stasiun di luar
+  Sumatra/Kalimantan/Papua (`--keep-other-regions` untuk menahan); model_table memuat kolom `region`
+- 04_baseline: skema LOIO (leave-one-island-out)
+
 ## v0.6
 - 02: DEM beralih ke COPERNICUS/DEM/GLO30_2024_1 (yang lama usang); tambah grup `gsmap` (hujan near-real-time); default `--only static,gsmap`
 - 03: pilih sumber hujan (`--rain-source auto|gsmap|chirps`) dan cetak kesesuaian gsmap vs chirps bila keduanya ada

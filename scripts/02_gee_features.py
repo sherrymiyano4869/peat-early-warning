@@ -18,6 +18,8 @@ Kelompok:
            resolusi 0,1 derajat; cantumkan atribusi JAXA GSMaP di slide
   s1     : median VV dan VH per jendela 12 hari (COPERNICUS/S1_GRD) di sekitar titik
   s2     : median NDMI per jendela 10 hari (COPERNICUS/S2_SR_HARMONIZED + Cloud Score+)
+Sentinel dihitung per jendela dan per kelompok stasiun yang berdekatan (--batch-size), dengan filterBounds pada
+titik (bukan kotak batas seluruh stasiun); kelompok yang gagal karena memori dibelah dua dan diulang.
 """
 import argparse
 import sys
@@ -29,6 +31,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.common import load_config, path  # noqa: E402
+from src.regions import add_region  # noqa: E402
 from src.gee_utils import date_chunks, date_windows, parse_daily_bands, parse_window_bands  # noqa: E402
 
 GROUPS = ("static", "chirps", "gsmap", "s1", "s2")
@@ -36,7 +39,9 @@ GROUPS = ("static", "chirps", "gsmap", "s1", "s2")
 
 def load_stations(limit):
     st = pd.read_parquet(path("interim") / "stations.parquet")
-    st = st[st["coord_ok"] & ((st["n_30min"] > 0) | (st["n_daily"] > 0))].copy()
+    st = add_region(st)
+    flat = st["flat_sensor"] if "flat_sensor" in st else False
+    st = st[st["coord_ok"] & st["region_ok"] & ~flat & ((st["n_30min"] > 0) | (st["n_daily"] > 0))].copy()
     return (st.head(limit) if limit else st).reset_index(drop=True)
 
 
@@ -58,8 +63,8 @@ def points_fc(ee, st, buffer_m=0):
     return ee.FeatureCollection(feats)
 
 
-def reduce_at(ee, image, fc, reducer, scale):
-    return image.reduceRegions(collection=fc, reducer=reducer, scale=scale, tileScale=4).getInfo()["features"]
+def reduce_at(ee, image, fc, reducer, scale, tile_scale=4):
+    return image.reduceRegions(collection=fc, reducer=reducer, scale=scale, tileScale=tile_scale).getInfo()["features"]
 
 
 def extract_static(ee, st, buffer_m):
@@ -110,44 +115,76 @@ def extract_gsmap(ee, st, start, end, chunk_days):
     return df.rename(columns={"rain": "rain_mm"})
 
 
-def extract_s1(ee, st, start, end, step_days, buffer_m):
-    fc, aoi = points_fc(ee, st, buffer_m), points_fc(ee, st, 0).geometry().bounds()
-    base = (ee.ImageCollection("COPERNICUS/S1_GRD")
+def station_batches(st: pd.DataFrame, size: int) -> list:
+    """Kelompok stasiun yang berdekatan (diurutkan menurut bujur lalu lintang) agar tiap permintaan kecil."""
+    ordered = st.sort_values(["lon", "lat"]).reset_index(drop=True)
+    return [ordered.iloc[i:i + size] for i in range(0, len(ordered), size)]
+
+
+def reduce_with_split(ee, image, batch, buffer_m, scale, tile_scale, names):
+    """reduceRegions pada satu kelompok; bila gagal (mis. memori), belah dua dan ulangi."""
+    try:
+        feats = reduce_at(ee, image, points_fc(ee, batch, buffer_m), ee.Reducer.mean(), scale, tile_scale)
+        return parse_window_bands(feats, names)
+    except Exception as err:  # noqa: BLE001
+        if len(batch) <= 1:
+            print(f"    gagal untuk {batch['station_id'].iloc[0]}: {str(err)[:90]}")
+            return pd.DataFrame(columns=["station_id", "window_start", *names])
+        half = len(batch) // 2
+        print(f"    kelompok {len(batch)} stasiun gagal ({str(err)[:60]}); dibelah menjadi {half} + {len(batch) - half}")
+        parts = [reduce_with_split(ee, image, b, buffer_m, scale, tile_scale, names) for b in (batch.iloc[:half], batch.iloc[half:])]
+        return pd.concat(parts, ignore_index=True)
+
+
+def composite_windows(ee, st, start, end, step_days, buffer_m, build, names, batch_size, tile_scale):
+    """Satu permintaan per (jendela, kelompok stasiun); `build` membuat citra komposit atau None."""
+    frames, batches = [], station_batches(st, batch_size)
+    for s_, e_ in date_windows(start, end, step_days):
+        key, done = f"w{s_:%Y%m%d}", 0
+        for batch in batches:
+            fc = points_fc(ee, batch, buffer_m)
+            image = build(ee, fc, s_, e_, key)
+            if image is None:
+                continue
+            part = reduce_with_split(ee, image, batch, buffer_m, 20, tile_scale, names)
+            if len(part):
+                frames.append(part)
+                done += 1
+        print(f"  jendela {s_}: {done}/{len(batches)} kelompok berhasil")
+    if not frames:
+        return pd.DataFrame(columns=["station_id", "window_start", *names, "window_end"])
+    df = pd.concat(frames, ignore_index=True).drop_duplicates(["station_id", "window_start"])
+    df["window_end"] = df["window_start"] + pd.Timedelta(days=step_days)
+    return df
+
+
+def build_s1(ee, fc, s_, e_, key):
+    coll = (ee.ImageCollection("COPERNICUS/S1_GRD")
             .filter(ee.Filter.eq("instrumentMode", "IW"))
             .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VV"))
             .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VH"))
-            .filterBounds(aoi))
-    comps = []
-    for s, e in date_windows(start, end, step_days):
-        coll = base.filterDate(str(s), str(e))
-        if coll.size().getInfo() == 0:
-            continue
-        key = f"w{s:%Y%m%d}"
-        comps.append(coll.select(["VV", "VH"]).median().rename([f"{key}_vv", f"{key}_vh"]))
-    if not comps:
-        return pd.DataFrame(columns=["station_id", "window_start", "vv", "vh", "window_end"])
-    df = parse_window_bands(reduce_at(ee, ee.Image.cat(comps), fc, ee.Reducer.mean(), 20), ["vv", "vh"])
-    df["window_end"] = df["window_start"] + pd.Timedelta(days=step_days)
-    return df
+            .filterBounds(fc).filterDate(str(s_), str(e_)))
+    if coll.size().getInfo() == 0:
+        return None
+    return coll.select(["VV", "VH"]).median().rename([f"{key}_vv", f"{key}_vh"])
 
 
-def extract_s2(ee, st, start, end, step_days, buffer_m):
-    fc, aoi = points_fc(ee, st, buffer_m), points_fc(ee, st, 0).geometry().bounds()
-    base = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED").filterBounds(aoi)
+def build_s2(ee, fc, s_, e_, key):
+    coll = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED").filterBounds(fc).filterDate(str(s_), str(e_))
+    if coll.size().getInfo() == 0:
+        return None
     cloud = ee.ImageCollection("GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED")
-    comps = []
-    for s, e in date_windows(start, end, step_days):
-        coll = base.filterDate(str(s), str(e))
-        if coll.size().getInfo() == 0:
-            continue
-        masked = coll.linkCollection(cloud, ["cs_cdf"]).map(lambda im: im.updateMask(im.select("cs_cdf").gte(0.6)))
-        ndmi = masked.map(lambda im: im.normalizedDifference(["B8", "B11"]).rename("ndmi")).median()
-        comps.append(ndmi.rename(f"w{s:%Y%m%d}_ndmi"))
-    if not comps:
-        return pd.DataFrame(columns=["station_id", "window_start", "ndmi", "window_end"])
-    df = parse_window_bands(reduce_at(ee, ee.Image.cat(comps), fc, ee.Reducer.mean(), 20), ["ndmi"])
-    df["window_end"] = df["window_start"] + pd.Timedelta(days=step_days)
-    return df
+    masked = coll.linkCollection(cloud, ["cs_cdf"]).map(lambda im: im.updateMask(im.select("cs_cdf").gte(0.6)))
+    ndmi = masked.map(lambda im: im.normalizedDifference(["B8", "B11"]).rename("ndmi")).median()
+    return ndmi.rename(f"{key}_ndmi")
+
+
+def extract_s1(ee, st, start, end, step_days, buffer_m, batch_size, tile_scale):
+    return composite_windows(ee, st, start, end, step_days, buffer_m, build_s1, ["vv", "vh"], batch_size, tile_scale)
+
+
+def extract_s2(ee, st, start, end, step_days, buffer_m, batch_size, tile_scale):
+    return composite_windows(ee, st, start, end, step_days, buffer_m, build_s2, ["ndmi"], batch_size, tile_scale)
 
 
 def main() -> None:
@@ -157,6 +194,8 @@ def main() -> None:
     parser.add_argument("--pad-before", type=int, default=40, help="hari sebelum data pertama (untuk fitur hujan terdahulu)")
     parser.add_argument("--chunk-days", type=int, default=90)
     parser.add_argument("--buffer-m", type=int, default=100, help="radius penyangga untuk DEM, S1, dan S2")
+    parser.add_argument("--batch-size", type=int, default=15, help="stasiun per permintaan Sentinel (kecil = hemat memori)")
+    parser.add_argument("--tile-scale", type=float, default=16, help="tileScale reduceRegions untuk Sentinel (maks 16)")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -171,7 +210,8 @@ def main() -> None:
     out_dir = path("features")
     print(f"stasiun: {len(st)} | rentang {start} .. {end} ({(end - start).days + 1} hari) | kelompok: {groups}")
     print(f"perkiraan: CHIRPS {len(date_chunks(start, end, args.chunk_days))} permintaan, "
-          f"S1 {len(date_windows(start, end, 12))} jendela, S2 {len(date_windows(start, end, 10))} jendela")
+          f"S1 {len(date_windows(start, end, 12))} jendela, S2 {len(date_windows(start, end, 10))} jendela, "
+          f"{len(station_batches(st, args.batch_size))} kelompok stasiun per jendela")
     if args.dry_run:
         print("(dry-run: tidak menyentuh Earth Engine)")
         return
@@ -202,9 +242,9 @@ def main() -> None:
             if len(df):
                 print(f"  data hujan terakhir: {df['date'].max().date()} (bandingkan dengan {end})")
         elif group == "s1":
-            df = extract_s1(ee, st, start, end, 12, args.buffer_m)
+            df = extract_s1(ee, st, start, end, 12, args.buffer_m, args.batch_size, args.tile_scale)
         else:
-            df = extract_s2(ee, st, start, end, 10, args.buffer_m)
+            df = extract_s2(ee, st, start, end, 10, args.buffer_m, args.batch_size, args.tile_scale)
         df.to_parquet(target, index=False)
         print(f"[{group}] {len(df)} baris -> {target.name} ({time.time() - t0:.0f} detik)")
     print("\nPantau pemakaian EECU di Cloud Console setelah uji pertama sebelum menjalankan penuh.")

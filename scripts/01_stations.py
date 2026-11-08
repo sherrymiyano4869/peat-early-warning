@@ -10,6 +10,7 @@ QC ringan (bendera, dan nilai mustahil menjadi NaN; tidak ada stasiun yang dibua
   - hujan negatif atau > 60 mm per 30 menit -> NaN (nilai stasiun tak konsisten; fitur hujan utama memakai CHIRPS)
   - lonjakan muka air > 30 cm per 30 menit diberi bendera `wl_spike`
   - koordinat di luar kotak Indonesia diberi bendera `coord_ok = False`
+  - `region` (sumatra/kalimantan/papua/other) dari koordinat; `other` (misalnya di Jawa) dianggap mencurigakan
   - sensor datar di sekitar nol (|median| < 5 cm dan simpangan baku < 5 cm) diberi bendera `flat_sensor = True`
 """
 import json
@@ -21,6 +22,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.common import path  # noqa: E402
+from src.regions import add_region  # noqa: E402
 from src.sitmat_parse import station_daily, station_meta, station_timeseries  # noqa: E402
 
 TZ_OFFSET = 7
@@ -82,7 +84,7 @@ def main() -> None:
         daily_parts.append(daily)
 
     out = path("interim")
-    stations = pd.DataFrame(meta_rows)
+    stations = add_region(pd.DataFrame(meta_rows))
     pd.concat(ts_parts, ignore_index=True).to_parquet(out / "ts_30min.parquet", index=False)
     pd.concat(daily_parts, ignore_index=True).to_parquet(out / "ts_daily.parquet", index=False)
     stations.to_parquet(out / "stations.parquet", index=False)
@@ -91,6 +93,13 @@ def main() -> None:
     print(f"koordinat wajar: {int(stations.coord_ok.sum())}")
     print(f"data 30 menitan >= 14 hari: {int((stations.days_30min >= 14).sum())} | >= 28 hari: {int((stations.days_30min >= 28).sum())}")
     print(f"riwayat harian >= 60 hari: {int((stations.n_daily >= 60).sum())}")
+    print("wilayah (semua stasiun):", stations["region"].value_counts().to_dict())
+    good = stations[stations.coord_ok & (stations.days_30min >= 14)]
+    print("wilayah (koordinat wajar, >= 14 hari):", good["region"].value_counts().to_dict())
+    other = stations[stations.coord_ok & ~stations.region_ok & (stations.n_30min + stations.n_daily > 0)]
+    if len(other):
+        print(f"\nBerkoordinat di luar Sumatra/Kalimantan/Papua ({len(other)} stasiun; dikeluarkan dari pilot dan model):")
+        print(other[["station_id", "name", "lon", "lat"]].round(2).to_string(index=False))
     flat = stations[stations.flat_sensor]
     if len(flat):
         print(f"\nSensor datar di sekitar nol ({len(flat)} stasiun; dikeluarkan dari pilot dan model):")

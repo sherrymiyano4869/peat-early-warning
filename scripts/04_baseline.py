@@ -9,7 +9,8 @@ Tugas:
   nowcast  : muka air hari t dari fitur satelit, hujan, dan statis (tanpa muka air)
   forecast : perubahan muka air t -> t+h (delta) dari fitur di t; varian `with_wl` memakai muka air terukur di t
 Skema validasi:
-  LOSO     : satu stasiun ditahan; LOCO : satu klaster ditahan; TEMPORAL : latih awal periode, uji 25% akhir
+  LOSO     : satu stasiun ditahan; LOCO : satu klaster ditahan; LOIO : satu pulau ditahan (mis. latih Sumatra, uji Kalimantan)
+  TEMPORAL : latih awal periode, uji 25% akhir
 Model: baseline (rata-rata latih / persistensi), regresi Ridge (hujan), LightGBM titik, dan kuantil q10-q90.
 Kejadian: peluang muka air t+h < ambang (config.yaml: thresholds_cm); ambang yang hampir selalu atau tak pernah terjadi dilewati.
 """
@@ -69,8 +70,8 @@ def make_lgbm(alpha=None):
 
 
 def make_splits(df: pd.DataFrame, scheme: str, horizon: int) -> list:
-    if scheme in ("LOSO", "LOCO"):
-        groups = df["station_id" if scheme == "LOSO" else "cluster"].to_numpy()
+    if scheme in ("LOSO", "LOCO", "LOIO"):
+        groups = df[{"LOSO": "station_id", "LOCO": "cluster", "LOIO": "region"}[scheme]].to_numpy()
         return list(LeaveOneGroupOut().split(df, groups=groups)) if len(np.unique(groups)) > 1 else []
     dates = np.sort(df["date"].unique())
     cutoff = pd.Timestamp(dates[int(len(dates) * 0.75)])
@@ -164,7 +165,7 @@ def run_events(df, horizon, taus, cols, schemes):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--horizons", type=int, nargs="+", default=[7, 14])
-    parser.add_argument("--schemes", nargs="+", default=["LOSO", "LOCO", "TEMPORAL"], choices=["LOSO", "LOCO", "TEMPORAL"])
+    parser.add_argument("--schemes", nargs="+", default=["LOSO", "LOCO", "LOIO", "TEMPORAL"], choices=["LOSO", "LOCO", "LOIO", "TEMPORAL"])
     parser.add_argument("--quick", action="store_true", help="lewati model kuantil")
     args = parser.parse_args()
 
