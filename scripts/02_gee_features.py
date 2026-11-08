@@ -1,17 +1,21 @@
 """02_gee_features: ekstraksi fitur Earth Engine di titik stasiun (GEE hanya untuk mengambil data).
 
     python scripts/02_gee_features.py --dry-run                      # lihat rencana, tanpa menyentuh GEE
-    python scripts/02_gee_features.py --limit 3 --only static,chirps # uji kecil dulu
-    python scripts/02_gee_features.py                                # static + chirps
+    python scripts/02_gee_features.py --limit 3 --only static,gsmap  # uji kecil dulu
+    python scripts/02_gee_features.py                                # static + gsmap
+    python scripts/02_gee_features.py --only chirps                  # CHIRPS (pembanding; tertinggal di GEE)
     python scripts/02_gee_features.py --only s1,s2                   # Sentinel-1 dan NDMI (lebih berat)
 
 Masuk : data/interim/stations.parquet (hasil 01_stations)
 Keluar: data/features/gee_static.parquet, gee_chirps.parquet, gee_s1.parquet, gee_s2.parquet
 Berkas yang sudah ada dilewati (pakai --force untuk mengulang), supaya kuota EECU tidak terbuang.
+Dengan --limit N, hasil ditulis ke gee_<kelompok>_testN.parquet agar tidak tertukar dengan berkas penuh.
 
 Kelompok:
-  static : elevasi dan kemiringan (COPERNICUS/DEM/GLO30; ini model permukaan, bukan tanah telanjang)
-  chirps : hujan harian (UCSB-CHG/CHIRPS/DAILY) -> `rain_mm`
+  static : elevasi dan kemiringan (COPERNICUS/DEM/GLO30_2024_1; ini model permukaan, bukan tanah telanjang)
+  chirps : hujan harian (UCSB-CHG/CHIRPS/DAILY) -> `rain_mm`; di GEE bisa tertinggal sekitar 5 minggu
+  gsmap  : hujan harian dari jumlah per jam (JAXA/GPM_L3/GSMaP/v8/operational, near-real-time) -> `rain_mm`
+           resolusi 0,1 derajat; cantumkan atribusi JAXA GSMaP di slide
   s1     : median VV dan VH per jendela 12 hari (COPERNICUS/S1_GRD) di sekitar titik
   s2     : median NDMI per jendela 10 hari (COPERNICUS/S2_SR_HARMONIZED + Cloud Score+)
 """
@@ -27,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.common import load_config, path  # noqa: E402
 from src.gee_utils import date_chunks, date_windows, parse_daily_bands, parse_window_bands  # noqa: E402
 
-GROUPS = ("static", "chirps", "s1", "s2")
+GROUPS = ("static", "chirps", "gsmap", "s1", "s2")
 
 
 def load_stations(limit):
@@ -59,7 +63,7 @@ def reduce_at(ee, image, fc, reducer, scale):
 
 
 def extract_static(ee, st, buffer_m):
-    col = ee.ImageCollection("COPERNICUS/DEM/GLO30").select("DEM")
+    col = ee.ImageCollection("COPERNICUS/DEM/GLO30_2024_1").select("DEM")
     dem = col.mosaic().setDefaultProjection(col.first().projection())
     img = dem.rename("elev_m").addBands(ee.Terrain.slope(dem).rename("slope_deg"))
     feats = reduce_at(ee, img, points_fc(ee, st, buffer_m), ee.Reducer.mean(), 30)
@@ -82,6 +86,28 @@ def extract_chirps(ee, st, start, end, chunk_days):
         print(f"  chirps {s}..{e}: {n} citra")
     df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["station_id", "date", "precipitation"])
     return df.rename(columns={"precipitation": "rain_mm"})
+
+
+def last_full_day(ee, ic):
+    """Hari penuh terakhir yang tersedia pada sebuah koleksi (hari terakhir mungkin parsial)."""
+    last_ms = ic.aggregate_max("system:time_start").getInfo()
+    return pd.to_datetime(last_ms, unit="ms").date() - timedelta(days=1)
+
+
+def extract_gsmap(ee, st, start, end, chunk_days):
+    ic_all = ee.ImageCollection("JAXA/GPM_L3/GSMaP/v8/operational").select("hourlyPrecipRate")
+    end = min(end, last_full_day(ee, ic_all))
+    print(f"  gsmap: hari penuh terakhir yang tersedia {end}")
+    fc, frames = points_fc(ee, st, 0), []
+    for s, e in date_chunks(start, end, chunk_days):
+        days = pd.date_range(s, e)
+        imgs = [ic_all.filterDate(str(d.date()), str((d + pd.Timedelta(days=1)).date())).sum().rename(f"{d:%Y%m%d}_rain")
+                for d in days]
+        feats = reduce_at(ee, ee.Image.cat(imgs), fc, ee.Reducer.first(), 11132)
+        frames.append(parse_daily_bands(feats, "rain"))
+        print(f"  gsmap {s}..{e}: {len(days)} hari")
+    df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["station_id", "date", "rain"])
+    return df.rename(columns={"rain": "rain_mm"})
 
 
 def extract_s1(ee, st, start, end, step_days, buffer_m):
@@ -126,7 +152,7 @@ def extract_s2(ee, st, start, end, step_days, buffer_m):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--only", default="static,chirps", help=f"kelompok dipisah koma dari {GROUPS}")
+    parser.add_argument("--only", default="static,gsmap", help=f"kelompok dipisah koma dari {GROUPS}")
     parser.add_argument("--limit", type=int, help="hanya N stasiun pertama (uji)")
     parser.add_argument("--pad-before", type=int, default=40, help="hari sebelum data pertama (untuk fitur hujan terdahulu)")
     parser.add_argument("--chunk-days", type=int, default=90)
@@ -158,7 +184,8 @@ def main() -> None:
     ee.Initialize(project=project)
 
     for group in groups:
-        target = out_dir / f"gee_{group}.parquet"
+        suffix = f"_test{args.limit}" if args.limit else ""  # uji kecil tidak menimpa berkas penuh
+        target = out_dir / f"gee_{group}{suffix}.parquet"
         if target.exists() and not args.force:
             print(f"[{group}] sudah ada, dilewati ({target.name})")
             continue
@@ -168,6 +195,10 @@ def main() -> None:
             df = extract_static(ee, st, args.buffer_m)
         elif group == "chirps":
             df = extract_chirps(ee, st, start, end, args.chunk_days)
+            if len(df):
+                print(f"  data hujan terakhir: {df['date'].max().date()} (bandingkan dengan {end})")
+        elif group == "gsmap":
+            df = extract_gsmap(ee, st, start, end, args.chunk_days)
             if len(df):
                 print(f"  data hujan terakhir: {df['date'].max().date()} (bandingkan dengan {end})")
         elif group == "s1":

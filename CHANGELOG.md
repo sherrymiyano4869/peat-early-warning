@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6
+- 02: DEM beralih ke COPERNICUS/DEM/GLO30_2024_1 (yang lama usang); tambah grup `gsmap` (hujan near-real-time); default `--only static,gsmap`
+- 03: pilih sumber hujan (`--rain-source auto|gsmap|chirps`) dan cetak kesesuaian gsmap vs chirps bila keduanya ada
+- Alasan: CHIRPS di GEE berhenti 30 Sep 2026, padahal data muka air sampai 8 Nov
+- 02: dengan --limit, keluaran bernama gee_<kelompok>_testN.parquet (tidak menimpa berkas penuh)
+
 ## v0.5
 - 01_stations: tambah bendera flat_sensor (sensor datar di sekitar nol) dan wl_std_cm; alasan jelas untuk respons kosong
 - pick_pilot dan 03_assemble mengeluarkan sensor datar (03: --keep-flat untuk menahannya)

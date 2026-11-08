@@ -15,7 +15,7 @@
 | scripts/01b_scrape_station_details.py | ambil station-detail semua stasiun | siap |
 | scripts/01_stations.py | bersihkan dan gabungkan jadi parquet | siap |
 | scripts/pick_pilot.py | pilih klaster stasiun untuk pilot | siap |
-| scripts/02_gee_features.py | fitur Earth Engine di titik stasiun (static, chirps, s1, s2) | siap; bagian GEE belum diuji pada GEE sungguhan |
+| scripts/02_gee_features.py | fitur Earth Engine di titik stasiun (static, gsmap, chirps, s1, s2) | siap; bagian GEE belum diuji pada GEE sungguhan |
 | scripts/03_assemble.py | gabung target harian dan fitur jadi model_table | siap (diuji data sintetik) |
 | scripts/04_baseline.py | baseline, LightGBM, kuantil, validasi LOSO/LOCO/TEMPORAL | siap (diuji data sintetik) |
 
@@ -25,7 +25,7 @@ Contoh pemakaian:
     python scripts/01_stations.py
     python scripts/pick_pilot.py
     python scripts/02_gee_features.py --dry-run
-    python scripts/02_gee_features.py --limit 3 --only static,chirps   # uji kecil
+    python scripts/02_gee_features.py --limit 3 --only static,gsmap   # uji kecil
     python scripts/02_gee_features.py
     python scripts/03_assemble.py
     python scripts/04_baseline.py --quick

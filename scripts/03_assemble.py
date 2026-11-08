@@ -57,6 +57,15 @@ def rain_features(chirps: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True)[["station_id", "date", "rain_7d", "rain_14d", "rain_30d", "dry_days"]]
 
 
+def report_rain_agreement(gsmap: pd.DataFrame, chirps: pd.DataFrame) -> None:
+    both = gsmap.merge(chirps, on=["station_id", "date"], suffixes=("_gsmap", "_chirps")).dropna()
+    if len(both) < 30:
+        return
+    corr = both["rain_mm_gsmap"].corr(both["rain_mm_chirps"])
+    ratio = both["rain_mm_gsmap"].sum() / max(both["rain_mm_chirps"].sum(), 1e-9)
+    print(f"[hujan] gsmap vs chirps pada {len(both)} stasiun-hari: korelasi harian {corr:.2f}, rasio total gsmap/chirps {ratio:.2f}")
+
+
 def merge_composite(df: pd.DataFrame, comp: pd.DataFrame, tolerance_days: int = 24) -> pd.DataFrame:
     comp = comp.drop(columns=["window_start"]).sort_values("window_end")
     merged = pd.merge_asof(df.sort_values("date"), comp, left_on="date", right_on="window_end", by="station_id",
@@ -68,6 +77,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--min-target-days", type=int, default=30)
     parser.add_argument("--eps", type=float, default=0.25, help="jarak klaster (derajat)")
+    parser.add_argument("--rain-source", choices=["auto", "gsmap", "chirps"], default="auto",
+                        help="auto = gsmap bila ada (lebih mutakhir), selain itu chirps")
     parser.add_argument("--keep-flat", action="store_true", help="jangan keluarkan sensor datar di sekitar nol")
     args = parser.parse_args()
 
@@ -88,16 +99,26 @@ def main() -> None:
     keep = add_clusters(keep, args.eps)
     df = target.merge(keep[["station_id", "lon", "lat", "cluster"]], on="station_id", how="inner")
 
-    for name in ("static", "chirps", "s1", "s2"):
-        file = feats / f"gee_{name}.parquet"
+    rain_files = {n: feats / f"gee_{n}.parquet" for n in ("gsmap", "chirps")}
+    available = [n for n, f in rain_files.items() if f.exists()]
+    if len(available) == 2:
+        report_rain_agreement(*(pd.read_parquet(rain_files[n]) for n in ("gsmap", "chirps")))
+    source = (available[0] if available else None) if args.rain_source == "auto" else args.rain_source
+    if source and not rain_files[source].exists():
+        sys.exit(f"--rain-source {source} dipilih, tetapi {rain_files[source].name} tidak ada.")
+
+    for name in ("static", "rain", "s1", "s2"):
+        file = feats / (f"gee_{source}.parquet" if name == "rain" and source else f"gee_{name}.parquet")
         if not file.exists():
             print(f"[{name}] tidak ada ({file.name}); dilewati")
             continue
         extra = pd.read_parquet(file)
         if name == "static":
             df = df.merge(extra, on="station_id", how="left")
-        elif name == "chirps":
-            df = df.merge(rain_features(extra), on=["station_id", "date"], how="left")
+        elif name == "rain":
+            rf = rain_features(extra)
+            print(f"[hujan] sumber {source}: data terakhir {extra['date'].max().date()}")
+            df = df.merge(rf, on=["station_id", "date"], how="left")
         else:
             df = merge_composite(df, extra)
         print(f"[{name}] digabung ({len(extra)} baris)")
