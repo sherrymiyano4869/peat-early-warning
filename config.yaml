@@ -1,0 +1,16 @@
+gee:
+  project: "try1-471200"
+
+paths:
+  raw: data/raw
+  interim: data/interim
+  features: data/features
+  outputs: outputs
+
+pilot:
+  name: "KHG-PILOT"            # ganti setelah audit SiTMAT
+  test_point: [114.0, -2.2]    # [lon, lat], hanya untuk uji koneksi GEE
+  start: "2019-01-01"
+  end: "2025-12-31"
+
+thresholds_cm: [-30, -40, -50]  # ambang muka air (cm), negatif = di bawah permukaan

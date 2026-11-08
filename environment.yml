@@ -1,0 +1,49 @@
+name: peat
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  # --- inti data
+  - numpy
+  - pandas
+  - scipy
+  - pyarrow
+  - pyyaml
+  - python-dateutil
+  - requests
+  - openpyxl
+  # --- Earth Engine (hanya untuk mengambil data)
+  - earthengine-api
+  # --- geospasial
+  - geopandas
+  - shapely
+  - pyproj
+  - pyogrio
+  - rasterio
+  - xarray
+  - rioxarray
+  - netcdf4
+  - pysheds          # HAND/TWI dari DEM
+  # --- ML, validasi, dan kalibrasi
+  - scikit-learn
+  - lightgbm
+  - xgboost
+  - statsmodels
+  - shap
+  - joblib
+  - optuna
+  - mapie            # interval prediksi (konformal)
+  - properscoring    # CRPS untuk prakiraan probabilistik
+  # --- visual dan dashboard
+  - matplotlib
+  - seaborn
+  - plotly
+  - folium
+  - streamlit
+  - streamlit-folium
+  # --- kerja
+  - jupyterlab
+  - ipykernel
+  - pytest
+  - ruff
