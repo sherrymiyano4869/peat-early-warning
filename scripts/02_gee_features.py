@@ -13,6 +13,9 @@ Dengan --limit N, hasil ditulis ke gee_<kelompok>_testN.parquet agar tidak tertu
 
 Kelompok:
   static : elevasi dan kemiringan (COPERNICUS/DEM/GLO30_2024_1; ini model permukaan, bukan tanah telanjang)
+  fabdem : elevasi FABDEM (projects/sat-io/open-datasets/FABDEM, katalog komunitas; CC BY-NC-SA 4.0), kemiringan, dan relief
+           1 km (elevasi dikurangi minimum dalam radius 1 km) -> fabdem_elev_m, fabdem_slope_deg, fabdem_relief_1km.
+           Alternatif tanpa Earth Engine untuk area pilot: scripts/02c_fabdem_pilot.py
   chirps : hujan harian (UCSB-CHG/CHIRPS/DAILY) -> `rain_mm`; di GEE bisa tertinggal sekitar 5 minggu
   gsmap  : hujan harian dari jumlah per jam (JAXA/GPM_L3/GSMaP/v8/operational, near-real-time) -> `rain_mm`
            dijumlahkan pada HARI LOKAL (WIB, --rain-tz-offset 7) agar sejajar dengan muka air; resolusi 0,1 derajat;
@@ -37,7 +40,7 @@ from src.common import load_config, path  # noqa: E402
 from src.regions import add_region  # noqa: E402
 from src.gee_utils import date_chunks, date_windows, parse_daily_bands, parse_window_bands  # noqa: E402
 
-GROUPS = ("static", "chirps", "gsmap", "chirps_long", "s1", "s2")
+GROUPS = ("static", "fabdem", "chirps", "gsmap", "chirps_long", "s1", "s2")
 
 
 def load_stations(limit):
@@ -78,6 +81,17 @@ def extract_static(ee, st, buffer_m):
     return pd.DataFrame([{"station_id": f["properties"]["station_id"],
                           "elev_m": f["properties"].get("elev_m"),
                           "slope_deg": f["properties"].get("slope_deg")} for f in feats])
+
+
+def extract_fabdem(ee, st, buffer_m):
+    col = ee.ImageCollection("projects/sat-io/open-datasets/FABDEM")
+    dem = col.mosaic().select([0]).setDefaultProjection(col.first().select([0]).projection())
+    img = (dem.rename("fabdem_elev_m")
+           .addBands(ee.Terrain.slope(dem).rename("fabdem_slope_deg"))
+           .addBands(dem.subtract(dem.focalMin(radius=1000, units="meters")).rename("fabdem_relief_1km")))
+    feats = reduce_at(ee, img, points_fc(ee, st, buffer_m), ee.Reducer.mean(), 30)
+    cols = ["fabdem_elev_m", "fabdem_slope_deg", "fabdem_relief_1km"]
+    return pd.DataFrame([{"station_id": f["properties"]["station_id"], **{c: f["properties"].get(c) for c in cols}} for f in feats])
 
 
 def extract_chirps(ee, st, start, end, chunk_days, quiet=False):
@@ -264,6 +278,8 @@ def main() -> None:
         print(f"[{group}] mulai ...")
         if group == "static":
             df = extract_static(ee, st, args.buffer_m)
+        elif group == "fabdem":
+            df = extract_fabdem(ee, st, args.buffer_m)
         elif group == "chirps":
             df = extract_chirps(ee, st, start, end, args.chunk_days)
             if len(df):

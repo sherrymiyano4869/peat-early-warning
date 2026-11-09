@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.11
+- scripts/02d_canal_density.py: kerapatan kanal (km/km2, radius 500 m dan 1 km) di sekitar stasiun dari kanal_osm_clip.gpkg
+  (hanya kerapatan, tanpa jenis kanal); proyeksi azimutal lokal per stasiun
+- 03 menggabungkan canal_density.parquet; 04 memakai canal_density_500m dan canal_density_1km sebagai fitur statis
+
+## v0.10
+- FABDEM: scripts/02c_fabdem_pilot.py mengambil hanya ubin area pilot dari arsip data.bris lewat HTTP Range (`--check` untuk uji
+  dukungan Range dan isi arsip), menghasilkan klip GeoTIFF dan fitur medan di stasiun (dem_fabdem.parquet)
+- 02: grup `fabdem` (katalog komunitas Earth Engine) sebagai jalur alternatif
+- 03 dan 04: fitur `fabdem_elev_m`, `fabdem_slope_deg`, `fabdem_relief_500m`, `fabdem_relief_1km`
+
 ## v0.9
 - ENSO/IOD: src/enso.py (pembaca format standar PSL, ONI dan sstoi CPC), scripts/02b_enso.py (tabel bulanan; `--auto`
   mengunduh berkas CPC), 03 menggabungkan nino34/oni/dmi dengan lag 1 bulan, 04 punya `--with-enso` (bawaan mati)

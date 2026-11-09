@@ -16,6 +16,8 @@
 | scripts/01_stations.py | bersihkan dan gabungkan jadi parquet | siap |
 | scripts/pick_pilot.py | pilih klaster stasiun untuk pilot | siap |
 | scripts/02_gee_features.py | fitur Earth Engine di titik stasiun (static, gsmap, chirps, s1, s2) | siap; static, gsmap, chirps, s1 teruji di GEE; s2 versi v0.7 belum diuji |
+| scripts/02d_canal_density.py | kerapatan kanal di sekitar stasiun dari gpkg kanal OSM (atribusi OSM wajib) | siap (diuji hitungan analitik) |
+| scripts/02c_fabdem_pilot.py | FABDEM area pilot dari data.bris (Range) dan fitur medan di stasiun | siap (diuji server tiruan; server asli belum) |
 | scripts/02b_enso.py | tabel ENSO/IOD bulanan dari berkas NOAA (data/raw/enso/) | siap (diuji data sintetik; format berkas dari ingatan) |
 | scripts/03_assemble.py | gabung target harian dan fitur jadi model_table | siap (diuji data sintetik) |
 | scripts/04_baseline.py | baseline, LightGBM, kuantil, validasi LOSO/LOCO/LOIO/TEMPORAL | siap (diuji data sintetik) |

@@ -218,8 +218,16 @@ def main() -> None:
     if source and not rain_files[source].exists():
         sys.exit(f"--rain-source {source} dipilih, tetapi {rain_files[source].name} tidak ada.")
 
-    for name in ("static", "rain", "s1", "s2"):
-        file = feats / (f"gee_{source}.parquet" if name == "rain" and source else f"gee_{name}.parquet")
+    dem_file = feats / "dem_fabdem.parquet" if (feats / "dem_fabdem.parquet").exists() else feats / "gee_fabdem.parquet"
+    for name in ("static", "fabdem", "canal", "rain", "s1", "s2"):
+        if name == "rain" and source:
+            file = feats / f"gee_{source}.parquet"
+        elif name == "fabdem":
+            file = dem_file
+        elif name == "canal":
+            file = feats / "canal_density.parquet"
+        else:
+            file = feats / f"gee_{name}.parquet"
         if not file.exists():
             print(f"[{name}] tidak ada ({file.name}); dilewati")
             continue
@@ -227,7 +235,7 @@ def main() -> None:
         if extra.empty:
             print(f"[{name}] berkas kosong ({file.name}); dilewati")
             continue
-        if name == "static":
+        if name in ("static", "fabdem", "canal"):
             df = df.merge(extra, on="station_id", how="left")
         elif name == "rain":
             print(f"[hujan] sumber {source}: data terakhir {extra['date'].max().date()}")
@@ -255,7 +263,10 @@ def main() -> None:
         "wl_cm": "muka air harian (cm; negatif = di bawah permukaan), target", "src": "sumber nilai harian: 30min atau hist",
         "cluster": "klaster spasial (stasiun tunggal = klaster sendiri)", "region": "pulau: sumatra, kalimantan, atau papua",
         "wl_d3": "perubahan muka air 3 hari terakhir (cm)", "wl_d7": "perubahan muka air 7 hari terakhir (cm)",
-        "elev_m": "elevasi Copernicus GLO30 (m)", "slope_deg": "kemiringan (derajat)",
+        "elev_m": "elevasi Copernicus GLO30 (m; model permukaan)", "slope_deg": "kemiringan (derajat)",
+        "canal_density_500m": "kerapatan kanal radius 500 m (km/km2)", "canal_density_1km": "kerapatan kanal radius 1 km (km/km2)",
+        "fabdem_elev_m": "elevasi FABDEM (m; hutan dan bangunan dikurangi)", "fabdem_slope_deg": "kemiringan FABDEM (derajat)",
+        "fabdem_relief_500m": "relief FABDEM radius 500 m (m)", "fabdem_relief_1km": "relief FABDEM radius 1 km (m): elevasi minus minimum lokal",
         "rain_7d": "hujan 7 hari berakhir di t (mm)", "rain_14d": "hujan 14 hari (mm)", "rain_30d": "hujan 30 hari (mm)",
         "dry_days": "hari tanpa hujan beruntun (<1 mm) sampai t (HTH)", "dry_cat": "kategori HTH BMKG: 0 hujan, 1 (1-5), 2 (6-10), 3 (11-20), 4 (21-30), 5 (31-60), 6 (>60)",
         "dry_max_30d": "rentetan hari kering terpanjang dalam 30 hari terakhir", "rain_days_30d": "jumlah hari berhujan (>=1 mm) dalam 30 hari",
