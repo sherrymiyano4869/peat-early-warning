@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.14
+- 07: kerapatan kanal sebagai peta panas (kernel Gaussian sigma 250 m dan 500 m; band `canal_kde_250m`, `canal_kde_500m`), menggantikan
+  jendela melingkar; diuji terhadap nilai analitik
+- scripts/09_export_web.py dan webmap/ (Leaflet): hamparan PNG, GeoJSON stasiun, deret waktu, dan manifest (versi, data sampai, status
+  validasi, legenda, atribusi, penafian). Bagian JavaScript diuji dengan node (fungsi murni dan pengambilan lewat server statis);
+  tampilan di peramban belum diperiksa
+- docs/WEBGIS_DAN_OTOMASI.md: alur pembaruan otomatis, kebijakan latih ulang, dan daftar yang belum dibangun
+
+## v0.13
+- scripts/07_grid_static.py: grid area pilot (UTM, default 100 m), fitur statis per sel (FABDEM: elevasi, kemiringan, relief 500 m/1 km;
+  kanal: kerapatan 500 m/1 km dari panjang kanal per sel), fitur yang sama di sel stasiun (konsistensi latih dan terap), dan komponen
+  kepercayaan statis: jarak ke stasiun, jumlah stasiun 10 km, indeks ketidakmiripan dan area penerapan (AOA)
+- src/confidence.py: skor kepercayaan 'rantai terlemah' (jarak, AOA, masukan, rentang prediksi), kelas rendah/sedang/tinggi, faktor
+  pembatas, dan batas kelas dari bukti skill validasi
+
+## v0.12
+- scripts/06_predict.py: prediksi ke depan per stasiun (delta muka air h hari: median dan q10-q90; peluang turun >= d cm) pada
+  tanggal terbit tertentu, dan `--walk-forward` (terbitkan tiap minggu hanya dengan data yang sudah diketahui, nilai setelah kenyataan
+  tiba; dibanding persistensi dan frekuensi kejadian). Prototipe: peluang belum dikalibrasi
+- src/modeling.py: konstanta dan pembantu model dipakai bersama 04 dan 06
+
 ## v0.11
 - scripts/02d_canal_density.py: kerapatan kanal (km/km2, radius 500 m dan 1 km) di sekitar stasiun dari kanal_osm_clip.gpkg
   (hanya kerapatan, tanpa jenis kanal); proyeksi azimutal lokal per stasiun

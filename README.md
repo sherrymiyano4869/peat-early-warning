@@ -21,6 +21,9 @@
 | scripts/02b_enso.py | tabel ENSO/IOD bulanan dari berkas NOAA (data/raw/enso/) | siap (diuji data sintetik; format berkas dari ingatan) |
 | scripts/03_assemble.py | gabung target harian dan fitur jadi model_table | siap (diuji data sintetik) |
 | scripts/04_baseline.py | baseline, LightGBM, kuantil, validasi LOSO/LOCO/LOIO/TEMPORAL | siap (diuji data sintetik) |
+| scripts/09_export_web.py | ekspor hamparan, GeoJSON, deret waktu, manifest ke webmap/data (WebGIS Leaflet) | siap (diuji data tiruan) |
+| scripts/07_grid_static.py | grid pilot, fitur statis per sel, dan kepercayaan statis (jarak stasiun, AOA) | siap (diuji data tiruan) |
+| scripts/06_predict.py | prediksi ke depan per stasiun dan uji walk-forward mingguan | siap (diuji data sintetik); prototipe, belum terkalibrasi |
 | scripts/05_seasonal_outlook.py | ENSO/IOD vs kekeringan musim (HTH, hujan) multi-tahun, leave-one-year-out | siap (diuji data sintetik) |
 
 Contoh pemakaian:

@@ -30,7 +30,7 @@ import pandas as pd
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-from lightgbm import LGBMClassifier, LGBMRegressor  # noqa: E402
+from lightgbm import LGBMClassifier  # noqa: E402
 from sklearn.impute import SimpleImputer  # noqa: E402
 from sklearn.linear_model import Ridge  # noqa: E402
 from sklearn.metrics import average_precision_score, brier_score_loss  # noqa: E402
@@ -40,19 +40,9 @@ from sklearn.preprocessing import StandardScaler  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.common import load_config, path  # noqa: E402
+from src.modeling import ENSO_COLS, LGB, RAIN_COLS, SAT_ABS, SAT_ANOM, STATIC_COLS, TREND_COLS, make_lgbm  # noqa: E402
 
 warnings.filterwarnings("ignore", category=UserWarning)
-RAIN_COLS = ["rain_7d", "rain_14d", "rain_30d", "dry_days", "dry_max_30d", "rain_days_30d"]
-SAT_ABS = ["vv", "vh", "ndmi"]
-SAT_ANOM = ["vv_anom", "vh_anom", "ndmi_anom"]
-ENSO_COLS = ["nino34", "dmi"]
-STATIC_COLS = ["elev_m", "slope_deg", "fabdem_elev_m", "fabdem_slope_deg", "fabdem_relief_500m", "fabdem_relief_1km",
-               "canal_density_500m", "canal_density_1km"]
-TREND_COLS = ["wl_d3", "wl_d7"]
-LGB = dict(n_estimators=200, learning_rate=0.05, num_leaves=15, min_child_samples=30, subsample=0.8,
-           subsample_freq=1, colsample_bytree=0.8, random_state=0, verbose=-1, n_jobs=1)
-
-
 class MeanModel:
     def fit(self, X, y):
         self.m_ = float(np.nanmean(y))
@@ -72,10 +62,6 @@ class ZeroModel:
 
 def make_ridge():
     return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), Ridge(alpha=10.0))
-
-
-def make_lgbm(alpha=None):
-    return LGBMRegressor(objective="quantile", alpha=alpha, **LGB) if alpha else LGBMRegressor(**LGB)
 
 
 def make_splits(df: pd.DataFrame, scheme: str, horizon: int) -> list:
