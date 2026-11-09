@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.9
+- ENSO/IOD: src/enso.py (pembaca format standar PSL, ONI dan sstoi CPC), scripts/02b_enso.py (tabel bulanan; `--auto`
+  mengunduh berkas CPC), 03 menggabungkan nino34/oni/dmi dengan lag 1 bulan, 04 punya `--with-enso` (bawaan mati)
+- Modul musiman: 02 grup `chirps_long` (CHIRPS Jun-Nov sejak 1981) dan scripts/05_seasonal_outlook.py (leave-one-year-out,
+  skill terhadap klimatologi; metrik musim: rain_total, hth_max, dry_frac)
+- 03: fitur HTH BMKG (`dry_cat`, `dry_max_30d`, `rain_days_30d`) di samping `dry_days`
+- 03: anomali komposit per stasiun (`vv_anom`, `vh_anom`, `ndmi_anom`, median berjalan); 04 memakai anomali (`--abs-sat` untuk menambah mutlak)
+- 02: hujan GSMaP dijumlahkan pada hari lokal WIB (`--rain-tz-offset`), sejajar dengan hari muka air
+
+## v0.8
+- 02: perbaikan S2 (citra satu band: reduceRegions menamai hasil `mean`; kini diterima lewat `fallback_key`);
+  peringatan bila satu kelompok menghasilkan 0 baris; hasil kosong tidak ditulis ke parquet
+- 03: QC lonjakan harian (`--max-jump-p95`, default 30 cm; stasiun terburuk dicetak), diagnostik kebisingan nilai harian
+  history vs median 30 menit, fitur tren muka air `wl_d3`/`wl_d7`, opsi `--smooth-days`, kolom ORACLE `fut_rain_7d/14d`
+- 04: baseline AR (`ridge_ar`) berbasis muka air dan tren, varian `oracle_rain` (batas atas jika hujan masa depan diketahui),
+  kejadian pengeringan (`turun>=d cm`, config `drop_events_cm`), opsi `--no-static`
+
 ## v0.7
 - 02: Sentinel-1/2 dihitung per jendela dan per kelompok stasiun yang berdekatan (`--batch-size`, `--tile-scale`),
   `filterBounds` pada titik (bukan kotak batas seluruh stasiun), dan kelompok yang gagal karena memori dibelah dua lalu diulang

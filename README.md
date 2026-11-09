@@ -16,8 +16,10 @@
 | scripts/01_stations.py | bersihkan dan gabungkan jadi parquet | siap |
 | scripts/pick_pilot.py | pilih klaster stasiun untuk pilot | siap |
 | scripts/02_gee_features.py | fitur Earth Engine di titik stasiun (static, gsmap, chirps, s1, s2) | siap; static, gsmap, chirps, s1 teruji di GEE; s2 versi v0.7 belum diuji |
+| scripts/02b_enso.py | tabel ENSO/IOD bulanan dari berkas NOAA (data/raw/enso/) | siap (diuji data sintetik; format berkas dari ingatan) |
 | scripts/03_assemble.py | gabung target harian dan fitur jadi model_table | siap (diuji data sintetik) |
-| scripts/04_baseline.py | baseline, LightGBM, kuantil, validasi LOSO/LOCO/TEMPORAL | siap (diuji data sintetik) |
+| scripts/04_baseline.py | baseline, LightGBM, kuantil, validasi LOSO/LOCO/LOIO/TEMPORAL | siap (diuji data sintetik) |
+| scripts/05_seasonal_outlook.py | ENSO/IOD vs kekeringan musim (HTH, hujan) multi-tahun, leave-one-year-out | siap (diuji data sintetik) |
 
 Contoh pemakaian:
     python scripts/01a_snapshot_sitmat.py --contact emailmu@contoh.com

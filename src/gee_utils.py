@@ -38,9 +38,14 @@ def parse_daily_bands(features: list, band: str) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["station_id", "date", band])
 
 
-def parse_window_bands(features: list, names: list) -> pd.DataFrame:
-    """Properti 'w<YYYYMMDD>_<nama>' -> tabel lebar per (stasiun, awal jendela)."""
+def parse_window_bands(features: list, names: list, fallback_key: str = None) -> pd.DataFrame:
+    """Properti 'w<YYYYMMDD>_<nama>' -> tabel lebar per (stasiun, awal jendela).
+
+    Untuk citra satu band, reduceRegions menamai hasil dengan nama reducer ('mean'/'first'), bukan nama band.
+    Bila `fallback_key` (mis. 'w20260812') diberikan dan hanya ada satu nama, properti itu dipakai.
+    """
     pattern = re.compile(rf"^w(\d{{8}})_({'|'.join(re.escape(n) for n in names)})$")
+    single = fallback_key if len(names) == 1 else None
     rows = {}
     for feat in features:
         props = feat.get("properties", {})
@@ -48,6 +53,8 @@ def parse_window_bands(features: list, names: list) -> pd.DataFrame:
             match = pattern.match(key)
             if match:
                 rows.setdefault((props["station_id"], match.group(1)), {})[match.group(2)] = value
+            elif single and key in ("mean", "first") and value is not None:
+                rows.setdefault((props["station_id"], single[1:]), {})[names[0]] = value
     records = [{"station_id": sid, "window_start": pd.to_datetime(d, format="%Y%m%d"), **vals}
                for (sid, d), vals in rows.items()]
     return pd.DataFrame(records, columns=["station_id", "window_start", *names])

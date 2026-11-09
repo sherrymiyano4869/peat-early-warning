@@ -15,7 +15,10 @@ Kelompok:
   static : elevasi dan kemiringan (COPERNICUS/DEM/GLO30_2024_1; ini model permukaan, bukan tanah telanjang)
   chirps : hujan harian (UCSB-CHG/CHIRPS/DAILY) -> `rain_mm`; di GEE bisa tertinggal sekitar 5 minggu
   gsmap  : hujan harian dari jumlah per jam (JAXA/GPM_L3/GSMaP/v8/operational, near-real-time) -> `rain_mm`
-           resolusi 0,1 derajat; cantumkan atribusi JAXA GSMaP di slide
+           dijumlahkan pada HARI LOKAL (WIB, --rain-tz-offset 7) agar sejajar dengan muka air; resolusi 0,1 derajat;
+           cantumkan atribusi JAXA GSMaP di slide
+  chirps_long : CHIRPS harian bulan-bulan musim (default Jun-Nov) sejak --long-start (default 1981), untuk modul musiman
+           (05_seasonal_outlook); satu permintaan per tahun
   s1     : median VV dan VH per jendela 12 hari (COPERNICUS/S1_GRD) di sekitar titik
   s2     : median NDMI per jendela 10 hari (COPERNICUS/S2_SR_HARMONIZED + Cloud Score+)
 Sentinel dihitung per jendela dan per kelompok stasiun yang berdekatan (--batch-size), dengan filterBounds pada
@@ -24,7 +27,7 @@ titik (bukan kotak batas seluruh stasiun); kelompok yang gagal karena memori dib
 import argparse
 import sys
 import time
-from datetime import timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -34,7 +37,7 @@ from src.common import load_config, path  # noqa: E402
 from src.regions import add_region  # noqa: E402
 from src.gee_utils import date_chunks, date_windows, parse_daily_bands, parse_window_bands  # noqa: E402
 
-GROUPS = ("static", "chirps", "gsmap", "s1", "s2")
+GROUPS = ("static", "chirps", "gsmap", "chirps_long", "s1", "s2")
 
 
 def load_stations(limit):
@@ -77,42 +80,64 @@ def extract_static(ee, st, buffer_m):
                           "slope_deg": f["properties"].get("slope_deg")} for f in feats])
 
 
-def extract_chirps(ee, st, start, end, chunk_days):
+def extract_chirps(ee, st, start, end, chunk_days, quiet=False):
     fc, frames = points_fc(ee, st, 0), []
     for s, e in date_chunks(start, end, chunk_days):
         ic = (ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
               .filterDate(str(s), str(e + timedelta(days=1))).select("precipitation"))
         n = ic.size().getInfo()
         if n == 0:
-            print(f"  chirps {s}..{e}: belum tersedia, dilewati")
+            if not quiet:
+                print(f"  chirps {s}..{e}: belum tersedia, dilewati")
             continue
         feats = reduce_at(ee, ic.toBands(), fc, ee.Reducer.first(), 5566)
         frames.append(parse_daily_bands(feats, "precipitation"))
-        print(f"  chirps {s}..{e}: {n} citra")
+        if not quiet:
+            print(f"  chirps {s}..{e}: {n} citra")
     df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["station_id", "date", "precipitation"])
     return df.rename(columns={"precipitation": "rain_mm"})
 
 
-def last_full_day(ee, ic):
-    """Hari penuh terakhir yang tersedia pada sebuah koleksi (hari terakhir mungkin parsial)."""
+def last_full_local_day(ee, ic, tz_offset):
+    """Hari lokal penuh terakhir yang tersedia (hari terakhir mungkin parsial)."""
     last_ms = ic.aggregate_max("system:time_start").getInfo()
-    return pd.to_datetime(last_ms, unit="ms").date() - timedelta(days=1)
+    last_local = pd.to_datetime(last_ms, unit="ms") + pd.Timedelta(hours=tz_offset)
+    return (last_local + pd.Timedelta(hours=1) - pd.Timedelta(days=1)).normalize().date()
 
 
-def extract_gsmap(ee, st, start, end, chunk_days):
+def extract_gsmap(ee, st, start, end, chunk_days, tz_offset=7):
+    """Hujan harian pada hari lokal: jumlah citra per jam dari 00:00 lokal sampai 24:00 lokal."""
     ic_all = ee.ImageCollection("JAXA/GPM_L3/GSMaP/v8/operational").select("hourlyPrecipRate")
-    end = min(end, last_full_day(ee, ic_all))
-    print(f"  gsmap: hari penuh terakhir yang tersedia {end}")
+    end = min(end, last_full_local_day(ee, ic_all, tz_offset))
+    print(f"  gsmap: hari lokal penuh terakhir yang tersedia {end} (UTC+{tz_offset})")
     fc, frames = points_fc(ee, st, 0), []
+    fmt = "%Y-%m-%dT%H:%M:%S"
     for s, e in date_chunks(start, end, chunk_days):
         days = pd.date_range(s, e)
-        imgs = [ic_all.filterDate(str(d.date()), str((d + pd.Timedelta(days=1)).date())).sum().rename(f"{d:%Y%m%d}_rain")
-                for d in days]
+        imgs = []
+        for d in days:
+            t0 = d - pd.Timedelta(hours=tz_offset)  # awal hari lokal dinyatakan dalam UTC
+            imgs.append(ic_all.filterDate(t0.strftime(fmt), (t0 + pd.Timedelta(days=1)).strftime(fmt)).sum().rename(f"{d:%Y%m%d}_rain"))
         feats = reduce_at(ee, ee.Image.cat(imgs), fc, ee.Reducer.first(), 11132)
         frames.append(parse_daily_bands(feats, "rain"))
         print(f"  gsmap {s}..{e}: {len(days)} hari")
     df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["station_id", "date", "rain"])
     return df.rename(columns={"rain": "rain_mm"})
+
+
+def extract_chirps_long(ee, st, first_year, last_day, months):
+    """CHIRPS harian pada bulan-bulan musim tiap tahun; satu permintaan per tahun."""
+    frames = []
+    for year in range(first_year, last_day.year + 1):
+        s = date(year, months[0], 1)
+        e = min((pd.Timestamp(year, months[1], 1) + pd.offsets.MonthEnd(0)).date(), last_day)
+        if s > last_day:
+            continue
+        part = extract_chirps(ee, st, s, e, 400, quiet=True)
+        if len(part):
+            frames.append(part)
+        print(f"  chirps_long {year}: {len(part)} baris")
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=["station_id", "date", "rain_mm"])
 
 
 def station_batches(st: pd.DataFrame, size: int) -> list:
@@ -121,18 +146,18 @@ def station_batches(st: pd.DataFrame, size: int) -> list:
     return [ordered.iloc[i:i + size] for i in range(0, len(ordered), size)]
 
 
-def reduce_with_split(ee, image, batch, buffer_m, scale, tile_scale, names):
+def reduce_with_split(ee, image, batch, buffer_m, scale, tile_scale, names, key):
     """reduceRegions pada satu kelompok; bila gagal (mis. memori), belah dua dan ulangi."""
     try:
         feats = reduce_at(ee, image, points_fc(ee, batch, buffer_m), ee.Reducer.mean(), scale, tile_scale)
-        return parse_window_bands(feats, names)
+        return parse_window_bands(feats, names, fallback_key=key)
     except Exception as err:  # noqa: BLE001
         if len(batch) <= 1:
             print(f"    gagal untuk {batch['station_id'].iloc[0]}: {str(err)[:90]}")
             return pd.DataFrame(columns=["station_id", "window_start", *names])
         half = len(batch) // 2
         print(f"    kelompok {len(batch)} stasiun gagal ({str(err)[:60]}); dibelah menjadi {half} + {len(batch) - half}")
-        parts = [reduce_with_split(ee, image, b, buffer_m, scale, tile_scale, names) for b in (batch.iloc[:half], batch.iloc[half:])]
+        parts = [reduce_with_split(ee, image, b, buffer_m, scale, tile_scale, names, key) for b in (batch.iloc[:half], batch.iloc[half:])]
         return pd.concat(parts, ignore_index=True)
 
 
@@ -146,10 +171,12 @@ def composite_windows(ee, st, start, end, step_days, buffer_m, build, names, bat
             image = build(ee, fc, s_, e_, key)
             if image is None:
                 continue
-            part = reduce_with_split(ee, image, batch, buffer_m, 20, tile_scale, names)
+            part = reduce_with_split(ee, image, batch, buffer_m, 20, tile_scale, names, key)
             if len(part):
                 frames.append(part)
                 done += 1
+            else:
+                print(f"    PERINGATAN: kelompok {len(batch)} stasiun menghasilkan 0 baris pada jendela {s_} (citra ada, tapi tidak ada nilai terbaca)")
         print(f"  jendela {s_}: {done}/{len(batches)} kelompok berhasil")
     if not frames:
         return pd.DataFrame(columns=["station_id", "window_start", *names, "window_end"])
@@ -196,6 +223,9 @@ def main() -> None:
     parser.add_argument("--buffer-m", type=int, default=100, help="radius penyangga untuk DEM, S1, dan S2")
     parser.add_argument("--batch-size", type=int, default=15, help="stasiun per permintaan Sentinel (kecil = hemat memori)")
     parser.add_argument("--tile-scale", type=float, default=16, help="tileScale reduceRegions untuk Sentinel (maks 16)")
+    parser.add_argument("--rain-tz-offset", type=int, default=7, help="selisih jam lokal terhadap UTC untuk hari hujan GSMaP")
+    parser.add_argument("--long-start", type=int, default=1981, help="tahun awal untuk chirps_long")
+    parser.add_argument("--season-months", type=int, nargs=2, default=[6, 11], help="bulan awal dan akhir musim untuk chirps_long")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -211,7 +241,8 @@ def main() -> None:
     print(f"stasiun: {len(st)} | rentang {start} .. {end} ({(end - start).days + 1} hari) | kelompok: {groups}")
     print(f"perkiraan: CHIRPS {len(date_chunks(start, end, args.chunk_days))} permintaan, "
           f"S1 {len(date_windows(start, end, 12))} jendela, S2 {len(date_windows(start, end, 10))} jendela, "
-          f"{len(station_batches(st, args.batch_size))} kelompok stasiun per jendela")
+          f"{len(station_batches(st, args.batch_size))} kelompok stasiun per jendela; "
+          f"chirps_long {max(end.year - args.long_start + 1, 0)} tahun")
     if args.dry_run:
         print("(dry-run: tidak menyentuh Earth Engine)")
         return
@@ -238,13 +269,18 @@ def main() -> None:
             if len(df):
                 print(f"  data hujan terakhir: {df['date'].max().date()} (bandingkan dengan {end})")
         elif group == "gsmap":
-            df = extract_gsmap(ee, st, start, end, args.chunk_days)
+            df = extract_gsmap(ee, st, start, end, args.chunk_days, args.rain_tz_offset)
             if len(df):
                 print(f"  data hujan terakhir: {df['date'].max().date()} (bandingkan dengan {end})")
+        elif group == "chirps_long":
+            df = extract_chirps_long(ee, st, args.long_start, end, args.season_months)
         elif group == "s1":
             df = extract_s1(ee, st, start, end, 12, args.buffer_m, args.batch_size, args.tile_scale)
         else:
             df = extract_s2(ee, st, start, end, 10, args.buffer_m, args.batch_size, args.tile_scale)
+        if df.empty:
+            print(f"[{group}] HASIL KOSONG: tidak ditulis (agar run berikutnya tidak melewatinya). Periksa pesan di atas.")
+            continue
         df.to_parquet(target, index=False)
         print(f"[{group}] {len(df)} baris -> {target.name} ({time.time() - t0:.0f} detik)")
     print("\nPantau pemakaian EECU di Cloud Console setelah uji pertama sebelum menjalankan penuh.")
