@@ -70,6 +70,14 @@ function legendHtml(layer) {
          `<div class="ends"><span>${fmt(lg.min, 1)}</span><span>${layer.unit}</span><span>${fmt(lg.max, 1)}</span></div>`;
 }
 
+function startupHint(protocol, message) {
+  if (protocol === "file:") {
+    return "Halaman dibuka lewat berkas (file://), dan peramban memblokir pengambilan data. Jalankan di terminal: " +
+           "python -m http.server -d webmap 8000, lalu buka http://localhost:8000";
+  }
+  return "Gagal memuat data: " + message + ". Pastikan python scripts/09_export_web.py sudah dijalankan dan folder webmap/data ada.";
+}
+
 async function getJson(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(url + " -> " + r.status);
@@ -77,6 +85,9 @@ async function getJson(url) {
 }
 
 async function main() {
+  const map = L.map("map").setView([-1.3, 104.0], 8);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
+  if (location.protocol === "file:") throw new Error("file-protocol");
   const manifest = await getJson(DATA_DIR + "manifest.json");
   document.getElementById("title").textContent = manifest.title;
   document.getElementById("meta").innerHTML =
@@ -87,8 +98,7 @@ async function main() {
   badgeEl.textContent = badge.text;
   document.getElementById("attrib").innerHTML = "<p>" + manifest.attribution.join("</p><p>") + "</p><p><b>" + manifest.disclaimer + "</b></p>";
 
-  const map = L.map("map").setView(manifest.center, 11);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
+  map.setView(manifest.center, 11);
 
   const overlays = {}, byTitle = {};
   let opacity = 0.7;
@@ -141,7 +151,14 @@ async function main() {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { fmt, probColor, wlColor, sparklinePath, validationBadge, predictionTable, legendHtml };
+  module.exports = { fmt, probColor, wlColor, sparklinePath, validationBadge, predictionTable, legendHtml, startupHint };
 } else {
-  main().catch(err => { document.getElementById("title").textContent = "Gagal memuat data: " + err.message; });
+  main().catch(err => {
+    document.getElementById("title").textContent = "Data belum dapat dimuat";
+    const hint = startupHint(location.protocol, err.message);
+    document.getElementById("meta").textContent = hint;
+    const badgeEl = document.getElementById("badge");
+    badgeEl.className = "badge bad";
+    badgeEl.textContent = hint;
+  });
 }

@@ -7,9 +7,12 @@
 #   ./run_pipeline.sh model peta                   # hanya tahap tertentu
 #   ./run_pipeline.sh --refresh-gee fitur          # ambil ulang fitur Earth Engine (wajib setelah data SiTMAT baru)
 #   ./run_pipeline.sh --serve                      # di akhir, buka server webmap di http://localhost:8000
+#   ./run_pipeline.sh --arsip --label "minggu 1"   # di akhir, arsipkan prediksi + metrik ke outputs/arsip/<waktu>/
+#   ./run_pipeline.sh --arsip-web                  # sama, tetapi seluruh webmap/data ikut diarsipkan
 #
-# Tahap (urutan tetap): stasiun -> fitur -> model -> peta
-#   stasiun : 01a potret SiTMAT, 01b detail stasiun, 01 tabel bersih, pick_pilot   (internet; butuh --contact)
+# Tahap (urutan tetap): stasiun -> fitur -> model -> peta [-> arsip]
+#   stasiun : 01a potret SiTMAT, 01b detail stasiun (aktif saja; folder bertanggal, tidak menimpa run lama),
+#             01 tabel bersih (menggabungkan semua run), pick_pilot   (internet; butuh --contact)
 #   fitur   : 02 Earth Engine, 02b ENSO, 02c FABDEM (internet; butuh --contact), 02d kerapatan kanal
 #   model   : 03 tabel model, 04 baseline --quick, 06 prediksi, 06 --walk-forward
 #   peta    : 07 grid statis (butuh FABDEM), 09 ekspor webmap
@@ -26,6 +29,9 @@ CONTACT=""
 REFRESH_GEE=0
 SERVE=0
 PORT=8000
+ARSIP=0
+ARSIP_WEB=0
+LABEL=""
 STAGES=()
 PILOT_BBOX=(103.68 -1.61 104.17 -1.12)   # klaster 5 (pesisir Jambi)
 
@@ -35,7 +41,10 @@ while [[ $# -gt 0 ]]; do
     --refresh-gee) REFRESH_GEE=1; shift ;;
     --serve) SERVE=1; shift ;;
     --port) PORT="${2:-8000}"; shift 2 ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    --arsip) ARSIP=1; shift ;;
+    --arsip-web) ARSIP=1; ARSIP_WEB=1; shift ;;
+    --label) LABEL="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
     stasiun|fitur|model|peta) STAGES+=("$1"); shift ;;
     *) echo "Pilihan tidak dikenal: $1 (lihat ./run_pipeline.sh --help)"; exit 2 ;;
   esac
@@ -142,6 +151,14 @@ if want peta; then
     skip "07 grid statis" "butuh data/raw/dem/fabdem_pilot.tif (jalankan dengan --contact untuk 02c)"
   fi
   run "09 ekspor webmap" "$PY" scripts/09_export_web.py
+fi
+
+# ---------- arsip (opsional) ----------
+if [[ $ARSIP -eq 1 ]]; then
+  ARSIP_ARGS=()
+  [[ -n "$LABEL" ]] && ARSIP_ARGS+=(--label "$LABEL")
+  [[ $ARSIP_WEB -eq 1 ]] && ARSIP_ARGS+=(--include-web)
+  run "arsip run" "$PY" scripts/archive_run.py "${ARSIP_ARGS[@]}"
 fi
 
 print_summary

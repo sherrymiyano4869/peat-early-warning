@@ -1,8 +1,11 @@
 """01_stations: bangun tabel bersih dari `station-detail` (muka air dalam cm).
 
     python scripts/01_stations.py
-Masuk : data/raw/sitmat/details/*.json  (hasil 01b)
+Masuk : data/raw/sitmat/details/<run>/*.json[.gz] (hasil 01b, semua run digabung; berkas lama langsung di details/ tetap terbaca)
 Keluar: data/interim/ts_30min.parquet, ts_daily.parquet, stations.parquet
+
+Penggabungan run: untuk tiap stasiun, deret 30 menitan dan ringkasan harian dari semua run digabung; bila satu waktu muncul di beberapa
+run, nilai dari run terbaru dipakai. Dengan begitu deret terus memanjang melampaui jendela SiTMAT (sekitar 30 hari).
 
 QC ringan (bendera, dan nilai mustahil menjadi NaN; tidak ada stasiun yang dibuang di sini):
   - zona waktu tetap WIB (UTC+7), sesuai petunjuk dari data
@@ -13,7 +16,9 @@ QC ringan (bendera, dan nilai mustahil menjadi NaN; tidak ada stasiun yang dibua
   - `region` (sumatra/kalimantan/papua/other) dari koordinat; `other` (misalnya di Jawa) dianggap mencurigakan
   - sensor datar di sekitar nol (|median| < 5 cm dan simpangan baku < 5 cm) diberi bendera `flat_sensor = True`
 """
+import gzip
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -32,9 +37,28 @@ SPIKE_CM = 30.0
 LON_RANGE, LAT_RANGE = (90.0, 142.0), (-12.0, 7.0)
 
 
-def load_detail(file: Path) -> dict:
-    rec = json.loads(file.read_text(encoding="utf-8"))
-    return rec["data"] if {"url", "data"} <= rec.keys() else rec
+def load_detail(file: Path):
+    """Kembalikan (data, fetched_at); mendukung .json dan .json.gz serta pembungkus PoliteClient."""
+    opener = gzip.open if file.suffix == ".gz" else open
+    with opener(file, "rt", encoding="utf-8") as fh:
+        rec = json.load(fh)
+    if {"url", "data"} <= rec.keys():
+        return rec["data"], rec.get("fetched_at") or ""
+    return rec, ""
+
+
+FILE_RE = re.compile(r"^(?P<sid>.+)_d\d+\.json(\.gz)?$")
+
+
+def group_files(details_root: Path) -> dict:
+    """Kelompokkan berkas detail per stasiun, diurutkan dari run terlama ke terbaru (menurut nama folder run, lalu waktu unduh)."""
+    groups = {}
+    for file in list(details_root.glob("*_d*.json*")) + list(details_root.glob("*/*_d*.json*")):
+        m = FILE_RE.match(file.name)
+        if m:
+            run = file.parent.name if file.parent != details_root else "00000000"
+            groups.setdefault(m.group("sid"), []).append((run, file))
+    return {sid: sorted(items, key=lambda x: (x[0], str(x[1]))) for sid, items in groups.items()}
 
 
 def clean_30min(ts: pd.DataFrame) -> pd.DataFrame:
@@ -48,21 +72,30 @@ def clean_30min(ts: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
-    files = sorted((path("raw") / "sitmat" / "details").glob("*_d*.json"))
-    if not files:
+    groups = group_files(path("raw") / "sitmat" / "details")
+    if not groups:
         sys.exit("Belum ada berkas di data/raw/sitmat/details. Jalankan 01b_scrape_station_details.py dulu.")
 
-    ts_parts, daily_parts, meta_rows, skipped = [], [], [], []
-    for file in files:
-        try:
-            raw = load_detail(file)
-            if not (raw.get("properties") or {}).get("properties"):
-                skipped.append((file.name, "respons kosong (tanpa properti stasiun)"))
-                continue
-            meta, ts, daily = station_meta(raw), station_timeseries(raw, tz_offset=TZ_OFFSET), station_daily(raw)
-        except (KeyError, TypeError, ValueError) as err:
-            skipped.append((file.name, str(err)[:60]))
+    ts_parts, daily_parts, meta_rows, skipped, n_runs = [], [], [], [], []
+    for sid, items in groups.items():
+        parsed = []
+        for order, (run, file) in enumerate(items):
+            try:
+                raw, fetched = load_detail(file)
+                if not (raw.get("properties") or {}).get("properties"):
+                    skipped.append((file.name, "respons kosong (tanpa properti stasiun)"))
+                    continue
+                parsed.append((order, station_meta(raw), station_timeseries(raw, tz_offset=TZ_OFFSET), station_daily(raw)))
+            except (KeyError, TypeError, ValueError) as err:
+                skipped.append((file.name, str(err)[:60]))
+        if not parsed:
             continue
+        meta = parsed[-1][1]  # metadata dari run terbaru
+        ts = pd.concat([t.assign(_run=o) for o, _, t, _ in parsed], ignore_index=True)
+        ts = ts.sort_values(["ts_local", "_run"]).drop_duplicates("ts_local", keep="last").drop(columns="_run")
+        daily = pd.concat([d.assign(_run=o) for o, _, _, d in parsed], ignore_index=True)
+        daily = daily.sort_values(["date", "_run"]).drop_duplicates("date", keep="last").drop(columns="_run").reset_index(drop=True)
+        n_runs.append(len(parsed))
         ts = clean_30min(ts)
         valid = ts["water_level_cm"].notna()
         wl_all = pd.concat([ts["water_level_cm"], daily["water_level_cm"].where(daily["water_level_cm"].between(*WL_RANGE))]).dropna()
@@ -89,7 +122,7 @@ def main() -> None:
     pd.concat(daily_parts, ignore_index=True).to_parquet(out / "ts_daily.parquet", index=False)
     stations.to_parquet(out / "stations.parquet", index=False)
 
-    print(f"stasiun diproses: {len(stations)} | dilewati: {len(skipped)}")
+    print(f"stasiun diproses: {len(stations)} | dilewati: {len(skipped)} | run per stasiun: median {int(np.median(n_runs))}, maks {max(n_runs)}")
     print(f"koordinat wajar: {int(stations.coord_ok.sum())}")
     print(f"data 30 menitan >= 14 hari: {int((stations.days_30min >= 14).sum())} | >= 28 hari: {int((stations.days_30min >= 28).sum())}")
     print(f"riwayat harian >= 60 hari: {int((stations.n_daily >= 60).sum())}")

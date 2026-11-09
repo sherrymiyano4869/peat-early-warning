@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.15
+- 01b: tiap run menulis ke data/raw/sitmat/details/<YYYYMMDD>/<id>_d90.json.gz dan tidak menimpa run lama; bawaan hanya stasiun aktif
+  di potret (--all untuk semua); run ulang di hari yang sama dilanjutkan tanpa permintaan; berkas dikompres (--no-gzip untuk menolak)
+- 01_stations: menggabungkan semua run per stasiun (berkas lama langsung di details/ tetap terbaca), membuang duplikat waktu dengan
+  nilai run terbaru menang, sehingga deret terus memanjang melampaui jendela SiTMAT (sekitar 30 hari data 30 menitan, 90 hari harian)
+- scripts/archive_run.py: arsip ringan per run (prediksi yang diterbitkan, metrik, run_meta.json, manifest) di outputs/arsip/ plus
+  index.csv; dasar untuk penilaian prospektif
+
+## v0.14.1
+- webmap: peta dasar tampil sebelum data dimuat, dan pesan galat menjelaskan bahwa halaman tidak boleh dibuka lewat file:// (peramban
+  memblokir fetch); jalankan `python -m http.server -d webmap 8000` lalu buka http://localhost:8000
+
 ## v0.14
 - 07: kerapatan kanal sebagai peta panas (kernel Gaussian sigma 250 m dan 500 m; band `canal_kde_250m`, `canal_kde_500m`), menggantikan
   jendela melingkar; diuji terhadap nilai analitik
