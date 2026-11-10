@@ -132,8 +132,10 @@ async function getJson(url) {
 
 async function main() {
   const map = L.map("map").setView([-1.3, 104.0], 8);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    { maxZoom: 19, subdomains: "abcd", attribution: "&copy; OpenStreetMap contributors &copy; CARTO" }).addTo(map);
+  // Peta dasar OSM standar (gratis, tanpa API key); dibuat abu muda lewat CSS .basemap-gray. CARTO kini meminta API key.
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    { maxZoom: 19, className: "basemap-gray",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
   L.control.scale({ metric: true, imperial: false }).addTo(map);
   if (location.protocol === "file:") throw new Error("file-protocol");
   const manifest = await getJson(DATA_DIR + "manifest.json");
