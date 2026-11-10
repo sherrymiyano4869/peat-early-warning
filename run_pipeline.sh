@@ -64,7 +64,7 @@ while [[ $# -gt 0 ]]; do
     --khg-layer) KHG_LAYER="${2:-}"; shift 2 ;;
     --khg-name) KHG_NAME="${2:-}"; shift 2 ;;
     --admin-layer) ADMIN_LAYER="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,37p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,35p' "$0"; exit 0 ;;
     stasiun|fitur|model|peta|dinamis|titikapi) STAGES+=("$1"); shift ;;
     *) echo "Pilihan tidak dikenal: $1 (lihat ./run_pipeline.sh --help)"; exit 2 ;;
   esac
