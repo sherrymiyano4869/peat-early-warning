@@ -113,6 +113,7 @@ def run_regression(df, task, y, ref_name, variants, schemes, horizon, quick):
             extra = {}
             if scheme == "LOSO" and not quick:
                 q10, q90 = (oof(df, cols["lgb"], y, lambda a=a: make_lgbm(a), splits) for a in (0.1, 0.9))
+                q10, q90 = np.fmin(q10, q90), np.fmax(q10, q90)  # cegah kuantil bersilang
                 inside = (yv >= q10) & (yv <= q90)
                 extra = {"cover_q10_q90": float(np.mean(inside[ok])), "width_q10_q90": float(np.nanmean((q90 - q10)[ok]))}
             for name, p in preds.items():

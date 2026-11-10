@@ -7,7 +7,8 @@
 Masuk : data/features/model_table.parquet (hasil 03_assemble)
 Keluar: outputs/predictions_latest.csv, atau outputs/walkforward_predictions.csv dan walkforward_summary.csv
 
-Prediksi: perubahan muka air `delta` (cm) dalam h hari (median dan rentang q10-q90) dan peluang pengeringan (turun >= d cm),
+Prediksi: perubahan muka air `delta` (cm) dalam h hari (median dan rentang q10-q90; kuantil diurutkan agar tidak bersilang; kolom `suspect` = 1
+bila perubahan prediksi jauh melampaui yang pernah teramati di data latih) dan peluang pengeringan (turun >= d cm),
 memakai fitur di tanggal terbit: hujan, anomali satelit, statis (DEM, kanal), muka air terukur dan tren 3/7 hari.
 Tanpa kebocoran: latihan hanya memakai baris yang targetnya (tanggal + h) sudah terjadi pada atau sebelum tanggal terbit.
 Pembanding: persistensi (delta = 0) dan frekuensi kejadian di data latih.
@@ -49,10 +50,12 @@ def predict_issue(d: pd.DataFrame, issue: pd.Timestamp, h: int, cols: list, rain
     X, y, Xn = train[cols].to_numpy(float), train["delta"].to_numpy(float), now[cols].to_numpy(float)
     out = pd.DataFrame({"station_id": now["station_id"].to_numpy(), "issue_date": issue, "horizon": h,
                         "wl_now_cm": now["wl_cm"].to_numpy(), "n_train": len(train)})
-    out["delta_med"] = make_lgbm().fit(X, y).predict(Xn)
-    out["delta_q10"] = make_lgbm(0.1).fit(X, y).predict(Xn)
-    out["delta_q90"] = make_lgbm(0.9).fit(X, y).predict(Xn)
+    # tiga model kuantil terpisah bisa bersilang; urutkan per baris (penataan ulang monoton) agar q10 <= median <= q90
+    q = np.sort(np.column_stack([make_lgbm(a).fit(X, y).predict(Xn) for a in (0.1, 0.5, 0.9)]), axis=1)
+    out["delta_q10"], out["delta_med"], out["delta_q90"] = q[:, 0], q[:, 1], q[:, 2]
     out["wl_pred_cm"] = out["wl_now_cm"] + out["delta_med"]
+    limit = 1.5 * np.percentile(np.abs(y), 99)  # perubahan yang jauh melampaui yang pernah teramati dianggap mencurigakan
+    out["suspect"] = (out["delta_med"].abs() > limit).astype(int)
     for dd in drops:
         yb = (y <= -dd).astype(int)
         out[f"p_turun{dd:g}"] = float(yb[0]) if yb.min() == yb.max() else LGBMClassifier(**LGB).fit(X, yb).predict_proba(Xn)[:, 1]
@@ -125,7 +128,8 @@ def main() -> None:
     for h, g in wf.groupby("horizon"):
         rm, rp = np.sqrt(np.mean((g.delta - g.delta_med) ** 2)), np.sqrt(np.mean(g.delta ** 2))
         row = {"horizon": h, "n": len(g), "tanggal_terbit": g.issue_date.nunique(), "rmse_model": rm, "rmse_persistensi": rp,
-               "skill_vs_persistensi": 1 - rm / rp, "cakupan_q10_q90": float(((g.delta >= g.delta_q10) & (g.delta <= g.delta_q90)).mean())}
+               "skill_vs_persistensi": 1 - rm / rp, "cakupan_q10_q90": float(((g.delta >= g.delta_q10) & (g.delta <= g.delta_q90)).mean()),
+               "n_suspect": int(g["suspect"].sum())}
         for dd in drops:
             yb = (g.delta <= -dd).astype(int)
             row[f"brier_turun{dd:g}_model"] = float(np.mean((g[f"p_turun{dd:g}"] - yb) ** 2))

@@ -1,5 +1,6 @@
 "use strict";
 const DATA_DIR = "data/";
+const TRANSPARENT_TILE = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
 
 function fmt(x, d = 1) {
   return (x === null || x === undefined || Number.isNaN(x)) ? "–" : Number(x).toFixed(d);
@@ -70,6 +71,51 @@ function legendHtml(layer) {
          `<div class="ends"><span>${fmt(lg.min, 1)}</span><span>${layer.unit}</span><span>${fmt(lg.max, 1)}</span></div>`;
 }
 
+// ---- kerawanan tiga tingkat -------------------------------------------------
+function levelForZoom(levels, z) {
+  return (levels || []).find(l => z >= l.minZoom && z <= l.maxZoom) || null;
+}
+
+function levelLabel(levels, z) {
+  const lv = levelForZoom(levels, z);
+  return lv ? lv.label : "–";
+}
+
+function classColor(classes, id) {
+  const c = (classes || []).find(x => x.id === id);
+  return c ? c.color : "#cccccc";
+}
+
+function unitStyle(classes, props) {
+  return { fillColor: classColor(classes, props.kelas), fillOpacity: 0.85, color: "#555555", weight: 0.8 };
+}
+
+function boundaryStyle(kind) {
+  if (kind === "khg") return { color: "#2d2d2d", weight: 1.6, dashArray: "6 4", fill: false };
+  if (kind === "admin") return { color: "#8a8a8a", weight: 0.9, fill: false };
+  return { color: "#3b83bd", weight: 0.7, opacity: 0.85 };   // kanal: garis biru tipis, bukan peta panas
+}
+
+function unitPopupHtml(p, k) {
+  return `<b>${p.nama}</b><br><span class="small">${k.unit_type}</span><br>` +
+         `Kelas: <b>${p.label}</b> (indeks rata-rata ${fmt(p.indeks_rata2, 2)})<br>` +
+         `Bagian sel kelas tinggi atau sangat tinggi: ${fmt(p.bagian_tinggi * 100, 0)}%<br>` +
+         `Cakupan data: ${fmt(p.cakupan * 100, 0)}% &middot; kepercayaan rendah: ${fmt(p.kepercayaan_rendah * 100, 0)}%<br>` +
+         `<div class="small">Ringkasan tingkat unit; perbesar peta untuk melihat sel.</div>`;
+}
+
+function kerawananLegendHtml(k) {
+  if (!k) return "";
+  const cls = k.classes.map(c => `<span class="swatch" style="background:${c.color}"></span>${c.label}`).join("<br>");
+  const conf = `<span class="swatch" style="background:#bd0026"></span>pekat: kepercayaan tinggi<br>` +
+               `<span class="swatch" style="background:#bd0026;opacity:.7"></span>agak transparan: sedang<br>` +
+               `<span class="swatch hatch" style="background-color:#fd8d3c;opacity:.6"></span>transparan dan diarsir: rendah`;
+  const mode = k.mode === "struktural" ? "Hanya kerentanan struktural (belum ada tekanan dinamis)." : "Kerentanan struktural + tekanan dinamis.";
+  return `<b>${k.title}</b> <span class="small">(indeks relatif)</span><br>${cls}<div class="small" style="margin-top:4px">${mode}</div>` +
+         `<div style="margin-top:6px"><b>Kepercayaan</b><br>${conf}</div>` +
+         `<div class="small" style="margin-top:4px">${k.disclaimer}</div>`;
+}
+
 function startupHint(protocol, message) {
   if (protocol === "file:") {
     return "Halaman dibuka lewat berkas (file://), dan peramban memblokir pengambilan data. Jalankan di terminal: " +
@@ -86,38 +132,69 @@ async function getJson(url) {
 
 async function main() {
   const map = L.map("map").setView([-1.3, 104.0], 8);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    { maxZoom: 19, subdomains: "abcd", attribution: "&copy; OpenStreetMap contributors &copy; CARTO" }).addTo(map);
+  L.control.scale({ metric: true, imperial: false }).addTo(map);
   if (location.protocol === "file:") throw new Error("file-protocol");
   const manifest = await getJson(DATA_DIR + "manifest.json");
-  document.getElementById("title").textContent = manifest.title;
-  document.getElementById("meta").innerHTML =
+  const $ = id => document.getElementById(id);
+  $("title").textContent = manifest.title;
+  $("meta").innerHTML =
     `Versi ${manifest.version} &middot; dibuat ${manifest.generated_at}<br>Data sampai ${manifest.data_through || "–"} &middot; tanggal terbit prediksi ${manifest.issue_date || "–"}`;
   const badge = validationBadge(manifest.validation);
-  const badgeEl = document.getElementById("badge");
-  badgeEl.className = "badge " + badge.cls;
-  badgeEl.textContent = badge.text;
-  document.getElementById("attrib").innerHTML = "<p>" + manifest.attribution.join("</p><p>") + "</p><p><b>" + manifest.disclaimer + "</b></p>";
-
+  $("badge").className = "badge " + badge.cls;
+  $("badge").textContent = badge.text;
+  $("attrib").innerHTML = "<p>" + manifest.attribution.join("</p><p>") + "</p><p><b>" + manifest.disclaimer + "</b></p>";
   map.setView(manifest.center, 11);
+  map.createPane("kerawananPane"); map.getPane("kerawananPane").style.zIndex = 250;
+  map.createPane("unitPane"); map.getPane("unitPane").style.zIndex = 300;
 
-  const overlays = {}, byTitle = {};
-  let opacity = 0.7;
-  manifest.layers.forEach(l => {
-    const ov = L.imageOverlay(DATA_DIR + l.file, l.bounds, { opacity: opacity });
-    overlays[l.title] = ov;
-    byTitle[l.title] = { layer: l, ov: ov };
-    if (l.default) ov.addTo(map);
-  });
-  const legendEl = document.getElementById("legend");
-  const firstDefault = manifest.layers.find(l => l.default);
-  legendEl.innerHTML = legendHtml(firstDefault);
+  let opacity = 0.9;
+  const k = manifest.kerawanan;
+  const tileLayers = [];
+  let unitLayer = null, unitLevel = null;
+  if (k) {
+    k.levels.forEach(lv => {
+      if (lv.type === "tiles") {
+        tileLayers.push(L.tileLayer(DATA_DIR + lv.url, { pane: "kerawananPane", minZoom: lv.minZoom, maxZoom: lv.maxZoom,
+          minNativeZoom: lv.minNativeZoom, maxNativeZoom: lv.maxNativeZoom, opacity: opacity, bounds: k.bounds, errorTileUrl: TRANSPARENT_TILE }));
+      } else if (lv.type === "geojson") { unitLevel = lv; }
+    });
+    if (unitLevel) {
+      const units = await getJson(DATA_DIR + unitLevel.file);
+      unitLayer = L.geoJSON(units, { pane: "unitPane", style: f => Object.assign(unitStyle(k.classes, f.properties), { fillOpacity: opacity }),
+        onEachFeature: (f, layer) => layer.bindPopup(unitPopupHtml(f.properties, k)) });
+    }
+  }
+  const lines = {};
+  const bfiles = (k && k.boundaries) || {};
+  for (const kind of Object.keys(bfiles)) {
+    lines[kind] = L.geoJSON(await getJson(DATA_DIR + bfiles[kind]), { style: () => boundaryStyle(kind) });
+  }
 
+  const on = id => $(id).checked;
+  const toggle = (layer, wanted) => {
+    if (!layer) return;
+    if (wanted && !map.hasLayer(layer)) map.addLayer(layer);
+    if (!wanted && map.hasLayer(layer)) map.removeLayer(layer);
+  };
+  const syncKerawanan = () => {
+    const z = map.getZoom(), want = on("chk-kerawanan");
+    tileLayers.forEach(l => toggle(l, want));
+    toggle(unitLayer, want && unitLevel && z <= unitLevel.maxZoom);
+    $("level").textContent = want && k ? levelLabel(k.levels, z) : "–";
+  };
+  const syncLines = () => {
+    toggle(lines.khg, on("chk-khg")); toggle(lines.admin, on("chk-admin")); toggle(lines.canals, on("chk-canals"));
+  };
+
+  // stasiun
   const gj = await getJson(DATA_DIR + manifest.stations.file);
   let mode = "wl";
   const colorFor = f => mode === "wl" ? wlColor(f.properties.wl_last_cm)
     : probColor(f.properties.pred && f.properties.pred.h14 ? f.properties.pred.h14.p_turun10 : null);
   const markers = L.geoJSON(gj, {
-    pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 7, weight: 1, color: "#222", fillOpacity: 0.9, fillColor: colorFor(f) }),
+    pointToLayer: (f, ll) => L.circleMarker(ll, { pane: "markerPane", radius: 7, weight: 1, color: "#222", fillOpacity: 0.9, fillColor: colorFor(f) }),
     onEachFeature: (f, layer) => {
       layer.bindPopup("Memuat...");
       layer.on("click", async () => {
@@ -135,23 +212,46 @@ async function main() {
           `<div class="small">&Delta; = perubahan muka air; basis = frekuensi kejadian di data latih.</div>`);
       });
     }
-  }).addTo(map);
+  });
+  const syncStations = () => toggle(markers, on("chk-stations"));
 
-  L.control.layers(null, Object.assign({}, overlays, { "Stasiun": markers }), { collapsed: false }).addTo(map);
-  map.on("overlayadd", e => { if (byTitle[e.name]) legendEl.innerHTML = legendHtml(byTitle[e.name].layer); });
+  // lapisan pendukung (relief, jarak, AOA)
+  const overlays = manifest.layers.map(l => L.imageOverlay(DATA_DIR + l.file, l.bounds, { opacity: 0.7 }));
+  const supportEl = $("support");
+  supportEl.innerHTML = manifest.layers.length
+    ? manifest.layers.map((l, i) => `<label><input type="checkbox" data-i="${i}"> ${l.title}</label>`).join("<br>")
+    : "belum ada";
+  let supportLegend = "";
+  const renderLegend = () => { $("legend").innerHTML = kerawananLegendHtml(k) + (supportLegend ? "<hr>" + supportLegend : ""); };
+  supportEl.addEventListener("change", e => {
+    const i = Number(e.target.dataset.i);
+    toggle(overlays[i], e.target.checked);
+    supportLegend = e.target.checked ? legendHtml(manifest.layers[i]) : "";
+    renderLegend();
+  });
 
-  document.getElementById("opacity").addEventListener("input", e => {
+  ["chk-kerawanan"].forEach(id => $(id).addEventListener("change", syncKerawanan));
+  ["chk-khg", "chk-admin", "chk-canals"].forEach(id => $(id).addEventListener("change", syncLines));
+  $("chk-stations").addEventListener("change", syncStations);
+  map.on("zoomend", syncKerawanan);
+  $("opacity").addEventListener("input", e => {
     opacity = Number(e.target.value);
-    Object.values(overlays).forEach(o => o.setOpacity(opacity));
+    tileLayers.forEach(l => l.setOpacity(opacity));
+    if (unitLayer) unitLayer.setStyle({ fillOpacity: opacity });
+    overlays.forEach(o => o.setOpacity(Math.min(opacity, 0.8)));
   });
   document.querySelectorAll("input[name=mode]").forEach(r => r.addEventListener("change", e => {
     mode = e.target.value;
     markers.eachLayer(l => l.setStyle({ fillColor: colorFor(l.feature) }));
   }));
+
+  syncKerawanan(); syncLines(); syncStations(); renderLegend();
+  if (k && k.bounds) map.fitBounds(k.bounds);
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { fmt, probColor, wlColor, sparklinePath, validationBadge, predictionTable, legendHtml, startupHint };
+  module.exports = { fmt, probColor, wlColor, sparklinePath, validationBadge, predictionTable, legendHtml, startupHint,
+                     levelForZoom, levelLabel, classColor, unitStyle, boundaryStyle, unitPopupHtml, kerawananLegendHtml };
 } else {
   main().catch(err => {
     document.getElementById("title").textContent = "Data belum dapat dimuat";

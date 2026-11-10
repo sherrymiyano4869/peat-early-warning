@@ -9,7 +9,7 @@ Masuk (yang ada saja):
   outputs/predictions_latest.csv dan walkforward_summary.csv (06)
 Keluar: webmap/data/manifest.json, stations.geojson, series/<id>.json, layers/<id>.png
 
-Hamparan dibuat dari raster (UTM -> EPSG:4326) dengan palet warna dan batas; manifest memuat legenda, status validasi, atribusi, dan
+Lapisan kerawanan tiga tingkat dibuat oleh 10_build_tiles.py (kerawanan.json ikut ditanam di manifest). Hamparan dibuat dari raster (UTM -> EPSG:4326) dengan palet warna dan batas; manifest memuat legenda, status validasi, atribusi, dan
 penafian. Seluruh keluaran statis, jadi bisa dihosting di GitHub Pages atau server berkas biasa.
 """
 import argparse
@@ -36,23 +36,16 @@ from src.regions import add_region  # noqa: E402
 
 # (id, berkas raster, nama band, judul, satuan, palet, vmin, vmax (None = persentil 98), kategorikal, tampil awal)
 LAYERS = [
-    ("canal_kde_250m", "static.tif", "canal_kde_250m", "Kerapatan kanal, peta panas (sigma 250 m)", "km/km2", "magma_r", 0, None, False, True),
-    ("canal_kde_500m", "static.tif", "canal_kde_500m", "Kerapatan kanal, peta panas (sigma 500 m)", "km/km2", "magma_r", 0, None, False, False),
     ("fabdem_relief_1km", "static.tif", "fabdem_relief_1km", "Relief lokal FABDEM (radius 1 km)", "m", "YlGnBu", 0, None, False, False),
-    ("dist_station_km", "confidence_static.tif", "dist_station_km", "Jarak ke stasiun terdekat", "km", "YlOrRd", 0, 20, False, False),
+    ("dist_station_km", "confidence_static.tif", "dist_station_km", "Jarak ke stasiun terdekat", "km", "Greys", 0, 20, False, False),
     ("outside_aoa", "confidence_static.tif", "inside_aoa", "Di luar area penerapan model (AOA)", "", None, 0, 1, True, False),
-    ("risk", "risk.tif", "risk", "Risiko pengeringan relatif", "0-1", "YlOrRd", 0, 1, False, False),
-    ("confidence_class", "confidence_class.tif", "confidence_class", "Kelas kepercayaan", "", None, 0, 2, True, False),
 ]
-CATEGORICAL = {
-    "outside_aoa": {0: (200, 40, 40, 170)},                                                # nilai 0 = di luar AOA ditandai merah
-    "confidence_class": {0: (215, 25, 28, 190), 1: (253, 174, 97, 190), 2: (26, 150, 65, 190)},
-}
-LEGEND_ITEMS = {"outside_aoa": [("di luar area penerapan", "#c82828")],
-                "confidence_class": [("rendah", "#d7191c"), ("sedang", "#fdae61"), ("tinggi", "#1a9641")]}
+CATEGORICAL = {"outside_aoa": {0: (90, 90, 90, 150)}}
+LEGEND_ITEMS = {"outside_aoa": [("di luar area penerapan", "#5a5a5a")]}
 ATTRIBUTION = [
     "Muka air dan stasiun: SiTMAT (KLH/BRGM), diambil dengan jeda sopan; data dapat berubah atau terkoreksi.",
-    "(c) OpenStreetMap contributors (ODbL); kanal dikompilasi BRGM BlueBook 2026.",
+    "(c) OpenStreetMap contributors (ODbL); kanal dan batas gambut/KHG dari BRGM BlueBook 2026. Peta dasar: (c) CARTO.",
+    "Tutupan lahan: ESA WorldCover 10 m 2021 (CC BY 4.0).",
     "FABDEM is produced using Copernicus WorldDEM-30 (c) DLR e.V. (CC BY-NC-SA 4.0), Hawker dkk. 2022.",
     "Hujan: JAXA GSMaP (Global Rainfall Map in Near-Real-Time) dan CHIRPS; citra: Copernicus Sentinel-1/2.",
 ]
@@ -175,13 +168,15 @@ def main() -> None:
     lons = [f["geometry"]["coordinates"][0] for f in features]
     lats = [f["geometry"]["coordinates"][1] for f in features]
     center = [float(np.mean(lats)), float(np.mean(lons))] if features else [-1.3, 104.0]
+    kfile = out / "kerawanan.json"
+    kerawanan = json.loads(kfile.read_text(encoding="utf-8")) if kfile.exists() else None
     manifest = {"title": "Peringatan dini kekeringan gambut (prototipe)", "version": read_version(),
                 "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "data_through": None if data_through is None else str(pd.Timestamp(data_through).date()),
                 "issue_date": None if not len(pred) else str(pred["issue_date"].max().date()),
                 "center": center, "validation": validation_block(outputs), "layers": layers,
                 "stations": {"file": "stations.geojson", "n": len(features), "series_dir": "series/"},
-                "attribution": ATTRIBUTION, "disclaimer": DISCLAIMER}
+                "kerawanan": kerawanan, "attribution": ATTRIBUTION, "disclaimer": DISCLAIMER}
     (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
     print("manifest:", out / "manifest.json")
     print(f"validasi: {manifest['validation'].get('cap_label', 'belum ada')} | data sampai {manifest['data_through']} | terbit {manifest['issue_date']}")

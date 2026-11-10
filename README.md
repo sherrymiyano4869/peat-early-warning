@@ -22,6 +22,8 @@
 | scripts/03_assemble.py | gabung target harian dan fitur jadi model_table | siap (diuji data sintetik) |
 | scripts/04_baseline.py | baseline, LightGBM, kuantil, validasi LOSO/LOCO/LOIO/TEMPORAL | siap (diuji data sintetik) |
 | scripts/archive_run.py | arsip ringan per run (prediksi terbit, metrik, run_meta) di outputs/arsip/ | siap (diuji data tiruan) |
+| scripts/08_susceptibility.py | indeks kerawanan relatif per sel (struktural; dinamis bila ada) | siap (diuji data tiruan) |
+| scripts/10_build_tiles.py | tile kerawanan tiga tingkat, unit KHG, batas, kanal untuk webmap | siap (diuji data tiruan) |
 | scripts/09_export_web.py | ekspor hamparan, GeoJSON, deret waktu, manifest ke webmap/data (WebGIS Leaflet) | siap (diuji data tiruan) |
 | scripts/07_grid_static.py | grid pilot, fitur statis per sel, dan kepercayaan statis (jarak stasiun, AOA) | siap (diuji data tiruan) |
 | scripts/06_predict.py | prediksi ke depan per stasiun dan uji walk-forward mingguan | siap (diuji data sintetik); prototipe, belum terkalibrasi |

@@ -15,7 +15,12 @@
 #             01 tabel bersih (menggabungkan semua run), pick_pilot   (internet; butuh --contact)
 #   fitur   : 02 Earth Engine, 02b ENSO, 02c FABDEM (internet; butuh --contact), 02d kerapatan kanal
 #   model   : 03 tabel model, 04 baseline --quick, 06 prediksi, 06 --walk-forward
-#   peta    : 07 grid statis (butuh FABDEM), 09 ekspor webmap
+#   peta    : 07 grid statis (butuh FABDEM), 08 indeks kerawanan, 10 tile tiga tingkat, 09 ekspor webmap
+#             Opsional (dipakai otomatis bila berkasnya ada; layer pertama dipakai bila --*-layer tidak diisi):
+#               data/raw/batas/gambut.gpkg -> 08 --peat-gpkg   (atur dengan --peat-layer NAMA)
+#               data/raw/batas/khg.gpkg    -> 10 --units-gpkg  (atur dengan --khg-layer NAMA --khg-name KOLOM)
+#               data/raw/batas/admin.gpkg  -> 10 --admin-gpkg  (atur dengan --admin-layer NAMA)
+#             Tanpa khg.gpkg, tingkat 1 memakai blok 5 km sementara.
 #
 # Log tiap jalan disimpan di outputs/logs/run_<tanggal>.log. Skrip berhenti pada galat pertama di tahap wajib;
 # tahap opsional yang syaratnya belum ada dilewati dengan pesan.
@@ -32,6 +37,10 @@ PORT=8000
 ARSIP=0
 ARSIP_WEB=0
 LABEL=""
+PEAT_LAYER=""
+KHG_LAYER=""
+KHG_NAME=""
+ADMIN_LAYER=""
 STAGES=()
 PILOT_BBOX=(103.68 -1.61 104.17 -1.12)   # klaster 5 (pesisir Jambi)
 
@@ -44,7 +53,11 @@ while [[ $# -gt 0 ]]; do
     --arsip) ARSIP=1; shift ;;
     --arsip-web) ARSIP=1; ARSIP_WEB=1; shift ;;
     --label) LABEL="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
+    --peat-layer) PEAT_LAYER="${2:-}"; shift 2 ;;
+    --khg-layer) KHG_LAYER="${2:-}"; shift 2 ;;
+    --khg-name) KHG_NAME="${2:-}"; shift 2 ;;
+    --admin-layer) ADMIN_LAYER="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
     stasiun|fitur|model|peta) STAGES+=("$1"); shift ;;
     *) echo "Pilihan tidak dikenal: $1 (lihat ./run_pipeline.sh --help)"; exit 2 ;;
   esac
@@ -64,6 +77,7 @@ if [[ -z "$PY" ]]; then
 fi
 # GDAL kadang tidak menemukan basis data PROJ; arahkan ke milik pyproj
 export PROJ_DATA="${PROJ_DATA:-$("$PY" -c 'import pyproj; print(pyproj.datadir.get_data_dir())')}"
+first_layer() { "$PY" -c 'import sys, pyogrio; print(pyogrio.list_layers(sys.argv[1])[0][0])' "$1" 2>/dev/null; }
 
 # ---------- log ----------
 mkdir -p outputs/logs
@@ -150,6 +164,34 @@ if want peta; then
   else
     skip "07 grid statis" "butuh data/raw/dem/fabdem_pilot.tif (jalankan dengan --contact untuk 02c)"
   fi
+
+  if [[ -f data/features/grid/static.tif ]]; then
+    S08=()
+    if [[ -f data/raw/batas/gambut.gpkg ]]; then
+      S08+=(--peat-gpkg data/raw/batas/gambut.gpkg --peat-layer "${PEAT_LAYER:-$(first_layer data/raw/batas/gambut.gpkg)}")
+    else
+      echo "   (08: data/raw/batas/gambut.gpkg belum ada; sel di luar gambut belum dikeluarkan)"
+    fi
+    run "08 indeks kerawanan" "$PY" scripts/08_susceptibility.py "${S08[@]}"
+
+    S10=()
+    if [[ -f data/raw/batas/khg.gpkg ]]; then
+      S10+=(--units-gpkg data/raw/batas/khg.gpkg --units-layer "${KHG_LAYER:-$(first_layer data/raw/batas/khg.gpkg)}")
+      [[ -n "$KHG_NAME" ]] && S10+=(--units-name "$KHG_NAME")
+    else
+      echo "   (10: data/raw/batas/khg.gpkg belum ada; tingkat 1 memakai blok 5 km sementara)"
+    fi
+    if [[ -f data/raw/batas/admin.gpkg ]]; then
+      S10+=(--admin-gpkg data/raw/batas/admin.gpkg --admin-layer "${ADMIN_LAYER:-$(first_layer data/raw/batas/admin.gpkg)}")
+    fi
+    if [[ -f data/raw/kanal/kanal_osm_clip.gpkg ]]; then
+      S10+=(--canal-gpkg data/raw/kanal/kanal_osm_clip.gpkg --canal-layer kanal_pilot_klaster5)
+    fi
+    run "10 tile tiga tingkat" "$PY" scripts/10_build_tiles.py "${S10[@]}"
+  else
+    skip "08 + 10" "butuh data/features/grid/static.tif dari 07"
+  fi
+
   run "09 ekspor webmap" "$PY" scripts/09_export_web.py
 fi
 

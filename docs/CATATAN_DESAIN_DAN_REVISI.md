@@ -1,0 +1,75 @@
+# Catatan desain dan daftar revisi (AGC 2027, peringatan dini kekeringan gambut)
+
+Dokumen hidup: tambahkan tanggal tiap kali ada keputusan. Ditulis 10 Nov 2026 (v0.16).
+
+## 1. Keputusan yang sudah diambil
+**Struktur sistem.** Dua sistem yang saling memvalidasi, bukan terpisah:
+- Pemantauan dan prediksi: data statis (topografi, kanal, LULC, batas gambut dan KHG) dan dinamis (hujan, citra, ENSO dan IOD, stasiun SiTMAT)
+  disatukan di kubus data grid; cabang "Saat ini" dan cabang "Prediksi".
+- Respons dan penilaian: ToPeCAl-2 (Sentinel-2), VIIRS, dan laporan warga/BPBD dicocokkan ruang-waktu di buku besar kejadian.
+- Umpan balik dari respons ke prediksi: catatan tindakan (jadi fitur), pantauan sisa (penanda sel), label terverifikasi (hanya untuk menilai).
+
+**Tampilan web.** Dua tab: "Saat ini" (semua parameter penyusun: hujan, ENSO, topografi, citra, kanal garis, LULC, stasiun) dan "Prediksi" (hanya peta
+kerawanan). Tab Respons terpisah, hotspot belum diintegrasikan.
+
+**Peta kerawanan = tiga lapis:** (1) indeks relatif seamless, (2) kalibrasi stasiun hanya di dalam AOA, (3) kepercayaan selalu tampil
+(transparansi dan arsiran). Keterangan wajib: "indeks relatif, bukan peluang kebakaran".
+
+**Penyajian tiga tingkat (generalisasi per skala):** zoom jauh = satu poligon per KHG; zoom menengah = sel 500 m; zoom dekat = sel 100 m (hanya pilot).
+Pilot Jambi dulu; seluruh wilayah (gambut Sumatra dan Kalimantan) pada 250-500 m menyusul.
+
+**Sumber data.** LULC: ESA WorldCover 10 m v200 (2021, CC BY 4.0; tidak ada kelas sawit, potret 2021). Batas gambut dan KHG: BRGM BlueBook (cek izin pakai,
+cantumkan atribusi). DTM: FABDEM (CC BY-NC-SA 4.0). Hujan: GSMaP (CHIRPS pembanding; CHIRPS di GEE tertinggal sekitar 5 minggu).
+
+**Kartografi.** Palet YlOrRd 5 kelas khusus kerawanan; kanal sebagai garis biru tipis (BUKAN peta panas, karena terbaca sebagai hotspot); batas KHG garis gelap
+putus-putus; batas kabupaten abu tipis; peta dasar abu muda; skala dan arah utara; legenda dengan satuan dan tanggal data.
+
+**Alur ToPeCAl-2 (sudah dicocokkan dengan paper Sofan dkk. 2020):** masker (awan, air, benda terang tetap) -> SICI = SWIR-2/SWIR-1 > 1 -> ambang SWIR-2 berbeda
+untuk atmosfer jernih dan berasap (penentu: pita biru) -> tes kontekstual (jendela 61x61 piksel) hanya untuk kandidat membara dan campuran; cloud mask adalah varian
+alternatif. Akurasi di paper: menyala jelas di atas 95%, membara hanya 35% (kontekstual) dan 56% (cloud mask) benar -> "kandidat membara" tidak boleh disajikan pasti.
+
+**Pencocokan.** Radius sekitar 1 km dan jendela 24-48 jam adalah ANGKA AWAL (tanpa sumber), disetel dengan data sekunder BPBD.
+
+## 2. Daftar revisi diagram (dari tinjauan 10 Nov 2026), urut prioritas
+1. Tambah langkah "nilai prediksi vs kejadian" yang menghasilkan skor validasi dan masuk ke "Hitung kepercayaan" (batas skill). Sekarang panah umpan balik hanya ke "Tandai pantauan sisa".
+2. "Verifikasi" perlu dua keluaran: ya (lanjut tindakan), tidak (alarm palsu -> label negatif, tutup). Bedakan "verifikasi" (kejadian) dan "validasi prediksi" (model).
+3. ToPeCAl-2: masking juga menyebut awan; tambah tes kontekstual atau cloud mask untuk kandidat membara.
+4. Tambah pilihan "Keyakinan cukup?" sebelum tiga kemungkinan (jalur tidak = tunggu data baru).
+5. Penamaan: satu istilah (keyakinan = skor kejadian, kepercayaan = keandalan peta); "terkni" -> "terkini"; "threshold bobot confidence" -> "beri bobot keyakinan";
+   "groundwater model SiTMAT" -> "stasiun muka air SiTMAT"; "rainfall CHIRPS" -> "GSMaP (CHIRPS pembanding)"; "ENSO NOAA" -> "ENSO dan IOD (DMI)";
+   "DTM copernicus" -> "DTM (FABDEM)"; "Peringatan" -> "notifikasi tindakan (prototipe)".
+6. Satu keputusan desain: sensor virtual -> prakiraan? Saat ini dibiarkan terpisah (sensor virtual per sel masih lemah).
+
+## 3. Jebakan yang harus dijaga (bukan hanya teknis)
+- Paradoks keberhasilan peringatan: peringatan yang berhasil mencegah kebakaran membuat model tampak salah. Catat tindakan dan nilai sel bertindakan terpisah.
+- Bias verifikasi: sel berisiko tinggi lebih sering diverifikasi. Sisihkan verifikasi acak kecil di sel berisiko rendah.
+- Kejadian yang masuk ke kerawanan hanya yang diketahui SEBELUM tanggal terbit; penilaian memakai kejadian sesudahnya (hindari kebocoran).
+- LOSO terlalu optimis untuk prakiraan; percayai LOCO, LOIO, dan TEMPORAL. Skill model belum terbukti melampaui persistensi sampai walk-forward menunjukkannya.
+- Indeks kerawanan: arah dan bobot komponen adalah asumsi; uji kepekaan dan tulis di metode. Kelas memakai ambang acuan tetap (reference_quantiles.json), bukan persentil
+  minggu itu.
+
+## 4. Status pengerjaan (v0.16)
+Sudah ada: prototipe tiga tingkat di webmap (08 indeks struktural, 10 tile dan unit, tampilan zoom, kepercayaan sebagai transparansi dan arsiran, kanal garis,
+skala, arah utara); diuji pada data tiruan dan simulasi peramban (node), belum di peramban sungguhan dan belum dengan data Jambi asli.
+Belum ada: tekanan dinamis per sel (hujan, NDMI, HTH, ENSO), ekstraksi WorldCover, batas gambut/KHG/administrasi asli dari BlueBook, kalibrasi stasiun per sel,
+pemilih kotak pilot, tab Saat ini dan Prediksi terpadu penuh, mode inkremental 02, orkestrator, penilaian prospektif (10_score_archive), ToPeCAl-2, VIIRS, buku besar kejadian.
+
+## 5. Pertanyaan terbuka
+- Sumber batas administrasi: BlueBook atau terbuka (geoBoundaries; periksa lisensi).
+- Respons di web: hanya menampilkan (laporan, validasi, pelabelan lewat KoboToolbox) atau backend kecil? Usulan: hanya menampilkan untuk lomba.
+- Definisi kerawanan final: kerawanan kekeringan (disarankan sebagai target) dengan kebakaran sebagai bukti validasi, atau kerawanan kebakaran.
+- Bobot komponen indeks dan uji kepekaannya; apakah LULC diberi bobot (bawaan 0).
+
+## 6. Urutan kerja
+Aktif: nomor 1 (sistem prediksi dan WebGIS terpadu): definisi -> lapisan data -> model/indeks per sel -> dashboard terpadu -> uji.
+Nanti: nomor 2 (model respons dan penilaian yang dapat memengaruhi model saat ada laporan). **Ingatkan setelah nomor 1 selesai.**
+
+## 7. Menjalankan prototipe tiga tingkat
+    python scripts/07_grid_static.py
+    python scripts/08_susceptibility.py --peat-gpkg data/raw/batas/gambut.gpkg --peat-layer NAMA
+    python scripts/10_build_tiles.py --units-gpkg data/raw/batas/khg.gpkg --units-layer NAMA --units-name KOLOM_NAMA \
+        --canal-gpkg data/raw/kanal/kanal_osm_clip.gpkg --canal-layer kanal_pilot_klaster5
+    python scripts/09_export_web.py
+    python -m http.server -d webmap 8000        # buka http://localhost:8000
+Tanpa --units-gpkg, tingkat 1 memakai blok 5 km (sementara). Rentang zoom bawaan: unit 0-10, kasar 11-12 (tile z9-12), halus 13-18 (tile z13-15).
+Ukuran pada data tiruan pilot sekitar 55x60 km: sekitar 3.100 tile halus dan 75 tile kasar, 7,7 MB, 46 detik.

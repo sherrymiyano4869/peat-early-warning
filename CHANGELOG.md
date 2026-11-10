@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.16
+- scripts/08_susceptibility.py: indeks kerawanan relatif per sel (struktural; dinamis bila dynamic.tif ada), peringkat terhadap distribusi acuan tetap
+  (reference_quantiles.json) agar kelas stabil antar-run, penutup air/terbangun/bakau (WorldCover) dan gambut (BlueBook)
+- scripts/10_build_tiles.py: tampilan tiga tingkat untuk hosting statis (unit KHG atau blok 5 km; tile 500 m; tile 100 m), kepercayaan sebagai
+  transparansi dan arsiran, batas KHG/administrasi dan kanal sebagai garis; menulis webmap/data/kerawanan.json
+- 09_export_web.py: peta panas kanal dihapus dari lapisan pendukung (terbaca sebagai hotspot), palet netral untuk jarak, kerawanan.json ditanam di manifest
+- webmap: peta dasar abu muda, skala dan arah utara, penampil tiga tingkat per zoom, legenda kerawanan dan kepercayaan, kanal dan batas sebagai garis
+- docs/CATATAN_DESAIN_DAN_REVISI.md: keputusan, daftar revisi diagram, jebakan, status, pertanyaan terbuka, dan cara menjalankan
+
+## v0.15.1
+- 06: median kini model kuantil 0,5 dan ketiga kuantil diurutkan per baris (q10 <= median <= q90), memperbaiki median yang melampaui q90
+  (sebelumnya median dari regresi rata-rata dan kuantil terpisah); kolom `suspect` menandai prediksi yang jauh melampaui perubahan
+  teramati di data latih; ringkasan walk-forward memuat `n_suspect`
+- 04: kuantil dicegah bersilang sebelum menghitung cakupan q10-q90
+
 ## v0.15
 - 01b: tiap run menulis ke data/raw/sitmat/details/<YYYYMMDD>/<id>_d90.json.gz dan tidak menimpa run lama; bawaan hanya stasiun aktif
   di potret (--all untuk semua); run ulang di hari yang sama dilanjutkan tanpa permintaan; berkas dikompres (--no-gzip untuk menolak)

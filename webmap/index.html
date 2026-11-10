@@ -7,35 +7,50 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; font-size: 13px; }
-  #map { height: 100%; }
-  #panel { position: absolute; top: 10px; right: 10px; z-index: 1000; width: 300px; max-height: 92%; overflow: auto;
-           background: rgba(255,255,255,0.95); padding: 10px 12px; border-radius: 6px; box-shadow: 0 1px 6px rgba(0,0,0,.3); }
+  #map { height: 100%; background: #e9eef2; }
+  #panel { position: absolute; top: 10px; right: 10px; z-index: 1000; width: 310px; max-height: 94%; overflow: auto;
+           background: rgba(255,255,255,0.96); padding: 10px 12px; border-radius: 6px; box-shadow: 0 1px 6px rgba(0,0,0,.3); }
   #panel h1 { font-size: 15px; margin: 0 0 6px; }
   .meta { color: #444; margin: 2px 0; }
+  .sect { margin-top: 8px; }
   .badge { padding: 6px 8px; border-radius: 4px; margin: 8px 0; font-size: 12px; }
   .badge.bad { background: #fde0dd; border: 1px solid #c51b8a55; }
   .badge.warn { background: #fff7bc; border: 1px solid #d9a40055; }
   .badge.ok { background: #e5f5e0; border: 1px solid #31a35455; }
-  .legend { margin: 6px 0; }
+  .legend { margin: 8px 0; font-size: 12px; }
   .legend .bar { height: 10px; border-radius: 2px; }
   .legend .ends { display: flex; justify-content: space-between; font-size: 11px; color: #444; }
-  .swatch { display: inline-block; width: 12px; height: 12px; margin-right: 4px; vertical-align: middle; border: 1px solid #0003; }
+  .swatch { display: inline-block; width: 14px; height: 12px; margin-right: 5px; vertical-align: middle; border: 1px solid #0003; }
+  .swatch.hatch { background-image: repeating-linear-gradient(45deg, #3238 0 2px, transparent 2px 6px); }
   details { margin-top: 8px; } summary { cursor: pointer; font-weight: 600; }
   .small { font-size: 11px; color: #555; }
+  .level { display: inline-block; padding: 1px 6px; border-radius: 3px; background: #eef; border: 1px solid #99c; }
+  #north { position: absolute; left: 10px; bottom: 36px; z-index: 900; background: rgba(255,255,255,.85); border-radius: 4px;
+           padding: 2px 6px; font-weight: 700; text-align: center; line-height: 1.1; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
   table.pred { border-collapse: collapse; margin-top: 4px; } table.pred td, table.pred th { padding: 2px 6px; border-bottom: 1px solid #ddd; text-align: right; }
   table.pred th:first-child, table.pred td:first-child { text-align: left; }
 </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="north">&#9650;<br>U</div>
 <div id="panel">
   <h1 id="title">Memuat...</h1>
   <div class="meta" id="meta"></div>
   <div id="badge" class="badge warn">Memuat status validasi...</div>
-  <div><b>Warna stasiun</b><br>
+  <div class="sect"><b>Tingkat tampilan:</b> <span id="level" class="level">–</span></div>
+  <div class="sect">
+    <label><input type="checkbox" id="chk-kerawanan" checked> Kerawanan relatif (3 tingkat)</label><br>
+    <label><input type="checkbox" id="chk-khg" checked> Batas KHG</label><br>
+    <label><input type="checkbox" id="chk-admin" checked> Batas kabupaten/provinsi</label><br>
+    <label><input type="checkbox" id="chk-canals"> Kanal (garis)</label><br>
+    <label><input type="checkbox" id="chk-stations" checked> Stasiun SiTMAT</label>
+  </div>
+  <div class="sect"><b>Lapisan pendukung</b><div id="support" class="small"></div></div>
+  <div class="sect"><b>Warna stasiun</b><br>
     <label><input type="radio" name="mode" value="wl" checked> muka air terakhir (cm)</label><br>
     <label><input type="radio" name="mode" value="p14"> peluang turun &ge; 10 cm dalam 14 hari</label></div>
-  <div style="margin-top:8px"><b>Transparansi hamparan</b><br><input id="opacity" type="range" min="0.1" max="1" step="0.05" value="0.7" style="width:100%"></div>
+  <div class="sect"><b>Transparansi</b><br><input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.9" style="width:100%"></div>
   <div id="legend" class="legend"></div>
   <details><summary>Atribusi dan penafian</summary><div id="attrib" class="small"></div></details>
 </div>
