@@ -1,0 +1,36 @@
+html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; font-size: 13px; }
+  #map { height: 100%; background: #e9eef2; }
+  #panel { position: absolute; top: 10px; right: 10px; z-index: 1000; width: 310px; max-height: 94%; overflow: auto;
+           background: rgba(255,255,255,0.96); padding: 10px 12px; border-radius: 6px; box-shadow: 0 1px 6px rgba(0,0,0,.3); }
+  #panel h1 { font-size: 15px; margin: 0 0 6px; }
+  .meta { color: #444; margin: 2px 0; }
+  .sect { margin-top: 8px; }
+  .badge { padding: 6px 8px; border-radius: 4px; margin: 8px 0; font-size: 12px; }
+  .badge.bad { background: #fde0dd; border: 1px solid #c51b8a55; }
+  .badge.warn { background: #fff7bc; border: 1px solid #d9a40055; }
+  .badge.ok { background: #e5f5e0; border: 1px solid #31a35455; }
+  .legend { margin: 8px 0; font-size: 12px; }
+  .legend .bar { height: 10px; border-radius: 2px; }
+  .legend .ends { display: flex; justify-content: space-between; font-size: 11px; color: #444; }
+  .swatch { display: inline-block; width: 14px; height: 12px; margin-right: 5px; vertical-align: middle; border: 1px solid #0003; }
+  #legendbox { position: absolute; left: 10px; bottom: 64px; z-index: 900; width: 250px; background: rgba(255,255,255,.93); border-radius: 6px;
+               padding: 8px 10px; box-shadow: 0 1px 6px rgba(0,0,0,.3); font-size: 12px; max-height: 60%; overflow: auto; }
+  #legendbox h2 { font-size: 12px; margin: 6px 0 3px; } #legendbox h2:first-child { margin-top: 0; }
+  .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: middle; border: 1px solid #222; }
+  .dot.stale { background: transparent; border-style: dashed; border-color: #777; }
+  .basemap-muted { filter: grayscale(0.85) brightness(1.06) contrast(0.9); }
+  .station-marker { filter: drop-shadow(0 0 2px rgba(0,0,0,.85)); }
+  .swatch.hatch { background-image: repeating-linear-gradient(45deg, #3238 0 2px, transparent 2px 6px); }
+  details { margin-top: 8px; } summary { cursor: pointer; font-weight: 600; }
+  .small { font-size: 11px; color: #555; }
+  .level { display: inline-block; padding: 1px 6px; border-radius: 3px; background: #eef; border: 1px solid #99c; }
+  #north { position: absolute; left: 10px; bottom: 36px; z-index: 900; background: rgba(255,255,255,.85); border-radius: 4px;
+           padding: 2px 6px; font-weight: 700; text-align: center; line-height: 1.1; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  table.pred { border-collapse: collapse; margin-top: 4px; } table.pred td, table.pred th { padding: 2px 6px; border-bottom: 1px solid #ddd; text-align: right; }
+  table.pred th:first-child, table.pred td:first-child { text-align: left; }
+  .nav { display: flex; gap: 6px; margin: 0 0 6px; } .nav a { padding: 2px 8px; border-radius: 12px; border: 1px solid #99c; color: #224; text-decoration: none; font-size: 12px; }
+  .nav a.active { background: #224; color: #fff; border-color: #224; }
+  #summary, #drivers { margin-top: 8px; padding: 6px 8px; background: #f6f6f4; border-radius: 4px; font-size: 12px; }
+  .cards { display: flex; gap: 16px; padding: 24px; flex-wrap: wrap; } .card { flex: 1 1 280px; border: 1px solid #ccd; border-radius: 8px; padding: 16px; text-decoration: none; color: inherit; background: #fff; }
+  .card h2 { margin: 0 0 6px; font-size: 18px; } .card p { margin: 4px 0; color: #444; }
+

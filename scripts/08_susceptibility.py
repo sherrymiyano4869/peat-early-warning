@@ -3,7 +3,8 @@
     python scripts/08_susceptibility.py [--peat-gpkg data/raw/batas/gambut.gpkg --peat-layer NAMA]
 
 Masuk : data/features/grid/static.tif (07); opsional lulc.tif (band `lulc`, kode ESA WorldCover) dan dynamic.tif
-        (band `dry_days`, `rain_deficit_mm`, `ndmi_dryness`), semuanya pada grid yang sama dengan static.tif
+        (band `dry_days`, `rain_deficit_mm`, `soil_moisture_dry`, `ndmi_dryness`; dibuat 02g bersama dynamic_reference.json berisi kuantil HISTORIS),
+        semuanya pada grid yang sama dengan static.tif
 Keluar: data/features/grid/risk_index.tif (0-1), risk_class.tif (1-5, 0 = tanpa nilai), kerawanan_meta.json,
         data/features/grid/reference_quantiles.json (acuan tetap agar kelas stabil antar-run)
 
@@ -27,7 +28,9 @@ from src.common import path  # noqa: E402
 
 # komponen struktural: nama band -> bobot (arah: nilai lebih besar = lebih rentan; ASUMSI hidrologis)
 STATIC_WEIGHTS = {"canal_kde_500m": 0.35, "canal_kde_250m": 0.25, "fabdem_relief_1km": 0.25, "fabdem_relief_500m": 0.15}
-DYNAMIC_WEIGHTS = {"dry_days": 0.40, "rain_deficit_mm": 0.30, "ndmi_dryness": 0.30}
+DYNAMIC_WEIGHTS = {"dry_days": 0.30, "rain_deficit_mm": 0.25, "soil_moisture_dry": 0.20, "ndmi_dryness": 0.25}   # semua: lebih besar = lebih kering (ASUMSI bobot)
+# Batas kelas mode dinamis TETAP: kuintil teoretis rata-rata dua peringkat seragam independen (segitiga), sehingga kelas bermakna sama antar-hari.
+DYNAMIC_MODE_BREAKS = [0.316, 0.447, 0.553, 0.684]
 STRUCT_VS_DYNAMIC = (0.5, 0.5)
 EXCLUDE_LULC = (80, 50, 95)  # air, terbangun, bakau
 N_CLASSES = 5
@@ -106,7 +109,12 @@ def main() -> None:
     structural = weighted_mean(s_parts, STATIC_WEIGHTS)
     mode, used, index = "struktural", {"struktural": {k: STATIC_WEIGHTS[k] for k in s_parts}}, structural
 
-    if (grid / "dynamic.tif").exists():
+    dyn_ref_file = grid / "dynamic_reference.json"
+    if (grid / "dynamic.tif").exists() and not dyn_ref_file.exists():
+        print("PERINGATAN: dynamic.tif ada tetapi dynamic_reference.json tidak; peringkat dinamis tanpa acuan historis tidak bermakna. Jalankan 02g_dynamic_features.py. Indeks hanya struktural.")
+    if (grid / "dynamic.tif").exists() and dyn_ref_file.exists():
+        for k_, q_ in json.loads(dyn_ref_file.read_text()).items():      # acuan historis, bukan sebaran hari ini
+            reference["components"][k_] = q_
         d_parts = ranks(read_bands(grid / "dynamic.tif")[0], DYNAMIC_WEIGHTS)
         if d_parts:
             dynamic = weighted_mean(d_parts, DYNAMIC_WEIGHTS)
@@ -115,6 +123,8 @@ def main() -> None:
             mode = "struktural+dinamis"
             used["dinamis"], used["gabungan"] = {k: DYNAMIC_WEIGHTS[k] for k in d_parts}, {"struktural": ws, "dinamis": wd}
 
+    if mode == "struktural+dinamis":
+        reference["breaks"][mode] = DYNAMIC_MODE_BREAKS
     if mode not in reference["breaks"] or args.refresh_reference:  # batas kelas tetap antar-run setelah ditetapkan
         valid = index[np.isfinite(index)]
         reference["breaks"][mode] = np.percentile(valid, np.linspace(0, 100, N_CLASSES + 1)[1:-1]).tolist()

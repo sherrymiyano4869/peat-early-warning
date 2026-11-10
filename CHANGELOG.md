@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.19
+- scripts/02e_worldcover.py: kelas dominan dan pecahan tiap kelas ESA WorldCover v200 per sel 100 m pada grid induk (lulc.tif); 08 memakainya untuk penutup, 14 dan 15 sebagai fitur statis
+- scripts/02f_grid_dynamic.py: hujan GSMaP (definisi sama dengan fitur stasiun) dan kelembapan tanah ERA5-Land (ECMWF/ERA5_LAND/DAILY_AGGR, volumetric_soil_water_layer_1) di PUSAT PIKSEL produk
+  (transformasi dibaca dari Earth Engine), komposit NDMI per jendela (definisi sama dengan 02_gee_features.build_s2) sebagai raster per jendela; pembaruan inkremental
+- scripts/02g_dynamic_features.py + src/dynfeat.py: fitur KAUSAL (jumlah hujan 1/7/14/30 hari, HTH, anomali terhadap tahun-tahun sebelumnya, kelembapan tanah, NDMI, ENSO/IOD bulan sebelumnya),
+  dynamic.tif (keadaan terbaru, lebih besar = lebih kering) dan dynamic_reference.json (kuantil historis)
+- src/cells.py: pemuat bersama kubus sel 1 km; fitur dinamis dalam empat format (sel-hari, piksel-hari, regional, sel-jendela tanpa melihat ke depan); 14_fire_model.py memakainya (--dynamic banyak berkas)
+- 08_susceptibility.py: mode struktural+dinamis (hujan, HTH, kelembapan tanah, NDMI) dengan peringkat terhadap acuan HISTORIS dan batas kelas tetap (kuintil teoretis); menolak peringkat dinamis tanpa acuan historis
+- scripts/15_dryness_cell_model.py: prakiraan pengeringan 7 dan 14 hari per sel (LightGBM kuantil dan klasifikasi turun >= 10 cm), fitur sel identik untuk stasiun dan peta, uji RUANG-WAKTU
+  (stasiun ditahan dan tanggal sesudah titik potong), gerbang bukti; keluaran sel untuk web
+- webmap prediksi: pilihan tema tunggal (peluang titik api, pengeringan per sel, kerentanan struktural), tiga lencana bukti, legenda mengikuti tema; 09 mengekspor dry_cells.geojson dan status masukan dari berkas yang ada
+
+## v0.18
+- src/grid.py: grid induk equal-area ESRI:54034 (paralel standar 0, hampir tanpa distorsi bentuk di ekuator: <= 0,55% pada 6 derajat; EPSG:6933 menjadikan sel 1 km
+  1,15 x 0,87 km), sel berjangkar di (0,0) dan bersarang 100 m, 500 m, 1 km, id sel bilangan bulat. 07_grid_static.py memakainya (--crs utm = perilaku lama).
+  Perlu dijalankan ulang: 07, 08, 10, 09 (keluaran lama berada di UTM dan tidak sejajar)
+- scripts/12_fetch_firms.py: API area FIRMS (potongan 1-10 hari, MAP_KEY dari FIRMS_MAP_KEY, kunci tidak pernah ditulis), mode arsip tahunan; berkas L0 bertanggal, atomik,
+  dilewati bila sudah ada; respons bukan CSV ditolak ke rejects.jsonl; manifest dengan sha256 dan jenis data SP/NRT
+- scripts/13_hotspots_to_cells.py: titik api bersih (SNPP saja, type 0, tanpa duplikat, tanggal WIB, sumber persisten dibuang) dan tabel sel-hari 1 km, dengan catatan baris per tahap
+- scripts/14_fire_model.py: LightGBM peluang titik api 1 dan 3 hari per sel 1 km; fitur hanya data <= t (diuji tiap run); pembagian waktu latih, kalibrasi isotonik, uji; pembanding
+  klimatologi dan persistensi; gerbang (PR-AUC, skill Brier, Brier lawan persistensi); fitur dinamis opsional per sel-hari atau deret regional
+- webmap: tiga halaman: index (beranda), monitoring (kondisi kini: kerentanan struktural, titik api teramati 7 hari, stasiun) dan prediction (peluang titik api, prakiraan stasiun);
+  mesin peta bersama app.js (window.PAGE); panel faktor penyusun menampilkan status masukan apa adanya; style.css bersama
+- 09_export_web.py: hotspots_recent.geojson, fire_cells.geojson, manifest.hotspots/fire/drivers; archive_run.py mengarsipkan fire_prob dan model
+
 ## v0.17.2
 - webmap: dari file:// tidak ada lagi permintaan tile OSM (OSM menjawab 403 "Access blocked" untuk permintaan tanpa Referer); hanya petunjuk menjalankan http.server yang tampil.
   Tile OSM meminta referrerPolicy "origin" dan halaman memakai meta referrer origin-when-cross-origin supaya asal halaman terkirim sebagai Referer

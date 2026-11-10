@@ -9,6 +9,7 @@
 #   ./run_pipeline.sh --serve                      # di akhir, buka server webmap di http://localhost:8000
 #   ./run_pipeline.sh --arsip --label "minggu 1"   # di akhir, arsipkan prediksi + metrik ke outputs/arsip/<waktu>/
 #   ./run_pipeline.sh --arsip-web                  # sama, tetapi seluruh webmap/data ikut diarsipkan
+#   ./run_pipeline.sh dinamis titikapi            # peta + pembaruan fitur dinamis per sel dan titik api (opsional, v0.18-0.19)
 #
 # Tahap (urutan tetap): stasiun -> fitur -> model -> peta [-> arsip]
 #   stasiun : 01a potret SiTMAT, 01b detail stasiun (aktif saja; folder bertanggal, tidak menimpa run lama),
@@ -21,6 +22,12 @@
 #               data/raw/batas/khg.gpkg    -> 10 --units-gpkg  (atur dengan --khg-layer NAMA --khg-name KOLOM)
 #               data/raw/batas/admin.gpkg  -> 10 --admin-gpkg  (atur dengan --admin-layer NAMA)
 #             Tanpa khg.gpkg, tingkat 1 memakai blok 5 km sementara.
+#   dinamis : (opsional, menyertakan peta) 02e WorldCover (sekali, bila lulc.tif belum ada), 02f data dinamis per sel
+#             INKREMENTAL (hanya kelompok yang berkasnya sudah ada di data/features/grid_dynamic/; unduhan awal 2015-an
+#             dijalankan manual, lihat README), 02g fitur kausal + dynamic.tif, lalu 08 dihitung ulang (struktural+dinamis)
+#   titikapi: (opsional, menyertakan peta) 12 FIRMS NRT 9 hari terakhir (butuh env FIRMS_MAP_KEY), 13 titik api ke sel,
+#             14 model peluang titik api (butuh berkas di data/raw/firms/)
+#   15 prakiraan pengeringan per sel dijalankan otomatis di peta bila fitur dinamis (dyn_rain/soil/ndmi) sudah ada.
 #
 # Log tiap jalan disimpan di outputs/logs/run_<tanggal>.log. Skrip berhenti pada galat pertama di tahap wajib;
 # tahap opsional yang syaratnya belum ada dilewati dengan pesan.
@@ -57,13 +64,15 @@ while [[ $# -gt 0 ]]; do
     --khg-layer) KHG_LAYER="${2:-}"; shift 2 ;;
     --khg-name) KHG_NAME="${2:-}"; shift 2 ;;
     --admin-layer) ADMIN_LAYER="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
-    stasiun|fitur|model|peta) STAGES+=("$1"); shift ;;
+    -h|--help) sed -n '2,37p' "$0"; exit 0 ;;
+    stasiun|fitur|model|peta|dinamis|titikapi) STAGES+=("$1"); shift ;;
     *) echo "Pilihan tidak dikenal: $1 (lihat ./run_pipeline.sh --help)"; exit 2 ;;
   esac
 done
 [[ ${#STAGES[@]} -eq 0 ]] && STAGES=(stasiun fitur model peta)
 want() { [[ " ${STAGES[*]} " == *" $1 "* ]]; }
+# dinamis dan titikapi berjalan di dalam tahap peta (butuh grid 07 dan kelas 08)
+if { want dinamis || want titikapi; } && ! want peta; then STAGES+=(peta); fi
 
 # ---------- Python env peat ----------
 PY="${PY:-}"
@@ -172,7 +181,63 @@ if want peta; then
     else
       echo "   (08: data/raw/batas/gambut.gpkg belum ada; sel di luar gambut belum dikeluarkan)"
     fi
+
+    if want dinamis; then
+      if [[ -f data/features/grid/lulc.tif ]]; then
+        skip "02e WorldCover" "lulc.tif sudah ada (pakai 02e --force untuk ulang)"
+      else
+        run "02e WorldCover" "$PY" scripts/02e_worldcover.py
+      fi
+    fi
     run "08 indeks kerawanan" "$PY" scripts/08_susceptibility.py "${S08[@]}"
+
+    if want dinamis; then
+      GD=data/features/grid_dynamic; ONLY=()
+      [[ -f $GD/rain_pixels.parquet ]] && ONLY+=(gsmap)
+      [[ -f $GD/soil_pixels.parquet ]] && ONLY+=(era5soil)
+      [[ -f $GD/ndmi_cells.parquet ]] && ONLY+=(ndmi)
+      if [[ ${#ONLY[@]} -gt 0 ]]; then
+        run "02f data dinamis (inkremental)" "$PY" scripts/02f_grid_dynamic.py --only "$(IFS=,; echo "${ONLY[*]}")"
+      else
+        skip "02f data dinamis" "belum ada unduhan awal di $GD/ (jalankan manual dulu, lihat README v0.19)"
+      fi
+      if compgen -G "$GD/*.parquet" > /dev/null; then
+        run "02g fitur dinamis" "$PY" scripts/02g_dynamic_features.py
+        run "08 indeks kerawanan (+dinamis)" "$PY" scripts/08_susceptibility.py "${S08[@]}"
+      else
+        skip "02g fitur dinamis" "belum ada data 02f"
+      fi
+    fi
+
+    DYN=()
+    for f in dyn_rain_pixels dyn_soil_pixels dyn_ndmi_cells dyn_enso_daily; do
+      [[ -f data/features/$f.parquet ]] && DYN+=(data/features/$f.parquet)
+    done
+
+    if want titikapi; then
+      if [[ -n "${FIRMS_MAP_KEY:-}" ]]; then
+        F12=(--source VIIRS_SNPP_NRT)
+        [[ -n "$CONTACT" ]] && F12+=(--contact "$CONTACT")
+        run "12 FIRMS NRT" "$PY" scripts/12_fetch_firms.py "${F12[@]}"
+      else
+        skip "12 FIRMS" "env FIRMS_MAP_KEY belum diisi (memakai titik api yang sudah ada)"
+      fi
+      if [[ -d data/raw/firms ]] && [[ -n "$(find data/raw/firms -type f -name '*.csv*' 2>/dev/null | head -1)" ]]; then
+        S13=()
+        [[ -f data/raw/batas/gambut.gpkg ]] && S13+=(--peat-gpkg data/raw/batas/gambut.gpkg --peat-layer "${PEAT_LAYER:-$(first_layer data/raw/batas/gambut.gpkg)}")
+        run "13 titik api ke sel" "$PY" scripts/13_hotspots_to_cells.py "${S13[@]}"
+        S14=(); [[ ${#DYN[@]} -gt 0 ]] && S14+=(--dynamic "${DYN[@]}")
+        run "14 model titik api" "$PY" scripts/14_fire_model.py "${S14[@]}"
+      else
+        skip "13 + 14 titik api" "belum ada berkas di data/raw/firms/"
+      fi
+    fi
+
+    if [[ -f data/features/dyn_rain_pixels.parquet || -f data/features/dyn_soil_pixels.parquet || -f data/features/dyn_ndmi_cells.parquet ]]; then
+      run "15 pengeringan per sel" "$PY" scripts/15_dryness_cell_model.py
+    else
+      skip "15 pengeringan per sel" "belum ada fitur dinamis (tahap dinamis / 02g)"
+    fi
 
     S10=()
     if [[ -f data/raw/batas/khg.gpkg ]]; then

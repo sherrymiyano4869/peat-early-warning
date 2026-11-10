@@ -62,6 +62,19 @@ def main() -> None:
         issue = str(pred["issue_date"].max().date())
         shutil.copy2(pred_file, dest / f"predictions_{issue}.csv")
         copied.append(f"predictions_{issue}.csv")
+    fire_file = outputs / "fire_prob_latest.parquet"          # peluang titik api per sel: arsip yang dinilai nanti terhadap titik api nyata
+    if fire_file.exists():
+        fire_issue = str(pd.read_parquet(fire_file, columns=["issue_date"])["issue_date"].iloc[0])
+        shutil.copy2(fire_file, dest / f"fire_prob_{fire_issue}.parquet")
+        copied.append(f"fire_prob_{fire_issue}.parquet")
+        issue = issue or fire_issue
+        for extra in ("fire_metrics.json",):
+            if (outputs / extra).exists():
+                shutil.copy2(outputs / extra, dest / extra)
+                copied.append(extra)
+        for model in sorted((outputs / "models").glob(f"fire_h*_{fire_issue}.txt")) if (outputs / "models").exists() else []:
+            shutil.copy2(model, dest / model.name)
+            copied.append(model.name)
     for pattern in ("metrics_*.csv", "walkforward_*.csv"):
         for f in sorted(outputs.glob(pattern)):
             shutil.copy2(f, dest / f.name)

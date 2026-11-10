@@ -321,7 +321,7 @@ def main() -> None:
         extra["canals"] = export_lines(args.canal_gpkg, args.canal_layer, pad, out / "canals.geojson", 15)
 
     descriptor = {
-        "title": "Kerawanan relatif", "mode": kmeta["mode"], "components": kmeta["components"], "unit_type": unit_type,
+        "title": "Kerentanan struktural" if kmeta["mode"] == "struktural" else "Indeks kondisi kini", "mode": kmeta["mode"], "components": kmeta["components"], "unit_type": unit_type,
         "classes": [{"id": i + 1, "label": LABELS[i], "color": "#%02x%02x%02x" % PALETTE[i]} for i in range(5)],
         "levels": [
             {"id": "unit", "label": f"per {unit_type.split(' (')[0]}", "type": "geojson", "file": "units.geojson", "minZoom": 0, "maxZoom": args.coarse_zooms[0] + 1},
@@ -330,7 +330,7 @@ def main() -> None:
             {"id": "fine", "label": f"sel {int(res)} m", "type": "tiles", "url": "tiles/fine/{z}/{x}/{y}.png",
              "minZoom": args.fine_zooms[0], "maxZoom": 18, "minNativeZoom": args.fine_zooms[0], "maxNativeZoom": args.fine_zooms[1]}],
         "bounds": [[south, west], [north, east]], "hillshade": shade_info,
-        "class_scheme": "5 kelas dari kuintil sebaran acuan (batas tetap: " + ", ".join(f"{b:.2f}" for b in breaks) + "); kelas relatif, bukan ambang absolut",
+        "class_scheme": ("5 kelas dari kuintil sebaran acuan (batas tetap: " if kmeta["mode"] == "struktural" else "5 kelas dari batas tetap (kuintil teoretis rata-rata dua peringkat terhadap riwayat: ") + ", ".join(f"{b:.2f}" for b in breaks) + "); kelas relatif, bukan ambang absolut",
         "unmapped": "tanpa warna = bukan gambut, air, atau terbangun (tidak dinilai)",
         "confidence": {"cap": cap, "cap_label": CLASS_LABEL[cap], "note": note_cap,
                        "legend": [{"label": "tinggi", "style": "pekat"}, {"label": "sedang", "style": "agak transparan"}, {"label": "rendah", "style": "transparan dan diarsir"}]},

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="origin-when-cross-origin">
+<title>Prediksi: 1–14 hari ke depan · peringatan dini kekeringan gambut (prototipe)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map"></div>
+<div id="north">&#9650;<br>U</div>
+<div id="legendbox"></div>
+<div id="panel">
+  <div class="nav"><a href="index.html">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html" class="active">Prediksi</a></div>
+  <h1 id="title">Prediksi: 1–14 hari ke depan</h1>
+  <div class="small" id="subtitle">Peluang ada titik api di sel 1 km (1–3 hari) dan prakiraan muka air di stasiun (7–14 hari). Peluang per sel, bukan titik pasti; bukan peringatan resmi.</div>
+  <div class="meta" id="meta"></div>
+  <div id="badge" class="badge warn">Memuat status...</div>
+  <div id="badge2" class="badge warn"></div>
+  <div id="badge3" class="badge warn"></div>
+  <div class="sect"><b>Tingkat tampilan:</b> <span id="level" class="level">–</span></div>
+  <div class="sect">
+    <b>Lapisan tema</b> <span class="small">(satu per satu)</span><br>
+    <label><input type="radio" name="theme" id="theme-fire" checked> Peluang titik api (1–3 hari)</label><br>
+    <label><input type="radio" name="theme" id="theme-dry"> Pengeringan per sel (7–14 hari)</label><br>
+    <label><input type="radio" name="theme" id="theme-struct"> Kerentanan struktural (konteks)</label><br>
+    <b>Lapisan bantu</b><br>
+    <label><input type="checkbox" id="chk-hillshade" checked> Bayangan relief (hillshade)</label><br>
+    <label><input type="checkbox" id="chk-khg" checked> Batas KHG</label><br>
+    <label><input type="checkbox" id="chk-admin" checked> Batas kabupaten/provinsi</label><br>
+    <label><input type="checkbox" id="chk-canals"> Kanal (garis)</label><br>
+    <label><input type="checkbox" id="chk-stations" checked> Stasiun SiTMAT</label>
+  </div>
+  <div id="summary"></div>
+  <div id="drivers"></div>
+  <div class="sect" id="support-sect"><b>Lapisan teknis (lanjutan)</b><div id="support" class="small"></div></div>
+  <div class="sect"><b>Opasitas peta</b> <span class="small">(kanan = lebih pekat)</span><br><input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.9" style="width:100%"></div>
+  <div id="legend" class="legend"></div>
+  <details><summary>Atribusi dan penafian</summary><div id="attrib" class="small"></div></details>
+</div>
+<script>window.PAGE = "prediction";</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

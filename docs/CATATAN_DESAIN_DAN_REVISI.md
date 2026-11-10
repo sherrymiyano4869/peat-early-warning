@@ -64,6 +64,22 @@ Bila masih 403 di localhost, periksa ekstensi privasi atau perisai peramban yang
 - Sumber: VIIRS 375 m arsip FIRMS sejak 20 Jan 2012 (perlu akun Earthdata); NRT diganti data sains dengan jeda beberapa bulan, jadi catat jenis data di manifest (pergeseran latih-layani);
   koleksi Earth Engine NASA/LANCE/SNPP_VIIRS/C2 hanya sejak 3 Sep 2023, jangan jadi satu-satunya sumber latih.
 
+**Keputusan 11 Nov 2026 (lanjutan, v0.18).**
+- Sel titik api: 1 km. CRS grid induk dipindah SEKARANG ke ESRI:54034 (equal-area, paralel standar 0), KOREKSI atas saranku semula (EPSG:6933): di ekuator 6933 membuat sel
+  "1 km" menjadi 1,15 x 0,87 km di tanah. Peta web tetap sejajar dengan OSM karena tile selalu diproyeksikan ke Web Mercator (diuji: selisih 1 m pada z14).
+- Dua halaman: Monitoring = kondisi kini (indeks kerentanan struktural dan, nanti, tekanan dinamis; titik api teramati; muka air stasiun), berhenti di "kondisi kini", bukan kerawanan masa depan.
+  Prediksi = kerawanan ke depan: peluang titik api 1-3 hari (LightGBM), prakiraan muka air stasiun 7-14 hari, dengan status bukti. Peta kerentanan struktural menjadi lapisan dasar kedua halaman.
+- Titik api = peluang per sel dengan gerbang bukti; hasil prospektif (arsip) menentukan klaim. Hasil pada data tiruan (PR-AUC model 0,27 lawan persistensi 0,20 dan klimatologi 0,005 pada h1)
+  hanya menguji alur, BUKAN bukti kinerja. Klimatologi bisa ber-ROC-AUC di bawah 0,5 secara gabungan bila waktu musim uji berbeda dari tahun-tahun latih.
+- Kunci: FIRMS memakai MAP_KEY (email cukup). Kata sandi Earthdata TIDAK dipakai kode dan tidak boleh ditempel di obrolan atau berkas; ganti kata sandi yang sudah terlanjur dibagikan.
+- Ditambahkan (v0.19, 11 Nov 2026): sumber kelembapan tanah diputuskan ERA5-Land (ECMWF/ERA5_LAND/DAILY_AGGR, lapisan 0-7 cm; reanalisis model dengan hidrologi tanah mineral umum, BUKAN pengamatan dan
+  tidak memodelkan gambut; tanggal akhir ketersediaan di Earth Engine berubah-ubah, skrip memotong sampai tanggal terakhir). Hujan GSMaP per piksel 0,1 derajat; NDMI komposit bulanan per sel; WorldCover
+  (tanpa kelas sawit); ENSO/IOD harian regional (bulan sebelumnya); model pengeringan per sel (15) dengan uji ruang-waktu. Semua bagian Earth Engine (02e, 02f) BELUM diuji terhadap Earth Engine sungguhan.
+- Prinsip konsistensi: fitur sel stasiun dan sel peta berasal dari kubus yang sama (statis 1 km, hujan/tanah per piksel produk, NDMI komposit), bukan dari fitur titik stasiun (02). Anomali kausal (hanya tahun
+  sebelumnya, min. 3 tahun): tahun awal rekaman tanpa anomali.
+- Masih belum: hotspot ToPeCAl-2, penilaian prospektif otomatis, Sentinel-1 per sel (VV), sumber kelembapan tanah alternatif (SMAP) untuk pembanding, tabel hujan CHIRPS per sel (CHIRPS tertinggal ~5 minggu),
+  pelatihan wilayah besar (kubus memuat semua tanggal ke memori; pilot saja).
+
 ## 2. Daftar revisi diagram (dari tinjauan 10 Nov 2026), urut prioritas
 1. Tambah langkah "nilai prediksi vs kejadian" yang menghasilkan skor validasi dan masuk ke "Hitung kepercayaan" (batas skill). Sekarang panah umpan balik hanya ke "Tandai pantauan sisa".
 2. "Verifikasi" perlu dua keluaran: ya (lanjut tindakan), tidak (alarm palsu -> label negatif, tutup). Bedakan "verifikasi" (kejadian) dan "validasi prediksi" (model).

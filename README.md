@@ -22,6 +22,13 @@
 | scripts/03_assemble.py | gabung target harian dan fitur jadi model_table | siap (diuji data sintetik) |
 | scripts/04_baseline.py | baseline, LightGBM, kuantil, validasi LOSO/LOCO/LOIO/TEMPORAL | siap (diuji data sintetik) |
 | scripts/archive_run.py | arsip ringan per run (prediksi terbit, metrik, run_meta) di outputs/arsip/ | siap (diuji data tiruan) |
+| scripts/02e_worldcover.py | tutupan lahan WorldCover (kelas dominan dan pecahan) pada grid induk 100 m | siap (bagian lokal diuji; Earth Engine belum dicoba) |
+| scripts/02f_grid_dynamic.py | hujan GSMaP, kelembapan tanah ERA5-Land (per piksel produk), dan komposit NDMI Sentinel-2 per sel, inkremental | siap (bagian lokal diuji; Earth Engine belum dicoba) |
+| scripts/02g_dynamic_features.py | fitur kausal (hujan, HTH, anomali, tanah, NDMI, ENSO), dynamic.tif dan acuan historis | siap (diuji data tiruan) |
+| scripts/15_dryness_cell_model.py | prakiraan pengeringan 7 dan 14 hari per sel (kuantil + peluang), uji ruang-waktu, gerbang bukti | siap (diuji data tiruan) |
+| scripts/12_fetch_firms.py | titik api VIIRS dari FIRMS (API area dengan MAP_KEY, atau arsip tahunan tanpa kunci) ke L0 bertanggal | siap (diuji server tiruan; server FIRMS belum dicoba) |
+| scripts/13_hotspots_to_cells.py | titik api bersih (L1) dan tabel sel-hari 1 km, dengan catatan baris tiap tahap | siap (diuji data tiruan) |
+| scripts/14_fire_model.py | LightGBM peluang titik api 1 dan 3 hari per sel 1 km, pembanding, gerbang bukti | siap (diuji data tiruan; belum di data nyata) |
 | scripts/08_susceptibility.py | indeks kerawanan relatif per sel (struktural; dinamis bila ada) | siap (diuji data tiruan) |
 | scripts/10_build_tiles.py | tile kerawanan tiga tingkat, unit KHG, batas, kanal untuk webmap | siap (diuji data tiruan) |
 | scripts/09_export_web.py | ekspor hamparan, GeoJSON, deret waktu, manifest ke webmap/data (WebGIS Leaflet) | siap (diuji data tiruan) |
@@ -49,3 +56,30 @@ describe_stations, check_history, summarize_network. Pipeline tidak bergantung p
 - Berkas `*:Zone.Identifier` hanyalah sisa unduhan Windows; aman dihapus:
     find . -name "*:Zone.Identifier" -delete
 - Pembaruan dikirim sebagai satu zip lengkap; lihat CHANGELOG.md.
+
+
+## Menjalankan titik api, grid induk, dan dua halaman web (v0.18)
+    export FIRMS_MAP_KEY=...            # kunci gratis dari firms.modaps.eosdis.nasa.gov/api/map_key (BUKAN kata sandi Earthdata)
+    python scripts/12_fetch_firms.py --source VIIRS_SNPP_SP  --start 2015-01-01 --end 2024-12-31   # riwayat sains untuk melatih
+    python scripts/12_fetch_firms.py --source VIIRS_SNPP_NRT --start TGL --end TGL                 # hari-hari terakhir
+    python scripts/07_grid_static.py                  # sekarang di grid induk equal-area (ESRI:54034); jalankan ulang 07, 08, 10, 09
+    python scripts/08_susceptibility.py --peat-gpkg data/raw/batas/gambut.gpkg --peat-layer NAMA
+    python scripts/13_hotspots_to_cells.py --peat-gpkg data/raw/batas/gambut.gpkg --peat-layer NAMA
+    python scripts/14_fire_model.py                   # opsional: --dynamic data/features/dynamic_daily.parquet
+    python scripts/10_build_tiles.py ...              # lihat docs/CATATAN_DESAIN_DAN_REVISI.md
+    python scripts/09_export_web.py
+    python -m http.server -d webmap 8000              # buka http://localhost:8000 (halaman: index, monitoring, prediction)
+Lalu `python scripts/archive_run.py --label "..."` mengarsipkan juga peluang titik api (fire_prob_<tanggal>.parquet) untuk penilaian prospektif.
+
+
+## Fitur dinamis per sel (v0.19)
+    python scripts/02e_worldcover.py                          # setelah 07; sekali saja
+    python scripts/02f_grid_dynamic.py --dry-run              # lihat rencana dan jumlah permintaan SEBELUM menyentuh Earth Engine
+    python scripts/02f_grid_dynamic.py --only gsmap,era5soil --start 2015-01-01
+    python scripts/02f_grid_dynamic.py --only ndmi --start 2018-12-01 --ndmi-step 30     # paling berat; satu bulan dulu
+    python scripts/02b_enso.py                                # indeks ENSO/IOD bulanan (sudah ada)
+    python scripts/02g_dynamic_features.py                    # fitur kausal + dynamic.tif + acuan historis
+    python scripts/08_susceptibility.py --peat-gpkg ...       # kini otomatis struktural+dinamis bila dynamic.tif dan dynamic_reference.json ada
+    python scripts/14_fire_model.py --dynamic data/features/dyn_rain_pixels.parquet data/features/dyn_soil_pixels.parquet data/features/dyn_ndmi_cells.parquet data/features/dyn_enso_daily.parquet
+    python scripts/15_dryness_cell_model.py                   # perlu model_table.parquet (03) dan fitur dinamis
+Pembaruan harian: 02f hanya meminta tanggal sesudah data terakhir (dikurangi --overlap-days); lalu 02g, 08, 14, 15, 10, 09.

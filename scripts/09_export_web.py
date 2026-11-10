@@ -48,6 +48,7 @@ ATTRIBUTION = [
     "Muka air dan stasiun: SiTMAT (KLH/BRGM), diambil dengan jeda sopan; data dapat berubah atau terkoreksi.",
     "(c) OpenStreetMap contributors (ODbL); kanal dan batas gambut/KHG dari BRGM BlueBook 2026. Peta dasar: OpenStreetMap (tile standar; patuhi kebijakan tile OSM, ganti lewat manifest.basemap bila lalu lintas besar).",
     "Tutupan lahan: ESA WorldCover 10 m 2021 (CC BY 4.0).",
+    "Titik api: NRT/standar VIIRS 375 m Active Fire (VNP14IMG) dari NASA LANCE/FIRMS, doi:10.5067/FIRMS/VIIRS/VNP14IMGT_NRT.002; ikuti ketentuan sitasi dan penafian NASA LANCE/FIRMS saat membagikan ulang.",
     "FABDEM is produced using Copernicus WorldDEM-30 (c) DLR e.V. (CC BY-NC-SA 4.0), Hawker dkk. 2022.",
     "Hujan: JAXA GSMaP (Global Rainfall Map in Near-Real-Time) dan CHIRPS; citra: Copernicus Sentinel-1/2.",
 ]
@@ -112,6 +113,83 @@ def validation_block(outputs: Path) -> dict:
             "note": "Skill terhadap persistensi pada walk-forward mingguan; kelas kepercayaan dibatasi oleh skill terburuk."}
 
 
+def export_hotspots(out: Path, days: int = 7):
+    """Titik api VIIRS 7 hari terakhir (relatif terhadap tanggal data terbaru) untuk halaman Monitoring."""
+    f = path("interim") / "hotspots.parquet"
+    if not f.exists():
+        return None
+    h = pd.read_parquet(f)
+    if h.empty:
+        return None
+    h["date"] = pd.to_datetime(h["date"])
+    dmax = h["date"].max()
+    recent = h[h["date"] >= dmax - pd.Timedelta(days=days - 1)]
+    feats = [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [round(float(r.lon), 5), round(float(r.lat), 5)]},
+              "properties": {"date": str(r.date.date()), "frp": None if pd.isna(r.frp) else round(float(r.frp), 1), "conf": int(r.conf), "dn": r.daynight}}
+             for r in recent.itertuples()]
+    (out / "hotspots_recent.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, ensure_ascii=False), encoding="utf-8")
+    print(f"titik api: {len(feats)} dalam {days} hari sampai {dmax.date()}")
+    return {"file": "hotspots_recent.geojson", "n": len(feats), "days": days, "date_max": str(dmax.date()),
+            "note": "Tanggal WIB; satelit Suomi NPP 375 m (NASA FIRMS)."}
+
+
+def export_fire(out: Path, outputs: Path):
+    """Sel teratas peluang titik api dan ringkasan uji untuk halaman Prediksi."""
+    gj, mj = outputs / "fire_top_cells.geojson", outputs / "fire_metrics.json"
+    if not gj.exists() or not mj.exists():
+        return None
+    g, m = json.loads(gj.read_text(encoding="utf-8")), json.loads(mj.read_text(encoding="utf-8"))
+    (out / "fire_cells.geojson").write_text(json.dumps(g, ensure_ascii=False), encoding="utf-8")
+    h1 = m["horizon"].get("h1", {})
+    mod, clim, per = h1.get("model", {}), h1.get("klimatologi", {}), h1.get("persistensi", {})
+    pl = m.get("prediksi_terakhir", {})
+    return {"file": "fire_cells.geojson", "issue_date": g.get("issue_date"), "horizons": g.get("horizons"), "top_fraction": g.get("top_fraction"),
+            "n_top": len(g["features"]), "n_cells": pl.get("n_sel"), "expected_cells_h1": pl.get("harapan_sel_berapi_p1"), "primary_key": "p1",
+            "skill_ok": bool(m.get("skill_ok")), "cap_class": int(m.get("cap_class", 0)),
+            "metrics": {"pr_auc_model": mod.get("pr_auc"), "pr_auc_klim": clim.get("pr_auc"), "pr_auc_persist": per.get("pr_auc"),
+                        "skill_brier": h1.get("skill_brier_vs_klimatologi"), "periode_uji": " s/d ".join(h1.get("periode", {}).get("uji", []))}}
+
+
+def export_dryness(out: Path, outputs: Path):
+    """Sel prakiraan pengeringan 7 dan 14 hari (semua sel yang dinilai) dan ringkasan uji ruang-waktu."""
+    gj, mj = outputs / "dryness_cells.geojson", outputs / "dryness_metrics.json"
+    if not gj.exists() or not mj.exists():
+        return None
+    g, m = json.loads(gj.read_text(encoding="utf-8")), json.loads(mj.read_text(encoding="utf-8"))
+    (out / "dry_cells.geojson").write_text(json.dumps(g, ensure_ascii=False), encoding="utf-8")
+    ev = m.get("uji_ruang_waktu", {})
+    return {"file": "dry_cells.geojson", "issue_date": g.get("issue_date"), "n_cells": len(g["features"]), "skill_ok": bool(m.get("skill_ok")), "cap_class": int(m.get("cap_class", 0)),
+            "n_stasiun": m.get("n_stasiun"), "p14_rata2": m.get("prediksi_terakhir", {}).get("p14_rata2"),
+            "metrics": {f"h{h}": {k: ev.get(f"h{h}", {}).get(k) for k in ("skill_mae", "cakupan_q10_q90", "skill_brier", "n_uji")} for h in (7, 14)}}
+
+
+def driver_status(n_stations: int, mt: pd.DataFrame, hot, dry=None) -> list:
+    """Daftar masukan sistem dan statusnya, dibaca dari berkas yang benar-benar ada (bukan janji)."""
+    grid = path("features") / "grid"
+    feat = path("features")
+    has_rain, has_soil, has_ndmi = (feat / "dyn_rain_pixels.parquet").exists(), (feat / "dyn_soil_pixels.parquet").exists(), (feat / "dyn_ndmi_cells.parquet").exists()
+    dyn_cols = ({"rain_7d"} if has_rain else set()) | ({"soil_moisture"} if has_soil else set())
+    enso_dir = path("raw") / "enso"
+    has_enso = enso_dir.exists() and any(enso_dir.iterdir())
+    cols = " ".join(map(str, mt.columns))
+    rain_station = "rain" in cols
+    ndmi_station = "ndmi" in cols.lower()
+
+    def row(i, t, ok, partial=False, detail=""):
+        return {"id": i, "title": t, "status": "tersedia" if ok else ("sebagian" if partial else "belum tersedia"), "detail": detail}
+    return [
+        row("stasiun", "Sensor muka air (SiTMAT)", n_stations > 0, detail=f"{n_stations} stasiun"),
+        row("hujan", "Hujan (GSMaP, CHIRPS)", "rain_7d" in dyn_cols, rain_station, "per sel" if "rain_7d" in dyn_cols else ("di tingkat stasiun; per sel belum" if rain_station else "")),
+        row("kelembapan", "Indeks kelembapan tanah", "soil_moisture" in dyn_cols, False, "ERA5-Land 0–7 cm (reanalisis, bukan pengamatan gambut)" if "soil_moisture" in dyn_cols else "belum diambil (02f --only era5soil)"),
+        row("ndmi", "NDMI Sentinel-2", has_ndmi, ndmi_station, "komposit bulanan per sel" if has_ndmi else ("di tingkat stasiun; per sel belum" if ndmi_station else "")),
+        row("enso", "ENSO dan IOD (DMI)", has_enso, detail="indeks bulanan" if has_enso else ""),
+        row("topografi", "Topografi (FABDEM) dan kanal", (grid / "static.tif").exists(), detail="grid 100 m, grid induk equal-area"),
+        row("lulc", "Tutupan lahan (WorldCover)", (grid / "lulc.tif").exists(), detail="2021, tanpa kelas sawit" if (grid / "lulc.tif").exists() else "belum diekstrak (02e)"),
+        row("hotspot", "Titik api VIIRS", hot is not None, detail=f"{hot['n']} titik, sampai {hot['date_max']}" if hot else ""),
+        row("kering_sel", "Prakiraan pengeringan per sel (7–14 hari)", dry is not None, detail=(f"{dry['n_cells']} sel; kepercayaan {'sedang' if dry['cap_class'] else 'rendah'}" if dry else "belum dijalankan (15)")),
+    ]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=str(ROOT / "webmap" / "data"))
@@ -173,13 +251,18 @@ def main() -> None:
     center = [float(np.mean(lats)), float(np.mean(lons))] if features else [-1.3, 104.0]
     kfile = out / "kerawanan.json"
     kerawanan = json.loads(kfile.read_text(encoding="utf-8")) if kfile.exists() else None
+    hot = export_hotspots(out)
+    fire = export_fire(out, outputs)
+    dry = export_dryness(out, outputs)
+    drivers = driver_status(len(features), mt, hot, dry)
     manifest = {"title": "Peringatan dini kekeringan gambut (prototipe)", "version": read_version(),
                 "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "data_through": None if data_through is None else str(pd.Timestamp(data_through).date()),
                 "issue_date": None if not len(pred) else str(pred["issue_date"].max().date()),
                 "center": center, "validation": validation_block(outputs), "layers": layers,
                 "stations": {"file": "stations.geojson", "n": len(features), "series_dir": "series/"},
-                "basemap": (load_config().get("webmap") or {}).get("basemap"), "kerawanan": kerawanan, "attribution": ATTRIBUTION, "disclaimer": DISCLAIMER}
+                "basemap": (load_config().get("webmap") or {}).get("basemap"), "kerawanan": kerawanan, "hotspots": hot, "fire": fire, "dryness": dry, "drivers": drivers,
+                "attribution": ATTRIBUTION, "disclaimer": DISCLAIMER}
     (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
     print("manifest:", out / "manifest.json")
     print(f"validasi: {manifest['validation'].get('cap_label', 'belum ada')} | data sampai {manifest['data_through']} | terbit {manifest['issue_date']}")

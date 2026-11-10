@@ -12,6 +12,8 @@ Kerapatan kanal dihitung seperti peta panas (kernel density, kernel Gaussian): p
 berlebar sigma 250 m dan 500 m, satuan km kanal per km2. Sigma kecil menangkap kanal di sekitar titik, sigma besar menangkap
 pola lanskap.
 
+CRS: bawaan grid induk equal-area ESRI:54034 (src/grid.py), sel berjangkar di (0, 0) dan sejajar dengan sel 500 m dan 1 km; --crs utm untuk perilaku lama.
+
 Prinsip konsistensi: fitur di stasiun diambil dari grid yang sama dengan fitur di sel peta (bukan dari 02c/02d), supaya model yang
 dilatih di stasiun dan diterapkan ke sel memakai definisi fitur yang identik.
 
@@ -44,6 +46,7 @@ from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.common import path  # noqa: E402
+from src.grid import bbox_to_grid, grid_crs  # noqa: E402
 from src.regions import add_region  # noqa: E402
 
 STATIC_BANDS = ["fabdem_elev_m", "fabdem_slope_deg", "fabdem_relief_500m", "fabdem_relief_1km", "canal_kde_250m", "canal_kde_500m"]
@@ -117,7 +120,9 @@ def aoa(cell_feats: np.ndarray, station_feats: np.ndarray):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--bbox", type=float, nargs=4, metavar=("LON_MIN", "LAT_MIN", "LON_MAX", "LAT_MAX"))
-    parser.add_argument("--res-m", type=float, default=100.0)
+    parser.add_argument("--res-m", type=float, default=100.0, help="harus membagi 1000 agar bersarang dengan sel 1 km")
+    parser.add_argument("--crs", choices=["master", "utm"], default="master",
+                        help="master = grid induk equal-area ESRI:54034 (bawaan); utm = zona UTM lokal (perilaku lama, tidak sejajar antar-pilot)")
     parser.add_argument("--dem", default=str(path("raw") / "dem" / "fabdem_pilot.tif"))
     parser.add_argument("--gpkg", default=str(path("raw") / "kanal" / "kanal_osm_clip.gpkg"))
     parser.add_argument("--layer", default="kanal_pilot_klaster5")
@@ -131,13 +136,22 @@ def main() -> None:
     else:
         with rasterio.open(dem_path) as src:
             lon_min, lat_min, lon_max, lat_max = src.bounds.left, src.bounds.bottom, src.bounds.right, src.bounds.top
-    crs = utm_crs((lon_min + lon_max) / 2, (lat_min + lat_max) / 2)
-    to_utm = Transformer.from_crs("EPSG:4326", crs, always_xy=True)
-    xs, ys = to_utm.transform([lon_min, lon_max, lon_min, lon_max], [lat_min, lat_min, lat_max, lat_max])
-    x0, y_top = math.floor(min(xs) / res) * res, math.ceil(max(ys) / res) * res
-    width, height = int(math.ceil((max(xs) - x0) / res)), int(math.ceil((y_top - min(ys)) / res))
-    transform, shape = from_origin(x0, y_top, res, res), (height, width)
-    print(f"grid: {width} x {height} sel @ {res:.0f} m | CRS {crs.to_string()} | {width * height:,} sel")
+    if args.crs == "master":
+        if 1000 % res:
+            sys.exit("--res-m harus membagi 1000 (mis. 100, 250, 500) agar sejajar dengan grid induk.")
+        crs = grid_crs()
+        transform, shape, (x_min, y_min, x_max, y_max) = bbox_to_grid((lon_min, lat_min, lon_max, lat_max), res)
+        x0, y_top = x_min, y_max
+        height, width = shape
+        to_utm = Transformer.from_crs("EPSG:4326", crs, always_xy=True)   # nama lama dipertahankan: transformer lon/lat -> CRS grid
+    else:
+        crs = utm_crs((lon_min + lon_max) / 2, (lat_min + lat_max) / 2)
+        to_utm = Transformer.from_crs("EPSG:4326", crs, always_xy=True)
+        xs, ys = to_utm.transform([lon_min, lon_max, lon_min, lon_max], [lat_min, lat_min, lat_max, lat_max])
+        x0, y_top = math.floor(min(xs) / res) * res, math.ceil(max(ys) / res) * res
+        width, height = int(math.ceil((max(xs) - x0) / res)), int(math.ceil((y_top - min(ys)) / res))
+        transform, shape = from_origin(x0, y_top, res, res), (height, width)
+    print(f"grid: {width} x {height} sel @ {res:.0f} m | CRS {crs.to_string()} ({'grid induk' if args.crs == 'master' else 'UTM lokal'}) | {width * height:,} sel")
 
     layers = [r[0] for r in pyogrio.list_layers(args.gpkg)] if Path(args.gpkg).exists() else []
     layer = args.layer if args.layer in layers else (layers[0] if layers else None)
@@ -186,7 +200,7 @@ def main() -> None:
             dst.write(arr)
             for i, b in enumerate(bands, 1):
                 dst.set_band_description(i, b)
-    (out_dir / "grid_meta.json").write_text(json.dumps({"crs": crs.to_string(), "res_m": res, "x0": x0, "y_top": y_top,
+    (out_dir / "grid_meta.json").write_text(json.dumps({"crs": crs.to_string(), "grid": args.crs, "res_m": res, "x0": x0, "y_top": y_top,
                                                        "width": width, "height": height, "aoa_threshold": thr}, indent=1))
     at_st.to_parquet(path("features") / "grid_static_at_stations.parquet", index=False)
 
