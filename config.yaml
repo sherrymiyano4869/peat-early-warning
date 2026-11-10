@@ -14,3 +14,10 @@ pilot:
   end: "2025-12-31"
 
 thresholds_cm: [-30, -40, -50]  # ambang muka air (cm), negatif = di bawah permukaan
+
+# Peta dasar WebGIS (opsional). Bawaan: OpenStreetMap standar. Untuk lalu lintas besar, arahkan ke server tile sendiri atau penyedia berbasis OSM.
+# webmap:
+#   basemap:
+#     url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+#     attribution: '&copy; OpenStreetMap contributors'
+#     maxZoom: 19

@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.17.1
+- webmap: peta dasar OpenStreetMap standar (tanpa kunci API) dengan atribusi dan filter peredam warna; URL dapat diganti lewat `webmap.basemap` di config.yaml (masuk manifest)
+- docs: keputusan peta dasar dan usulan arsitektur data (monitoring dan predicting) di CATATAN_DESAIN_DAN_REVISI.md
+
+## v0.17
+- 10_build_tiles.py: tile hillshade dari DEM 30 m (bayangan transparan, relief diperbesar 15x, kontras diregangkan otomatis, kompresi lunak); deskriptor memuat
+  skema kelas, keterangan "tanpa warna = tidak dinilai", dan catatan hillshade
+- 09_export_web.py: relief lokal dihapus; jarak ke stasiun dan AOA hanya dengan --advanced-layers
+- webmap: grid tanpa goresan abu-abu; stasiun satu simbol (kelas muka air divergen di ambang -40 cm, abu-abu = tanpa data, putus-putus = berhenti melapor), prakiraan hanya di popup
+  dengan peringatan jujur; hillshade di bawah kerawanan; legenda di peta; angka berformat Indonesia; kontrol opasitas diperjelas
+
 ## v0.16
 - scripts/08_susceptibility.py: indeks kerawanan relatif per sel (struktural; dinamis bila dynamic.tif ada), peringkat terhadap distribusi acuan tetap
   (reference_quantiles.json) agar kelas stabil antar-run, penutup air/terbangun/bakau (WorldCover) dan gambut (BlueBook)

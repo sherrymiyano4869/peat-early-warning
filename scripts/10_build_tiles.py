@@ -8,8 +8,13 @@ Masuk : data/features/grid/{risk_index,risk_class,confidence_static}.tif, grid_m
 Keluar: webmap/data/units.geojson           tingkat 1 (zoom jauh): satu poligon per KHG (atau blok 5 km bila tanpa KHG)
         webmap/data/tiles/coarse/{z}/{x}/{y}.png   tingkat 2 (zoom menengah): sel 500 m
         webmap/data/tiles/fine/{z}/{x}/{y}.png     tingkat 3 (zoom dekat): sel 100 m
+        webmap/data/tiles/hillshade/{z}/{x}/{y}.png bayangan relief dari DEM (konteks di bawah kerawanan), bila DEM ada
         webmap/data/boundaries_khg.geojson, boundaries_admin.geojson, canals.geojson (bila masukannya diberikan)
         webmap/data/kerawanan.json                 deskripsi tampilan, dibaca 09_export_web.py dan peramban
+
+Hillshade: sinar dari barat laut (315 derajat, tinggi 45 derajat). Gambut sangat datar, jadi relief diperbesar (--hillshade-exag, bawaan 15x) dan kontras diregangkan otomatis;
+kesalahan vertikal FABDEM di hutan tropis beberapa meter sebanding dengan relief kubah, jadi tekstur halus bisa sebagian artefak. Dirender
+sebagai bayangan transparan (hitam untuk sisi gelap, putih tipis untuk sisi terang) agar menyatu dengan peta dasar.
 
 Palet: urutan kuning ke merah tua 5 kelas (ColorBrewer YlOrRd). Kepercayaan: kelas rendah = lebih transparan dan diarsir; sedang = agak
 transparan; tinggi = pekat. Kepercayaan yang dihitung di sini baru dari jarak ke stasiun dan AOA (masukan dan rentang prediksi belum ada).
@@ -107,6 +112,65 @@ def write_tiles(layers: dict, transform, crs, shape, bbox_ll, zooms, out_dir: Pa
     return count
 
 
+def hillshade(dem: np.ndarray, dx_m: float, dy_m: float, exag: float = 8.0, azimuth: float = 315.0, altitude: float = 45.0, smooth: bool = True):
+    """Iluminasi 0-1 (datar = sin(tinggi matahari)); NaN di luar DEM. DEM utara-atas; dx_m dan dy_m ukuran piksel dalam meter."""
+    z = dem.astype("float64").copy()
+    valid = np.isfinite(z)
+    if smooth:  # redam derau FABDEM sebelum menurunkan kemiringan
+        from scipy import ndimage
+        filled = np.where(valid, z, np.nanmean(z))
+        z = ndimage.uniform_filter(filled, size=3, mode="nearest")
+    z *= exag
+    dz_dx = np.gradient(z, dx_m, axis=1)          # timur positif
+    dz_dy = -np.gradient(z, dy_m, axis=0)         # utara positif (baris bertambah ke selatan)
+    norm = np.sqrt(1 + dz_dx ** 2 + dz_dy ** 2)
+    az, alt = math.radians(azimuth), math.radians(altitude)
+    light = (math.sin(az) * math.cos(alt), math.cos(az) * math.cos(alt), math.sin(alt))
+    shade = (-dz_dx * light[0] - dz_dy * light[1] + light[2]) / norm
+    return np.where(valid, np.clip(shade, 0, 1), np.nan).astype("float32")
+
+
+def shade_gain(shade: np.ndarray, altitude: float = 45.0, target: float = 0.45) -> float:
+    """Penguat kontras: persentil 98 penyimpangan dari permukaan datar dipetakan ke opasitas `target` (relief gambut sangat landai)."""
+    flat = math.sin(math.radians(altitude))
+    dev = np.abs(shade[np.isfinite(shade)] - flat)
+    return float(target / max(np.percentile(dev, 98), 1e-4)) if dev.size else 1.0
+
+
+def shade_to_rgba(shade: np.ndarray, altitude: float = 45.0, gain: float = 3.0) -> np.ndarray:
+    flat = math.sin(math.radians(altitude))
+    rgba = np.zeros(shade.shape + (4,), dtype=np.uint8)
+    ok = np.isfinite(shade)
+    dev = np.nan_to_num(shade, nan=flat) - flat
+    dark = 0.5 * np.tanh(np.clip(-dev, 0, None) * gain / 0.5)         # kompresi lunak agar lereng curam tidak jenuh
+    light = 0.3 * np.tanh(np.clip(dev, 0, None) * gain * 0.6 / 0.3)
+    rgba[..., :3] = np.where((light > dark)[..., None], 255, 0)
+    rgba[..., 3] = np.where(ok, np.maximum(dark, light) * 255, 0).astype(np.uint8)
+    return rgba
+
+
+def write_hillshade_tiles(shade, transform, crs, bbox_ll, zooms, out_dir: Path, gain: float = 3.0) -> int:
+    count = 0
+    for z in zooms:
+        x0, y0 = lonlat_to_tile(bbox_ll[0], bbox_ll[3], z)
+        x1, y1 = lonlat_to_tile(bbox_ll[2], bbox_ll[1], z)
+        for x in range(x0, x1 + 1):
+            for y in range(y0, y1 + 1):
+                minx, miny, maxx, maxy = tile_bounds(z, x, y)
+                dst_t = from_origin(minx, maxy, (maxx - minx) / 256, (maxy - miny) / 256)
+                dst = np.full((256, 256), np.nan, dtype="float32")
+                reproject(shade, dst, src_transform=transform, src_crs=crs, src_nodata=np.nan, dst_transform=dst_t, dst_crs="EPSG:3857",
+                          dst_nodata=np.nan, resampling=Resampling.bilinear)
+                rgba = shade_to_rgba(dst, gain=gain)
+                if rgba[..., 3].max() == 0:
+                    continue
+                target = out_dir / str(z) / str(x)
+                target.mkdir(parents=True, exist_ok=True)
+                Image.fromarray(rgba, "RGBA").save(target / f"{y}.png", optimize=True)
+                count += 1
+    return count
+
+
 def zonal_units(polys, names, cls, idx, conf, transform, crs, res, breaks):
     """Statistik per unit pada grid halus; polys dalam CRS grid."""
     feats = []
@@ -151,6 +215,10 @@ def main() -> None:
     p.add_argument("--coarse-m", type=float, default=500.0)
     p.add_argument("--coarse-zooms", type=int, nargs=2, default=[9, 12])
     p.add_argument("--fine-zooms", type=int, nargs=2, default=[13, 15])
+    p.add_argument("--dem", default=str(path("raw") / "dem" / "fabdem_pilot.tif"), help="DEM untuk hillshade (EPSG:4326)")
+    p.add_argument("--hillshade-exag", type=float, default=15.0)
+    p.add_argument("--hillshade-zooms", type=int, nargs=2, default=[11, 14])
+    p.add_argument("--no-hillshade", action="store_true")
     p.add_argument("--cap", default="auto", help="auto | 0 | 1 | 2: batas kelas kepercayaan (auto = dari walkforward_summary.csv)")
     p.add_argument("--out", default=str(ROOT / "webmap" / "data"))
     args = p.parse_args()
@@ -199,6 +267,29 @@ def main() -> None:
     t_c = from_origin(transform.c, transform.f, res * f, res * f)
     n_coarse = write_tiles({"cls": cls_c, "conf": conf_c}, t_c, crs, cls_c.shape, bbox_ll, range(args.coarse_zooms[0], args.coarse_zooms[1] + 1), out / "tiles" / "coarse")
 
+    # konteks relief: hillshade dari DEM asli (30 m), bukan dari grid 100 m
+    n_shade, shade_info = 0, None
+    dem_path = Path(args.dem)
+    if not args.no_hillshade and dem_path.exists():
+        with rasterio.open(dem_path) as src:
+            dem = src.read(1).astype("float64")
+            if src.nodata is not None:
+                dem[dem == src.nodata] = np.nan
+            dem[dem < -500] = np.nan
+            lat_c = (src.bounds.bottom + src.bounds.top) / 2
+            dx_m = abs(src.transform.a) * 111_320.0 * math.cos(math.radians(lat_c))
+            dy_m = abs(src.transform.e) * 111_320.0
+            shade = hillshade(dem, dx_m, dy_m, exag=args.hillshade_exag)
+            gain = shade_gain(shade)
+            n_shade = write_hillshade_tiles(shade, src.transform, src.crs, (src.bounds.left, src.bounds.bottom, src.bounds.right, src.bounds.top),
+                                            range(args.hillshade_zooms[0], args.hillshade_zooms[1] + 1), out / "tiles" / "hillshade", gain)
+        shade_info = {"url": "tiles/hillshade/{z}/{x}/{y}.png", "minZoom": args.hillshade_zooms[0], "maxZoom": 18,
+                      "minNativeZoom": args.hillshade_zooms[0], "maxNativeZoom": args.hillshade_zooms[1],
+                      "azimuth": 315, "altitude": 45, "exaggeration": args.hillshade_exag,
+                      "gain": round(gain, 1),
+                      "note": f"Bayangan relief dari FABDEM; sinar dari barat laut; relief diperbesar {args.hillshade_exag:g}x dan kontras diregangkan otomatis "
+                              f"(relief gambut sangat landai; kesalahan vertikal DEM sebanding dengan relief)."}
+
     # tingkat 1: unit (KHG atau blok 5 km)
     unit_type = "KHG"
     if args.units_gpkg:
@@ -238,7 +329,9 @@ def main() -> None:
              "minZoom": args.coarse_zooms[0] + 2, "maxZoom": args.fine_zooms[0] - 1, "minNativeZoom": args.coarse_zooms[0], "maxNativeZoom": args.coarse_zooms[1]},
             {"id": "fine", "label": f"sel {int(res)} m", "type": "tiles", "url": "tiles/fine/{z}/{x}/{y}.png",
              "minZoom": args.fine_zooms[0], "maxZoom": 18, "minNativeZoom": args.fine_zooms[0], "maxNativeZoom": args.fine_zooms[1]}],
-        "bounds": [[south, west], [north, east]],
+        "bounds": [[south, west], [north, east]], "hillshade": shade_info,
+        "class_scheme": "5 kelas dari kuintil sebaran acuan (batas tetap: " + ", ".join(f"{b:.2f}" for b in breaks) + "); kelas relatif, bukan ambang absolut",
+        "unmapped": "tanpa warna = bukan gambut, air, atau terbangun (tidak dinilai)",
         "confidence": {"cap": cap, "cap_label": CLASS_LABEL[cap], "note": note_cap,
                        "legend": [{"label": "tinggi", "style": "pekat"}, {"label": "sedang", "style": "agak transparan"}, {"label": "rendah", "style": "transparan dan diarsir"}]},
         "boundaries": {k: f"boundaries_{k}.geojson" if k != "canals" else "canals.geojson" for k in extra},
@@ -247,7 +340,7 @@ def main() -> None:
     (out / "kerawanan.json").write_text(json.dumps(descriptor, indent=1, ensure_ascii=False), encoding="utf-8")
 
     size_mb = sum(f.stat().st_size for f in (out / "tiles").rglob("*.png")) / 1e6 if (out / "tiles").exists() else 0
-    print(f"tile halus {n_fine} | tile kasar {n_coarse} | total {size_mb:.1f} MB | unit {len(feats)} ({unit_type}) | batas {extra}")
+    print(f"tile halus {n_fine} | tile kasar {n_coarse} | hillshade {n_shade} | total {size_mb:.1f} MB | unit {len(feats)} ({unit_type}) | batas {extra}")
     print("Tersimpan:", out / "kerawanan.json")
 
 

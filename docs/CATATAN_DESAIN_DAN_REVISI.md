@@ -1,6 +1,6 @@
 # Catatan desain dan daftar revisi (AGC 2027, peringatan dini kekeringan gambut)
 
-Dokumen hidup: tambahkan tanggal tiap kali ada keputusan. Ditulis 10 Nov 2026 (v0.16).
+Dokumen hidup: tambahkan tanggal tiap kali ada keputusan. Ditulis 10 Nov 2026 (v0.16), diperbarui 11 Nov 2026 (v0.17, tinjauan kartografi).
 
 ## 1. Keputusan yang sudah diambil
 **Struktur sistem.** Dua sistem yang saling memvalidasi, bukan terpisah:
@@ -29,6 +29,38 @@ untuk atmosfer jernih dan berasap (penentu: pita biru) -> tes kontekstual (jende
 alternatif. Akurasi di paper: menyala jelas di atas 95%, membara hanya 35% (kontekstual) dan 56% (cloud mask) benar -> "kandidat membara" tidak boleh disajikan pasti.
 
 **Pencocokan.** Radius sekitar 1 km dan jendela 24-48 jam adalah ANGKA AWAL (tanpa sumber), disetel dengan data sekunder BPBD.
+
+**Keputusan kartografi (tinjauan 11 Nov 2026, v0.17).** Pesan peta: indeks relatif kerentanan gambut terhadap pengeringan; satu peta, satu pesan.
+- Grid pada zoom jauh dipertahankan, TANPA goresan abu-abu (isi berwarna saja; garis sewarna isi mencegah celah halus antarpoligon).
+- Stasiun: satu simbol, bukan dua mode. Warna = kelas muka air terakhir dengan titik tengah divergen di ambang -40 cm (biru = di atas ambang;
+  pasir, cokelat, cokelat tua = makin dalam), abu-abu = tanpa data, abu-abu berongga putus-putus = berhenti melapor lebih dari 3 hari. Peluang turun TIDAK lagi
+  mewarnai penanda (angkanya belum terbukti lebih baik daripada persistensi); tampil di popup berbahasa jelas dengan peringatan bila validasi belum ada.
+- Relief lokal diganti hillshade dari FABDEM 30 m (sinar barat laut, relief diperbesar, kontras diregangkan otomatis, di bawah kerawanan). Peringatan: kesalahan
+  vertikal FABDEM di hutan tropis sebanding dengan relief kubah; sebagian tekstur halus bisa artefak.
+- "Di luar AOA" dan "jarak ke stasiun" dihapus dari antarmuka (istilah teknis, informasinya sudah dibawa transparansi dan arsiran kepercayaan, ditambah penjelasan
+  di legenda). Masih tersedia untuk analis lewat `09_export_web.py --advanced-layers`.
+- Legenda dipindah ke kotak di peta (bukan hanya di panel); memuat kelas, skema kelas (kuintil acuan tetap, kelas relatif), kepercayaan, dan "tanpa warna = tidak dinilai".
+- Angka di popup memakai format Indonesia (koma desimal) dan satuan; kontrol "Transparansi" diganti "Opasitas" dengan keterangan arah.
+- Verifikasi (protokol skill kartografi): simulasi buta warna (protan, deutan, tritan; Machado 2009) selisih warna antar-kelas bertetangga terkecil 13,1 dE untuk palet kerawanan
+  dan 28,8 dE untuk palet stasiun; kelas terendah kerawanan terhadap peta dasar CARTO Positron 37 dE (31,7 dE pada opasitas 0,85). Pada kepercayaan rendah (opasitas 0,59) kelas
+  sengaja lebih sulit dibedakan. Sumber palet: ColorBrewer (registri skill terakhir diverifikasi 19 Jul 2026, diperiksa 11 Nov 2026).
+- Belum: histogram dengan batas kelas di alur kerja, uji dua skema kelas (kuintil vs batas manual) untuk melihat apakah cerita berubah, peta statis (matplotlib, palet
+  sama) untuk slide, tata letak panel di layar ponsel, pemotongan raster mengikuti batas gambut BlueBook asli.
+
+**Peta dasar (11 Nov 2026).** OpenStreetMap standar (tanpa kunci API), diredam dengan filter CSS agar tidak mengalahkan tema. Kebijakan tile OSM: pemakaian berat dilarang tanpa izin
+dan atribusi wajib jelas; browser biasa sudah mengirim Referer dan User-Agent yang dibutuhkan. URL peta dasar bisa diganti lewat `webmap.basemap` di config.yaml
+(masuk manifest) tanpa mengubah kode, bila lalu lintas besar (server tile sendiri atau penyedia berbasis OSM).
+
+**Usulan arsitektur data dan alur kerja (menunggu keputusan; 11 Nov 2026).** Dua segmen: Monitoring (kini) dan Predicting (masa depan, LightGBM).
+- SiTMAT adalah ACUAN (kalibrasi dan validasi indeks), bukan bahan indeks. Bahan dinamis: defisit hujan dan hari tanpa hujan (GSMaP), indeks kelembapan tanah, anomali NDMI/S1.
+  Bahan struktural: kanal, relief, LULC. Titik api teramati (VIIRS) ditampilkan di Monitoring tetapi TIDAK masuk indeks (hasil, bukan bahan; jaga agar tidak melingkar).
+- Predicting titik api = peluang per sel (bukan titik pasti), target berbeda dari kekeringan: dipicu manusia, label VIIRS jarang dan bias awan/asap. Wajib dibandingkan dengan dasar
+  (klimatologi sel-bulan, titik api kemarin, HTH/KBDI) dengan PR-AUC, skill Brier, kurva keandalan, dan tangkapan pada sel teratas.
+- Lapisan data: L0 mentah bertanggal (tak ditimpa, manifest sumber dan lisensi), L1 sel-hari terstandar (GeoParquet, COG), L2 tabel fitur (Parquet per tanggal), L3 produk, L4 arsip
+  prediksi dan kejadian (tak berubah). Satu grid induk bersarang (100 m, 500 m, 1 km) dalam satu CRS (cross-region: EPSG:6933; pilot masih UTM 32748, putuskan migrasi sebelum tahap wilayah).
+- Harian: ambil -> cek mutu -> seragamkan -> fitur -> monitoring -> prediksi -> arsip -> ekspor web. Mingguan: skor prospektif -> uji lebih baik dari dasar -> latih ulang atau batasi kepercayaan.
+- Sumber: VIIRS 375 m arsip FIRMS sejak 20 Jan 2012 (perlu akun Earthdata); NRT diganti data sains dengan jeda beberapa bulan, jadi catat jenis data di manifest (pergeseran latih-layani);
+  koleksi Earth Engine NASA/LANCE/SNPP_VIIRS/C2 hanya sejak 3 Sep 2023, jangan jadi satu-satunya sumber latih.
 
 ## 2. Daftar revisi diagram (dari tinjauan 10 Nov 2026), urut prioritas
 1. Tambah langkah "nilai prediksi vs kejadian" yang menghasilkan skor validasi dan masuk ke "Hitung kepercayaan" (batas skill). Sekarang panah umpan balik hanya ke "Tandai pantauan sisa".

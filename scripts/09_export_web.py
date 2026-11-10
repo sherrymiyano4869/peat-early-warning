@@ -30,13 +30,15 @@ matplotlib.use("Agg")
 from matplotlib import colormaps  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.common import ROOT, path  # noqa: E402
+from src.common import ROOT, load_config, path  # noqa: E402
 from src.confidence import CLASS_LABEL, cap_from_skill  # noqa: E402
 from src.regions import add_region  # noqa: E402
 
 # (id, berkas raster, nama band, judul, satuan, palet, vmin, vmax (None = persentil 98), kategorikal, tampil awal)
+# (id, berkas raster, nama band, judul, satuan, palet, vmin, vmax (None = persentil 98), kategorikal, tampil awal)
+# Lapisan teknis hanya dengan --advanced-layers. Informasi "jauh dari stasiun / di luar AOA" sudah tersampaikan oleh transparansi dan arsiran
+# kepercayaan; hillshade (10_build_tiles.py) menggantikan relief lokal.
 LAYERS = [
-    ("fabdem_relief_1km", "static.tif", "fabdem_relief_1km", "Relief lokal FABDEM (radius 1 km)", "m", "YlGnBu", 0, None, False, False),
     ("dist_station_km", "confidence_static.tif", "dist_station_km", "Jarak ke stasiun terdekat", "km", "Greys", 0, 20, False, False),
     ("outside_aoa", "confidence_static.tif", "inside_aoa", "Di luar area penerapan model (AOA)", "", None, 0, 1, True, False),
 ]
@@ -44,7 +46,7 @@ CATEGORICAL = {"outside_aoa": {0: (90, 90, 90, 150)}}
 LEGEND_ITEMS = {"outside_aoa": [("di luar area penerapan", "#5a5a5a")]}
 ATTRIBUTION = [
     "Muka air dan stasiun: SiTMAT (KLH/BRGM), diambil dengan jeda sopan; data dapat berubah atau terkoreksi.",
-    "(c) OpenStreetMap contributors (ODbL); kanal dan batas gambut/KHG dari BRGM BlueBook 2026. Peta dasar: (c) CARTO.",
+    "(c) OpenStreetMap contributors (ODbL); kanal dan batas gambut/KHG dari BRGM BlueBook 2026. Peta dasar: OpenStreetMap (tile standar; patuhi kebijakan tile OSM, ganti lewat manifest.basemap bila lalu lintas besar).",
     "Tutupan lahan: ESA WorldCover 10 m 2021 (CC BY 4.0).",
     "FABDEM is produced using Copernicus WorldDEM-30 (c) DLR e.V. (CC BY-NC-SA 4.0), Hawker dkk. 2022.",
     "Hujan: JAXA GSMaP (Global Rainfall Map in Near-Real-Time) dan CHIRPS; citra: Copernicus Sentinel-1/2.",
@@ -114,6 +116,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=str(ROOT / "webmap" / "data"))
     parser.add_argument("--series-days", type=int, default=90)
+    parser.add_argument("--advanced-layers", action="store_true", help="sertakan lapisan teknis (jarak ke stasiun, AOA)")
     args = parser.parse_args()
     out = Path(args.out)
     grid, outputs = path("features") / "grid", path("outputs")
@@ -121,7 +124,7 @@ def main() -> None:
     (out / "series").mkdir(parents=True, exist_ok=True)
 
     layers = []
-    for lid, fname, band, title, unit, cmap_name, vmin, vmax, categorical, default in LAYERS:
+    for lid, fname, band, title, unit, cmap_name, vmin, vmax, categorical, default in (LAYERS if args.advanced_layers else []):
         tif = grid / fname
         if not tif.exists():
             continue
@@ -176,7 +179,7 @@ def main() -> None:
                 "issue_date": None if not len(pred) else str(pred["issue_date"].max().date()),
                 "center": center, "validation": validation_block(outputs), "layers": layers,
                 "stations": {"file": "stations.geojson", "n": len(features), "series_dir": "series/"},
-                "kerawanan": kerawanan, "attribution": ATTRIBUTION, "disclaimer": DISCLAIMER}
+                "basemap": (load_config().get("webmap") or {}).get("basemap"), "kerawanan": kerawanan, "attribution": ATTRIBUTION, "disclaimer": DISCLAIMER}
     (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
     print("manifest:", out / "manifest.json")
     print(f"validasi: {manifest['validation'].get('cap_label', 'belum ada')} | data sampai {manifest['data_through']} | terbit {manifest['issue_date']}")

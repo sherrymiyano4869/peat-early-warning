@@ -1,27 +1,70 @@
 "use strict";
 const DATA_DIR = "data/";
+// Peta dasar: OpenStreetMap standar. Kebijakan tile OSM melarang pemakaian berat tanpa izin dan mewajibkan atribusi yang jelas; untuk lalu lintas besar
+// ganti lewat manifest.basemap (tanpa mengubah kode), misalnya ke server tile sendiri atau penyedia berbasis OSM.
+const DEFAULT_BASEMAP = { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors", maxZoom: 19 };
 const TRANSPARENT_TILE = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
 
 function fmt(x, d = 1) {
-  return (x === null || x === undefined || Number.isNaN(x)) ? "–" : Number(x).toFixed(d);
+  if (x === null || x === undefined || Number.isNaN(x)) return "–";
+  return Number(x).toLocaleString("id-ID", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
-function probColor(p) {
-  if (p === null || p === undefined || Number.isNaN(p)) return "#888888";
-  if (p < 0.2) return "#2b83ba";
-  if (p < 0.4) return "#abdda4";
-  if (p < 0.6) return "#ffffbf";
-  if (p < 0.8) return "#fdae61";
-  return "#d7191c";
+// Kelas muka air terakhir: ambang acuan -40 cm (titik tengah divergen); biru di atas ambang, cokelat makin gelap makin dalam.
+const WL_CLASSES = [
+  { min: -40, color: "#2c7bb6", label: "di atas ambang (≥ −40 cm)" },
+  { min: -80, color: "#dfc27d", label: "−40 s/d −80 cm" },
+  { min: -120, color: "#a6611a", label: "−80 s/d −120 cm" },
+  { min: -Infinity, color: "#543005", label: "lebih dalam dari −120 cm" },
+];
+const NODATA_COLOR = "#9e9e9e";
+
+function wlClass(cm) {
+  if (cm === null || cm === undefined || Number.isNaN(cm)) return null;
+  return WL_CLASSES.find(c => cm >= c.min) || WL_CLASSES[WL_CLASSES.length - 1];
 }
 
 function wlColor(cm) {
-  if (cm === null || cm === undefined || Number.isNaN(cm)) return "#888888";
-  if (cm >= -40) return "#2b83ba";
-  if (cm >= -80) return "#abdda4";
-  if (cm >= -120) return "#ffffbf";
-  if (cm >= -160) return "#fdae61";
-  return "#d7191c";
+  const c = wlClass(cm);
+  return c ? c.color : NODATA_COLOR;
+}
+
+function isStale(lastDate, dataThrough, days = 3) {
+  if (!lastDate || !dataThrough) return true;
+  return (Date.parse(dataThrough) - Date.parse(lastDate)) / 86400000 > days;
+}
+
+function stationLegendHtml() {
+  const rows = WL_CLASSES.map(c => `<span class="dot" style="background:${c.color}"></span>${c.label}`).join("<br>");
+  return `<h2>Stasiun SiTMAT: muka air terakhir</h2>${rows}<br><span class="dot" style="background:${NODATA_COLOR}"></span>tanpa data<br>` +
+         `<span class="dot stale"></span>berhenti melapor (> 3 hari)`;
+}
+
+function trendText(d7) {
+  if (d7 === null || d7 === undefined || Number.isNaN(d7)) return "perubahan 7 hari tidak tersedia";
+  if (Math.abs(d7) < 2) return "stabil dalam 7 hari terakhir";
+  return `${d7 < 0 ? "turun" : "naik"} ${fmt(Math.abs(d7), 0)} cm dalam 7 hari terakhir`;
+}
+
+function predictionSentences(pred) {
+  const out = ["h7", "h14"].filter(k => pred && pred[k]).map(k => {
+    const p = pred[k], dt = Number(p.delta_med);
+    const arah = Math.abs(dt) < 2 ? "tetap" : (dt < 0 ? "turun" : "naik");
+    return `<li><b>${k.slice(1)} hari ke depan:</b> ${arah} ${fmt(Math.abs(dt), 0)} cm (rentang ${fmt(p.delta_q10, 0)} s/d ${fmt(p.delta_q90, 0)}); ` +
+           `peluang turun ≥ 10 cm ${fmt(p.p_turun10 === null ? null : p.p_turun10 * 100, 0)}% ` +
+           `<span class="small">(rata-rata di data latih ${fmt(p.p_turun10_basis === null ? null : p.p_turun10_basis * 100, 0)}%)</span></li>`;
+  });
+  return out.length ? "<ul style=\"margin:4px 0 0 16px;padding:0\">" + out.join("") + "</ul>" : "<div class=\"small\">Belum ada prakiraan untuk stasiun ini.</div>";
+}
+
+function stationPopupHtml(p, validation, spark) {
+  const c = wlClass(p.wl_last_cm);
+  const reliable = validation && validation.available && validation.cap_class >= 1;
+  const caveat = reliable ? "" : "<div class=\"small\" style=\"margin:4px 0\">Prakiraan belum dapat diandalkan: model belum terbukti lebih baik daripada tebakan &quot;muka air tetap&quot;. Angka hanya untuk tinjauan.</div>";
+  return `<b>${p.name}</b><br><span class="small">${p.id} &middot; ${p.region}</span><br>` +
+         `Muka air terakhir (${p.last_date || "–"}): <b>${fmt(p.wl_last_cm, 0)} cm</b>${c ? " · " + c.label : ""}<br>` +
+         `${trendText(p.wl_d7_cm)}<br>${spark}` +
+         `<div style="margin-top:4px"><b>Prakiraan (prototipe)</b></div>${caveat}${predictionSentences(p.pred)}`;
 }
 
 function sparklinePath(values, w, h, pad = 2) {
@@ -87,7 +130,8 @@ function classColor(classes, id) {
 }
 
 function unitStyle(classes, props) {
-  return { fillColor: classColor(classes, props.kelas), fillOpacity: 0.85, color: "#555555", weight: 0.8 };
+  const c = classColor(classes, props.kelas);
+  return { fillColor: c, fillOpacity: 0.85, color: c, weight: 1, opacity: 0.85 };   // tanpa garis tepi abu-abu: hanya isi berwarna
 }
 
 function boundaryStyle(kind) {
@@ -111,8 +155,11 @@ function kerawananLegendHtml(k) {
                `<span class="swatch" style="background:#bd0026;opacity:.7"></span>agak transparan: sedang<br>` +
                `<span class="swatch hatch" style="background-color:#fd8d3c;opacity:.6"></span>transparan dan diarsir: rendah`;
   const mode = k.mode === "struktural" ? "Hanya kerentanan struktural (belum ada tekanan dinamis)." : "Kerentanan struktural + tekanan dinamis.";
-  return `<b>${k.title}</b> <span class="small">(indeks relatif)</span><br>${cls}<div class="small" style="margin-top:4px">${mode}</div>` +
-         `<div style="margin-top:6px"><b>Kepercayaan</b><br>${conf}</div>` +
+  const unmapped = k.unmapped ? `<div class="small" style="margin-top:4px">${k.unmapped}</div>` : "";
+  const scheme = k.class_scheme ? `<div class="small" style="margin-top:2px">${k.class_scheme}</div>` : "";
+  const hs = k.hillshade ? `<div class="small" style="margin-top:4px">${k.hillshade.note}</div>` : "";
+  return `<h2>${k.title} (indeks relatif)</h2>${cls}<div class="small" style="margin-top:4px">${mode}</div>${scheme}${unmapped}` +
+         `<h2>Kepercayaan peta</h2>${conf}<div class="small">Arsiran berarti jauh dari stasiun atau kondisi lahan berbeda dari stasiun.</div>${hs}` +
          `<div class="small" style="margin-top:4px">${k.disclaimer}</div>`;
 }
 
@@ -132,13 +179,15 @@ async function getJson(url) {
 
 async function main() {
   const map = L.map("map").setView([-1.3, 104.0], 8);
-  // Peta dasar OSM standar (gratis, tanpa API key); dibuat abu muda lewat CSS .basemap-gray. CARTO kini meminta API key.
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    { maxZoom: 19, className: "basemap-gray",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
+  const baseOpts = b => ({ maxZoom: b.maxZoom || 19, attribution: b.attribution, className: "basemap-muted" });  // kelas CSS meredam warna agar peta dasar tidak mengalahkan tema
+  let baseLayer = L.tileLayer(DEFAULT_BASEMAP.url, baseOpts(DEFAULT_BASEMAP)).addTo(map);
   L.control.scale({ metric: true, imperial: false }).addTo(map);
   if (location.protocol === "file:") throw new Error("file-protocol");
   const manifest = await getJson(DATA_DIR + "manifest.json");
+  if (manifest.basemap && manifest.basemap.url && manifest.basemap.url !== DEFAULT_BASEMAP.url) {
+    map.removeLayer(baseLayer);
+    baseLayer = L.tileLayer(manifest.basemap.url, baseOpts(manifest.basemap)).addTo(map);
+  }
   const $ = id => document.getElementById(id);
   $("title").textContent = manifest.title;
   $("meta").innerHTML =
@@ -148,6 +197,7 @@ async function main() {
   $("badge").textContent = badge.text;
   $("attrib").innerHTML = "<p>" + manifest.attribution.join("</p><p>") + "</p><p><b>" + manifest.disclaimer + "</b></p>";
   map.setView(manifest.center, 11);
+  map.createPane("hillshadePane"); map.getPane("hillshadePane").style.zIndex = 240;
   map.createPane("kerawananPane"); map.getPane("kerawananPane").style.zIndex = 250;
   map.createPane("unitPane"); map.getPane("unitPane").style.zIndex = 300;
 
@@ -168,6 +218,8 @@ async function main() {
         onEachFeature: (f, layer) => layer.bindPopup(unitPopupHtml(f.properties, k)) });
     }
   }
+  const hs = k && k.hillshade ? L.tileLayer(DATA_DIR + k.hillshade.url, { pane: "hillshadePane", minZoom: k.hillshade.minZoom, maxZoom: k.hillshade.maxZoom,
+    minNativeZoom: k.hillshade.minNativeZoom, maxNativeZoom: k.hillshade.maxNativeZoom, opacity: 0.9, bounds: k.bounds, errorTileUrl: TRANSPARENT_TILE }) : null;
   const lines = {};
   const bfiles = (k && k.boundaries) || {};
   for (const kind of Object.keys(bfiles)) {
@@ -186,17 +238,20 @@ async function main() {
     toggle(unitLayer, want && unitLevel && z <= unitLevel.maxZoom);
     $("level").textContent = want && k ? levelLabel(k.levels, z) : "–";
   };
+  const syncHillshade = () => toggle(hs, on("chk-hillshade"));
   const syncLines = () => {
     toggle(lines.khg, on("chk-khg")); toggle(lines.admin, on("chk-admin")); toggle(lines.canals, on("chk-canals"));
   };
 
   // stasiun
   const gj = await getJson(DATA_DIR + manifest.stations.file);
-  let mode = "wl";
-  const colorFor = f => mode === "wl" ? wlColor(f.properties.wl_last_cm)
-    : probColor(f.properties.pred && f.properties.pred.h14 ? f.properties.pred.h14.p_turun10 : null);
+  const styleFor = f => {
+    const p = f.properties, stale = isStale(p.last_date, manifest.data_through);
+    return stale ? { fillColor: NODATA_COLOR, fillOpacity: 0.15, color: "#555", weight: 1.5, dashArray: "3 3", className: "station-marker" }
+                 : { fillColor: wlColor(p.wl_last_cm), fillOpacity: 1, color: "#ffffff", weight: 2, className: "station-marker" };   // lingkaran putih + bayangan: terbaca di atas warna kerawanan apa pun
+  };
   const markers = L.geoJSON(gj, {
-    pointToLayer: (f, ll) => L.circleMarker(ll, { pane: "markerPane", radius: 7, weight: 1, color: "#222", fillOpacity: 0.9, fillColor: colorFor(f) }),
+    pointToLayer: (f, ll) => L.circleMarker(ll, Object.assign({ pane: "markerPane", radius: 7 }, styleFor(f))),
     onEachFeature: (f, layer) => {
       layer.bindPopup("Memuat...");
       layer.on("click", async () => {
@@ -208,10 +263,7 @@ async function main() {
           spark = path ? `<svg width="220" height="50" style="background:#f4f4f4"><path d="${path}" fill="none" stroke="#1f78b4" stroke-width="1.5"/></svg>` +
                          `<div class="small">muka air harian, ${s.dates[0]} s/d ${s.dates[s.dates.length - 1]}</div>` : "";
         } catch (e) { spark = "<div class=\"small\">Deret waktu tidak tersedia.</div>"; }
-        layer.setPopupContent(`<b>${p.name}</b><br><span class="small">${p.id} &middot; ${p.region}</span><br>` +
-          `Terakhir ${p.last_date || "–"}: ${fmt(p.wl_last_cm)} cm (perubahan 7 hari ${fmt(p.wl_d7_cm)} cm)<br>${spark}` +
-          `<div style="margin-top:4px"><b>Prediksi (prototipe)</b></div>${predictionTable(p.pred)}` +
-          `<div class="small">&Delta; = perubahan muka air; basis = frekuensi kejadian di data latih.</div>`);
+        layer.setPopupContent(stationPopupHtml(p, manifest.validation, spark));
       });
     }
   });
@@ -222,9 +274,13 @@ async function main() {
   const supportEl = $("support");
   supportEl.innerHTML = manifest.layers.length
     ? manifest.layers.map((l, i) => `<label><input type="checkbox" data-i="${i}"> ${l.title}</label>`).join("<br>")
-    : "belum ada";
+    : "";
   let supportLegend = "";
-  const renderLegend = () => { $("legend").innerHTML = kerawananLegendHtml(k) + (supportLegend ? "<hr>" + supportLegend : ""); };
+  const renderLegend = () => {
+    $("legendbox").innerHTML = kerawananLegendHtml(k) + stationLegendHtml();
+    $("legend").innerHTML = supportLegend;
+  };
+  const ss = $("support-sect"); if (!manifest.layers.length && ss && ss.style) ss.style.display = "none";
   supportEl.addEventListener("change", e => {
     const i = Number(e.target.dataset.i);
     toggle(overlays[i], e.target.checked);
@@ -233,6 +289,7 @@ async function main() {
   });
 
   ["chk-kerawanan"].forEach(id => $(id).addEventListener("change", syncKerawanan));
+  $("chk-hillshade").addEventListener("change", syncHillshade);
   ["chk-khg", "chk-admin", "chk-canals"].forEach(id => $(id).addEventListener("change", syncLines));
   $("chk-stations").addEventListener("change", syncStations);
   map.on("zoomend", syncKerawanan);
@@ -242,17 +299,13 @@ async function main() {
     if (unitLayer) unitLayer.setStyle({ fillOpacity: opacity });
     overlays.forEach(o => o.setOpacity(Math.min(opacity, 0.8)));
   });
-  document.querySelectorAll("input[name=mode]").forEach(r => r.addEventListener("change", e => {
-    mode = e.target.value;
-    markers.eachLayer(l => l.setStyle({ fillColor: colorFor(l.feature) }));
-  }));
 
-  syncKerawanan(); syncLines(); syncStations(); renderLegend();
+  syncKerawanan(); syncHillshade(); syncLines(); syncStations(); renderLegend();
   if (k && k.bounds) map.fitBounds(k.bounds);
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { fmt, probColor, wlColor, sparklinePath, validationBadge, predictionTable, legendHtml, startupHint,
+  module.exports = { fmt, wlColor, wlClass, isStale, stationLegendHtml, trendText, predictionSentences, stationPopupHtml, sparklinePath, validationBadge, predictionTable, legendHtml, startupHint,
                      levelForZoom, levelLabel, classColor, unitStyle, boundaryStyle, unitPopupHtml, kerawananLegendHtml };
 } else {
   main().catch(err => {
