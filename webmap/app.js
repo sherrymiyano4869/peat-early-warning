@@ -178,11 +178,13 @@ async function getJson(url) {
 }
 
 async function main() {
+  // Dari file:// peramban tidak mengirim Referer, dan server tile OSM menolak (403 "Access blocked"). Jangan minta tile sama sekali; tampilkan petunjuk.
+  if (location.protocol === "file:") throw new Error("file-protocol");
   const map = L.map("map").setView([-1.3, 104.0], 8);
-  const baseOpts = b => ({ maxZoom: b.maxZoom || 19, attribution: b.attribution, className: "basemap-muted" });  // kelas CSS meredam warna agar peta dasar tidak mengalahkan tema
+  // referrerPolicy "origin": pastikan asal halaman (mis. http://localhost:8000) ikut terkirim sebagai Referer, sesuai kebijakan tile OSM
+  const baseOpts = b => ({ maxZoom: b.maxZoom || 19, attribution: b.attribution, className: "basemap-muted", referrerPolicy: "origin" });  // kelas CSS meredam warna agar peta dasar tidak mengalahkan tema
   let baseLayer = L.tileLayer(DEFAULT_BASEMAP.url, baseOpts(DEFAULT_BASEMAP)).addTo(map);
   L.control.scale({ metric: true, imperial: false }).addTo(map);
-  if (location.protocol === "file:") throw new Error("file-protocol");
   const manifest = await getJson(DATA_DIR + "manifest.json");
   if (manifest.basemap && manifest.basemap.url && manifest.basemap.url !== DEFAULT_BASEMAP.url) {
     map.removeLayer(baseLayer);

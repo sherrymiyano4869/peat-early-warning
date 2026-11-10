@@ -50,6 +50,8 @@ alternatif. Akurasi di paper: menyala jelas di atas 95%, membara hanya 35% (kont
 **Peta dasar (11 Nov 2026).** OpenStreetMap standar (tanpa kunci API), diredam dengan filter CSS agar tidak mengalahkan tema. Kebijakan tile OSM: pemakaian berat dilarang tanpa izin
 dan atribusi wajib jelas; browser biasa sudah mengirim Referer dan User-Agent yang dibutuhkan. URL peta dasar bisa diganti lewat `webmap.basemap` di config.yaml
 (masuk manifest) tanpa mengubah kode, bila lalu lintas besar (server tile sendiri atau penyedia berbasis OSM).
+Catatan: WebGIS HARUS dibuka lewat server (`python -m http.server -d webmap 8000`, lalu http://localhost:8000). Dari file:// OSM menjawab 403 karena tidak ada Referer.
+Bila masih 403 di localhost, periksa ekstensi privasi atau perisai peramban yang membuang Referer, atau ganti peta dasar lewat `webmap.basemap`.
 
 **Usulan arsitektur data dan alur kerja (menunggu keputusan; 11 Nov 2026).** Dua segmen: Monitoring (kini) dan Predicting (masa depan, LightGBM).
 - SiTMAT adalah ACUAN (kalibrasi dan validasi indeks), bukan bahan indeks. Bahan dinamis: defisit hujan dan hari tanpa hujan (GSMaP), indeks kelembapan tanah, anomali NDMI/S1.

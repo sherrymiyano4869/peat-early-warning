@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.17.2
+- webmap: dari file:// tidak ada lagi permintaan tile OSM (OSM menjawab 403 "Access blocked" untuk permintaan tanpa Referer); hanya petunjuk menjalankan http.server yang tampil.
+  Tile OSM meminta referrerPolicy "origin" dan halaman memakai meta referrer origin-when-cross-origin supaya asal halaman terkirim sebagai Referer
+
 ## v0.17.1
 - webmap: peta dasar OpenStreetMap standar (tanpa kunci API) dengan atribusi dan filter peredam warna; URL dapat diganti lewat `webmap.basemap` di config.yaml (masuk manifest)
 - docs: keputusan peta dasar dan usulan arsitektur data (monitoring dan predicting) di CATATAN_DESAIN_DAN_REVISI.md
