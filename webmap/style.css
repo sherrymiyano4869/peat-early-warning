@@ -34,3 +34,25 @@ html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; font-s
   .cards { display: flex; gap: 16px; padding: 24px; flex-wrap: wrap; } .card { flex: 1 1 280px; border: 1px solid #ccd; border-radius: 8px; padding: 16px; text-decoration: none; color: inherit; background: #fff; }
   .card h2 { margin: 0 0 6px; font-size: 18px; } .card p { margin: 4px 0; color: #444; }
 
+  /* deret waktu (timeseries.js); lokal, bukan dari zip web */
+  #timeseries { margin-top: 8px; padding: 6px 8px; background: #f6f6f4; border-radius: 4px; font-size: 12px; }
+  #timeseries:empty { display: none; }
+  .ts-ranges { display: flex; gap: 4px; margin: 6px 0 2px; }
+  .ts-ranges button { font: inherit; font-size: 11px; padding: 2px 8px; border-radius: 12px; border: 1px solid #99c; background: #fff; color: #224; cursor: pointer; }
+  .ts-ranges button[aria-pressed="true"] { background: #224; color: #fff; border-color: #224; }
+  .ts-chart { margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e2de; }
+  .ts-head { display: flex; flex-direction: column; }
+  .ts-title { font-weight: 600; color: #0b0b0b; }
+  .ts-readout { font-size: 11px; color: #52514e; min-height: 14px; }
+  .ts-readout b { color: #0b0b0b; font-size: 12px; }
+  .ts-chart svg { display: block; margin-top: 2px; touch-action: pan-y; }
+  .ts-grid { stroke: #e4e4e0; stroke-width: 1; }
+  .ts-thr { stroke: #8a8a85; stroke-width: 1; }
+  .ts-tick { font-size: 9.5px; fill: #6b6a66; }
+  .ts-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .ts-ref { fill: none; stroke: #9a9a94; stroke-width: 1.5; stroke-linejoin: round; }
+  .ts-cross { stroke: #52514e; stroke-width: 1; pointer-events: none; }
+  .ts-key { font-size: 10.5px; color: #52514e; }
+  .ts-keyline { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin: 0 4px 0 6px; }
+  .ts-key .ts-keyline:first-child { margin-left: 0; }
+  .ts-empty { font-size: 11px; color: #6b6a66; padding: 8px; background: #ecece8; border-radius: 4px; margin-top: 4px; }

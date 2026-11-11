@@ -16,7 +16,8 @@
 #             01 tabel bersih (menggabungkan semua run), pick_pilot   (internet; butuh --contact)
 #   fitur   : 02 Earth Engine, 02b ENSO, 02c FABDEM (internet; butuh --contact), 02d kerapatan kanal
 #   model   : 03 tabel model, 04 baseline --quick, 06 prediksi, 06 --walk-forward
-#   peta    : 07 grid statis (butuh FABDEM), 08 indeks kerawanan, 10 tile tiga tingkat, 09 ekspor webmap
+#   peta    : 07 grid statis (butuh FABDEM), 08 indeks kerawanan, 10 tile tiga tingkat, 09 ekspor webmap,
+#             09b deret waktu area pilot untuk halaman Monitoring (skrip lokal)
 #             Opsional (dipakai otomatis bila berkasnya ada; layer pertama dipakai bila --*-layer tidak diisi):
 #               data/raw/batas/gambut.gpkg -> 08 --peat-gpkg   (atur dengan --peat-layer NAMA)
 #               data/raw/batas/khg.gpkg    -> 10 --units-gpkg  (atur dengan --khg-layer NAMA --khg-name KOLOM)
@@ -64,7 +65,7 @@ while [[ $# -gt 0 ]]; do
     --khg-layer) KHG_LAYER="${2:-}"; shift 2 ;;
     --khg-name) KHG_NAME="${2:-}"; shift 2 ;;
     --admin-layer) ADMIN_LAYER="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,33p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,34p' "$0"; exit 0 ;;
     stasiun|fitur|model|peta|dinamis|titikapi) STAGES+=("$1"); shift ;;
     *) echo "Pilihan tidak dikenal: $1 (lihat ./run_pipeline.sh --help)"; exit 2 ;;
   esac
@@ -258,6 +259,9 @@ if want peta; then
   fi
 
   run "09 ekspor webmap" "$PY" scripts/09_export_web.py
+  if [[ -f scripts/09b_export_timeseries.py ]]; then
+    run "09b deret waktu monitoring" "$PY" scripts/09b_export_timeseries.py
+  fi
 fi
 
 # ---------- arsip (opsional) ----------
