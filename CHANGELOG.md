@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.19.1
+- 02f NDMI: perbaikan galat Earth Engine "Image.reduceResolution: The input to reduceResolution does not have a valid default projection". Komposit median() tidak punya proyeksi tetap;
+  kini ditetapkan setDefaultProjection (EPSG:4326, 20 m) sebelum reduceResolution, dengan cadangan proyeksi asli B11 bila server menolak. Piksel tertutup awan diberi NODATA (-9999) dan
+  dikeluarkan di sisi lokal (sebelumnya akan terbaca 0, yang NDMI sah). tests/test_02f_ndmi.py memakai Earth Engine tiruan yang menolak urutan panggilan lama seperti Earth Engine asli
+
 ## v0.19
 - scripts/02e_worldcover.py: kelas dominan dan pecahan tiap kelas ESA WorldCover v200 per sel 100 m pada grid induk (lulc.tif); 08 memakainya untuk penutup, 14 dan 15 sebagai fitur statis
 - scripts/02f_grid_dynamic.py: hujan GSMaP (definisi sama dengan fitur stasiun) dan kelembapan tanah ERA5-Land (ECMWF/ERA5_LAND/DAILY_AGGR, volumetric_soil_water_layer_1) di PUSAT PIKSEL produk

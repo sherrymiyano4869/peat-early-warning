@@ -123,3 +123,10 @@ Nanti: nomor 2 (model respons dan penilaian yang dapat memengaruhi model saat ad
     python -m http.server -d webmap 8000        # buka http://localhost:8000
 Tanpa --units-gpkg, tingkat 1 memakai blok 5 km (sementara). Rentang zoom bawaan: unit 0-10, kasar 11-12 (tile z9-12), halus 13-18 (tile z13-15).
 Ukuran pada data tiruan pilot sekitar 55x60 km: sekitar 3.100 tile halus dan 75 tile kasar, 7,7 MB, 46 detik.
+
+
+## 8. Catatan uji Earth Engine (11 Nov 2026)
+- Hasil nyata pertama (WSL, Jambi): 02e WorldCover berhasil (4 ubin, lulc.tif lengkap), 02f gsmap berhasil (49 piksel, 2015-01-01 s.d. 2026-11-08, 212 ribu baris, 168 detik), 02f era5soil berhasil
+  (49 piksel, s.d. 2026-11-02, 212 ribu baris, 160 detik; jeda ERA5-Land di Earth Engine terlihat sekitar sembilan hari). 02f ndmi gagal di jendela pertama (galat proyeksi bawaan; diperbaiki v0.19.1).
+- Pelajaran: Earth Engine tiruan di uji lokal tidak menegakkan aturan server; tests/test_02f_ndmi.py kini menegakkan aturan proyeksi bawaan. Setiap galat Earth Engine baru sebaiknya ditambahkan ke tiruan.
+- Jalankan NDMI bertahap: `--start 2023-01-01 --end 2023-03-31` (tiga jendela) dulu, cek lama per jendela dan EECU, baru perluas. Data L2A global baru ada sejak sekitar Des 2018; jendela sebelumnya "tidak ada citra".

@@ -14,7 +14,8 @@ Cara kerja yang disengaja:
   - Hujan dan kelembapan tanah diambil di PUSAT PIKSEL produk (satu titik per piksel 0,1 derajat, bukan satu titik per sel), dengan transformasi piksel dibaca
     dari Earth Engine; tiap sel 1 km nanti memakai piksel terdekatnya. Satu permintaan untuk puluhan piksel, bukan ribuan sel.
   - Hujan memakai fungsi extract_gsmap di 02_gee_features.py (definisi yang sama dengan fitur stasiun: jumlah per jam pada hari lokal WIB).
-  - NDMI memakai definisi 02_gee_features.build_s2 (B8 dan B11, Cloud Score+ >= 0,6, median), tetapi sebagai raster per jendela (satu permintaan per jendela, bukan
+  - NDMI memakai definisi 02_gee_features.build_s2 (B8 dan B11, Cloud Score+ >= 0,6, median) dengan proyeksi bawaan yang ditetapkan sebelum reduceResolution
+    (komposit median() tidak punya proyeksi tetap), tetapi sebagai raster per jendela (satu permintaan per jendela, bukan
     per sel). Komposit tersedia SETELAH jendelanya berakhir (window_end), bukan sebelumnya.
   - Pembaruan inkremental: hanya tanggal sesudah data terakhir (dikurangi --overlap-days) yang diminta ulang; berkas lama tidak ditulis ulang di luar itu.
 Batasan: kelembapan tanah ERA5-Land adalah keluaran model reanalisis dengan hidrologi tanah mineral umum, BUKAN pengamatan dan tidak memodelkan gambut;
@@ -110,16 +111,41 @@ def fetch_start(existing: pd.DataFrame | None, start: date, overlap_days: int) -
     return max(start, existing["date"].max().date() - timedelta(days=overlap_days))
 
 
+def ndmi_composite(ee, coll, how: str):
+    """Median NDMI (B8, B11; Cloud Score+ >= 0,6) dengan proyeksi bawaan yang SAH. Komposit hasil median() tidak punya proyeksi tetap, sehingga
+    reduceResolution gagal ("does not have a valid default projection") bila tidak ditetapkan dulu.
+      geographic: proyeksi bawaan EPSG:4326 pada 20 m (tidak bergantung pada citra pertama; aman lintas zona UTM)
+      native    : proyeksi B11 (20 m) dari citra pertama koleksi (cadangan)"""
+    cloud = ee.ImageCollection("GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED")
+    masked = coll.linkCollection(cloud, ["cs_cdf"]).map(lambda im: im.updateMask(im.select("cs_cdf").gte(0.6)))
+    ndmi = masked.map(lambda im: im.normalizedDifference(["B8", "B11"]).rename("ndmi")).median()
+    if how == "native":
+        return ndmi.setDefaultProjection(coll.first().select("B11").projection())
+    return ndmi.setDefaultProjection(crs="EPSG:4326", scale=20)
+
+
+NODATA = -9999.0
+
+
 def fetch_ndmi_tile(ee, bbox, s_, e_, scale_m: float):
     region = ee.Geometry.Rectangle(list(bbox))
     coll = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED").filterBounds(region).filterDate(str(s_), str(e_))
     if coll.size().getInfo() == 0:
         return None
-    cloud = ee.ImageCollection("GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED")
-    masked = coll.linkCollection(cloud, ["cs_cdf"]).map(lambda im: im.updateMask(im.select("cs_cdf").gte(0.6)))
-    ndmi = masked.map(lambda im: im.normalizedDifference(["B8", "B11"]).rename("ndmi")).median()
-    img = ndmi.reduceResolution(reducer=ee.Reducer.mean(), maxPixels=1024).reproject(crs="EPSG:4326", scale=scale_m).toFloat()
-    url = img.getDownloadURL({"region": region, "scale": scale_m, "crs": "EPSG:4326", "format": "GEO_TIFF"})
+    last_err = None
+    for how in ("geographic", "native"):                 # bila cara pertama ditolak server, coba proyeksi asli B11
+        try:
+            img = (ndmi_composite(ee, coll, how).reduceResolution(reducer=ee.Reducer.mean(), maxPixels=1024)
+                   .reproject(crs="EPSG:4326", scale=scale_m).toFloat().unmask(NODATA))   # piksel tertutup awan = NODATA (bukan 0, yang NDMI sah)
+            url = img.getDownloadURL({"region": region, "scale": scale_m, "crs": "EPSG:4326", "format": "GEO_TIFF"})
+            break
+        except Exception as err:  # noqa: BLE001
+            last_err = err
+            if "projection" not in str(err).lower():
+                raise
+            print(f"    proyeksi bawaan '{how}' ditolak ({str(err)[:70]}); mencoba cadangan")
+    else:
+        raise last_err
     r = requests.get(url, timeout=600)
     r.raise_for_status()
     return r.content
@@ -132,7 +158,9 @@ def ndmi_to_cells(contents: list, uni: dict, s_, e_) -> pd.DataFrame:
     arr = np.full((hh, ww), np.nan, dtype="float32")
     for content in contents:
         for a, tr, crs, _names in read_download(content, ["ndmi"]):
-            arr = merge_first(arr, to_master(a[0], tr, crs, dst_t, (hh, ww), grid_crs(), Resampling.average))
+            band = a[0].copy()
+            band[(band < -1.5) | (band > 1.5)] = np.nan                 # NODATA (-9999) dan nilai mustahil -> kosong; NDMI sah ada di [-1, 1]
+            arr = merge_first(arr, to_master(band, tr, crs, dst_t, (hh, ww), grid_crs(), Resampling.average))
     rr, cc = np.nonzero(uni["valid"] & np.isfinite(arr))
     return pd.DataFrame({"cx": uni["cx0"] + cc, "cy": uni["cy_top"] - rr, "window_start": pd.Timestamp(s_), "window_end": pd.Timestamp(e_), "ndmi": arr[rr, cc]})
 
