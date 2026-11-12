@@ -142,3 +142,6 @@ Keputusan: penekanan lomba adalah prediksi yang DIKAITKAN dengan data partisipat
 - Privasi: tidak ada nama; kode pelapor anonim; kolom identitas Kobo dibuang sebelum L0; jangan menampilkan titik laporan mentah di peta publik (perkasar ke sel 1 km).
 - Klaim "partisipatif" yang jujur saat ini: tingkat kontributor + umpan balik. Ko-desain hanya bila ada lokakarya dengan desa.
 - Pertanyaan terbuka: mitra lapangan (BPBD, MPA, desa pilot) dan izin; siapa yang memasang sumur pantau atau papan duga; apakah MPA dihitung petugas (kini tidak).
+- Halaman Respons (v0.21) adalah demo utama: pesan peta = apa yang ditambahkan laporan lapangan pada pengamatan satelit. Satu berkas data (response.json), terpisah dari manifest 09.
+  "Sel baru di sebelah deteksi satelit" = laporan A/B yang cocok dengan deteksi VIIRS di sel tetangga; dipisah dari "lolos dari satelit" agar selisih jumlah kejadian terjelaskan.
+  Belum: histori tugas terbitan sebelumnya di peta, tata letak ponsel, lapisan kerawanan sebagai latar.

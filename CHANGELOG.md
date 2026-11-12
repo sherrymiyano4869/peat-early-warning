@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.21
+- Halaman Respons (webmap/response.html + response.js, data dari scripts/20_export_response.py): sel 1 km berwarna menurut sumber bukti (satelit, laporan, keduanya, nihil,
+  belum terverifikasi), penanda laporan membara, saklar "Hanya satelit" lawan "Satelit + laporan" dengan tabel sebelum dan sesudah, penggeser rentang waktu, tugas pemeriksaan
+  terbitan terakhir, sel berpeluang tertinggi, sekat, muka air lapangan, dan panel "Apakah prediksi terbukti?" dari 18. Lencana merah bila ada laporan tiruan
+- Privasi: response.json tidak memuat titik laporan kejadian, kode pelapor, atau alasan tugas (diuji di tests/test_participatory.py)
+- Tautan Respons ditambahkan ke navigasi Monitoring, Prediksi, dan Beranda; app.js tidak diubah
+- Diuji di Chromium tanpa akses internet: peta dasar OSM BELUM terlihat pada uji; periksa di perambanmu
+
 ## v0.20
 - Data partisipatif yang terkait dengan prediksi (sistem nomor 2 di catatan desain, dimajukan):
   src/reports.py (skema tunggal), tools/build_xlsform.py -> forms/laporan_lapangan.xlsx (lolos konversi pyxform), tools/fake_reports.py (laporan TIRUAN)

@@ -38,6 +38,7 @@
 | scripts/16_ingest_reports.py | laporan lapangan (KoboToolbox atau CSV) ke L0 bertanggal dan laporan bersih per sel 1 km | siap (diuji data tiruan dan Kobo tiruan; server Kobo asli belum) |
 | scripts/17_event_ledger.py | buku besar kejadian per sel-hari: laporan + VIIRS, tingkat keyakinan A/B/C, nihil, sekat kanal | siap (diuji data tiruan) |
 | scripts/18_score_prospective.py | nilai arsip peluang titik api terhadap kejadian sesudahnya; tugas teratas lawan acak; muka air lapangan lawan indeks | siap (diuji data tiruan) |
+| scripts/20_export_response.py | ekspor buku besar, tugas, sekat, muka air lapangan, dan skor ke webmap/data/response.json (halaman Respons) | siap (diuji data tiruan dan peramban tanpa peta dasar) |
 | scripts/05_seasonal_outlook.py | ENSO/IOD vs kekeringan musim (HTH, hujan) multi-tahun, leave-one-year-out | siap (diuji data sintetik) |
 
 Contoh pemakaian:
@@ -97,6 +98,7 @@ Pembaruan harian: 02f hanya meminta tanggal sesudah data terakhir (dikurangi --o
     python scripts/16_ingest_reports.py --kobo-asset UID      # atau --csv berkas.csv --source bpbd_sekunder
     python scripts/17_event_ledger.py
     python scripts/18_score_prospective.py                    # mingguan
+    python scripts/20_export_response.py                      # lalu buka http://localhost:8000/response.html
 Uji alur tanpa data nyata: `python tests/test_participatory.py` (folder sementara), atau di proyek:
 `python tools/fake_reports.py --out /tmp/tiruan.csv && python scripts/16_ingest_reports.py --csv /tmp/tiruan.csv --source tiruan`
 (hapus data/raw/laporan/tiruan sebelum memakai data nyata).

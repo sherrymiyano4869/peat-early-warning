@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="origin-when-cross-origin">
+<title>Respons: laporan lapangan dan penilaian · peringatan dini kekeringan gambut (prototipe)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map"></div>
+<div id="north">&#9650;<br>U</div>
+<div id="legendbox" style="bottom:84px"></div>
+<div id="panel">
+  <div class="nav"><a href="index.html">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html" class="active">Respons</a></div>
+  <h1 id="title">Respons: laporan lapangan dan penilaian</h1>
+  <div class="small" id="subtitle">Apa yang ditambahkan laporan warga dan petugas pada pengamatan satelit, tugas pemeriksaan dari prediksi, dan apakah prediksi terbukti.</div>
+  <div class="meta" id="meta"></div>
+  <div id="badge" class="badge warn">Memuat data...</div>
+  <div class="sect">
+    <b>Bandingkan</b><br>
+    <label><input type="radio" name="mode" id="mode-sat"> Hanya satelit</label>
+    <label style="margin-left:10px"><input type="radio" name="mode" id="mode-all" checked> Satelit + laporan lapangan</label>
+  </div>
+  <div class="sect">
+    <b>Rentang waktu:</b> <span id="range">–</span><br>
+    <input id="end" type="range" min="0" max="0" step="1" value="0" style="width:100%" aria-label="Tanggal akhir rentang">
+    <label>Panjang rentang <select id="span"><option value="7">7 hari</option><option value="14" selected>14 hari</option><option value="30">30 hari</option><option value="0">semua</option></select></label>
+  </div>
+  <div id="summary"></div>
+  <div class="sect field-only">
+    <b>Lapisan</b><br>
+    <label><input type="checkbox" id="chk-tasks" checked> Tugas pemeriksaan (terbitan terakhir)</label><br>
+    <label><input type="checkbox" id="chk-top"> Sel berpeluang tertinggi (prediksi)</label><br>
+    <label><input type="checkbox" id="chk-sekat"> Sekat kanal</label><br>
+    <label><input type="checkbox" id="chk-water"> Muka air lapangan</label>
+  </div>
+  <div id="tasksum" class="box"></div>
+  <div id="scores" class="box"></div>
+  <details><summary>Atribusi dan penafian</summary><div id="attrib" class="small"></div></details>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="response.js"></script>
+</body>
+</html>

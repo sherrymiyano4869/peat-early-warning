@@ -30,7 +30,7 @@ html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; font-s
   table.pred th:first-child, table.pred td:first-child { text-align: left; }
   .nav { display: flex; gap: 6px; margin: 0 0 6px; } .nav a { padding: 2px 8px; border-radius: 12px; border: 1px solid #99c; color: #224; text-decoration: none; font-size: 12px; }
   .nav a.active { background: #224; color: #fff; border-color: #224; }
-  #summary, #drivers { margin-top: 8px; padding: 6px 8px; background: #f6f6f4; border-radius: 4px; font-size: 12px; }
+  #summary, #drivers, .box { margin-top: 8px; padding: 6px 8px; background: #f6f6f4; border-radius: 4px; font-size: 12px; }
   .cards { display: flex; gap: 16px; padding: 24px; flex-wrap: wrap; } .card { flex: 1 1 280px; border: 1px solid #ccd; border-radius: 8px; padding: 16px; text-decoration: none; color: inherit; background: #fff; }
   .card h2 { margin: 0 0 6px; font-size: 18px; } .card p { margin: 4px 0; color: #444; }
 
@@ -56,3 +56,5 @@ html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; font-s
   .ts-keyline { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin: 0 4px 0 6px; }
   .ts-key .ts-keyline:first-child { margin-left: 0; }
   .ts-empty { font-size: 11px; color: #6b6a66; padding: 8px; background: #ecece8; border-radius: 4px; margin-top: 4px; }
+  table.cmp { width: 100%; } table.cmp td.on, table.cmp th.on { background: #fff; font-weight: 600; } .plus { color: #0b6b2f; font-weight: 600; }
+  #scores div { margin-top: 5px; }

@@ -4,6 +4,7 @@
 
 Memeriksa: (1) Kobo tiruan berhalaman: semua baris terambil, token terkirim, kolom identitas dibuang; (2) 16: baris rusak dibuang, duplikat antar-potret hilang;
 (3) 17: aturan tingkat A/B/C, nihil, konflik, dan kejadian yang lolos dari VIIRS; (4) 19: daftar tugas berulang sama dan berkas pemeriksa tanpa alasan;
+(6) 20: ekspor web tanpa titik laporan dan alasan tugas;
 (5) 18: hanya terbitan berjendela lengkap dinilai, model tiruan yang informatif mengalahkan klimatologi, muka air tiruan berkorelasi negatif dengan indeks.
 Ini menguji ALUR dan ATURAN, bukan kinerja pada data nyata, dan Kobo tiruan bukan server Kobo.
 """
@@ -98,8 +99,8 @@ def main() -> None:
     rng = np.random.default_rng(3)
     tmp = Path(tempfile.mkdtemp(prefix="partisipatif_"))
     common.load_config = lambda: {"paths": {k: str(tmp / k) for k in ("raw", "interim", "features", "outputs")}}
-    m16, m17, m18, m19, fake = (load(f) for f in ("scripts/16_ingest_reports.py", "scripts/17_event_ledger.py", "scripts/18_score_prospective.py",
-                                                  "scripts/19_verification_tasks.py", "tools/fake_reports.py"))
+    m16, m17, m18, m19, m20, fake = (load(f) for f in ("scripts/16_ingest_reports.py", "scripts/17_event_ledger.py", "scripts/18_score_prospective.py",
+                                                       "scripts/19_verification_tasks.py", "scripts/20_export_response.py", "tools/fake_reports.py"))
     test_kobo_mock(m16)
     w = fake_world(tmp, rng)
     hot, issues = w["hot"], w["issues"]
@@ -191,6 +192,16 @@ def main() -> None:
     by = pd.read_csv(tmp / "outputs" / "prospective_by_issue.csv")
     assert set(by["horizon"]) == {1, 3} and (by["n_sel"] == len(cells)).all()
     print("LOLOS 18: jendela lengkap saja, positif cocok dengan hitungan mandiri, tugas dan muka air terbaca")
+
+    # ---- 20: ekspor halaman Respons; tidak boleh memuat titik atau kode pelapor
+    run(m20, "--out", tmp / "web")
+    web = json.loads((tmp / "web" / "response.json").read_text())
+    assert web["tiruan"] and len(web["ledger"]) == len(led[led["date"] > led["date"].max() - pd.Timedelta(days=90)])
+    assert all(r["cell_id"] in web["cells"] for r in web["ledger"] + web["tasks"]["items"]) and len(web["sekat"]) == 15 and len(web["water"]) == 25
+    assert not {"lon", "lat", "kode_pelapor", "alasan"} & set(web["ledger"][0]) and set(web["tasks"]["items"][0]) == {"id_tugas", "cell_id", "hasil"}
+    assert {t["hasil"] for t in web["tasks"]["items"]} <= {"belum", "nihil", "kejadian"} and web["scores"]["titik_api"]["h1"]["lolos_prospektif"]
+    print(f"LOLOS 20: response.json {len(web['ledger'])} sel-hari, tanpa titik laporan, kode pelapor, atau alasan tugas")
+    print(f"dunia tiruan: {tmp}")
     print("\nSEMUA LOLOS (alur dan aturan pada data tiruan; bukan bukti kinerja)")
 
 
