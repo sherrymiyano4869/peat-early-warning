@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.20
+- Data partisipatif yang terkait dengan prediksi (sistem nomor 2 di catatan desain, dimajukan):
+  src/reports.py (skema tunggal), tools/build_xlsform.py -> forms/laporan_lapangan.xlsx (lolos konversi pyxform), tools/fake_reports.py (laporan TIRUAN)
+- scripts/19_verification_tasks.py: tugas pemeriksaan dari fire_prob_latest (teratas, acak dengan peluang terpilih, pantauan sisa); berkas pemeriksa tanpa alasan dan peluang
+- scripts/16_ingest_reports.py: Kobo (api/v2, token dari KOBO_TOKEN) atau CSV -> L0 bertanggal dengan sha256, identitas dibuang sebelum disimpan -> reports.parquet; GPS buruk dan
+  laporan terlambat ditandai, tidak dibuang
+- scripts/17_event_ledger.py: buku besar sel-hari (laporan + VIIRS; radius 1 km dan 48 jam masih ANGKA AWAL), tingkat A/B/C, nihil, konflik, catatan upaya (n_kunjungan),
+  label y_viirs / y_buku / y_lapangan, kondisi sekat terakhir per titik (belum dipakai 08)
+- scripts/18_score_prospective.py: nilai arsip fire_prob terhadap kejadian sesudah tanggal terbit (tiga definisi kenyataan, dengan dan tanpa sel bertindakan), laju kejadian tugas
+  teratas lawan acak (Fisher), Spearman indeks kerentanan lawan muka air lapangan per titik
+- tests/test_participatory.py: dunia tiruan di folder sementara; aturan tingkat, pembuangan baris rusak, jendela lengkap, dan hitungan positif diperiksa terhadap hitungan mandiri
+- Belum: server Kobo sungguhan, data laporan nyata, sekat kanal masuk 08, laporan sebagai fitur 14, tampilan Respons di webmap, lolos_prospektif belum menaikkan kelas kepercayaan
+
 ## v0.19.1
 - 02f NDMI: perbaikan galat Earth Engine "Image.reduceResolution: The input to reduceResolution does not have a valid default projection". Komposit median() tidak punya proyeksi tetap;
   kini ditetapkan setDefaultProjection (EPSG:4326, 20 m) sebelum reduceResolution, dengan cadangan proyeksi asli B11 bila server menolak. Piksel tertutup awan diberi NODATA (-9999) dan

@@ -34,6 +34,10 @@
 | scripts/09_export_web.py | ekspor hamparan, GeoJSON, deret waktu, manifest ke webmap/data (WebGIS Leaflet) | siap (diuji data tiruan) |
 | scripts/07_grid_static.py | grid pilot, fitur statis per sel, dan kepercayaan statis (jarak stasiun, AOA) | siap (diuji data tiruan) |
 | scripts/06_predict.py | prediksi ke depan per stasiun dan uji walk-forward mingguan | siap (diuji data sintetik); prototipe, belum terkalibrasi |
+| scripts/19_verification_tasks.py | daftar tugas pemeriksaan lapangan dari prediksi terbit: sel teratas, sampel acak, pantauan sisa | siap (diuji data tiruan) |
+| scripts/16_ingest_reports.py | laporan lapangan (KoboToolbox atau CSV) ke L0 bertanggal dan laporan bersih per sel 1 km | siap (diuji data tiruan dan Kobo tiruan; server Kobo asli belum) |
+| scripts/17_event_ledger.py | buku besar kejadian per sel-hari: laporan + VIIRS, tingkat keyakinan A/B/C, nihil, sekat kanal | siap (diuji data tiruan) |
+| scripts/18_score_prospective.py | nilai arsip peluang titik api terhadap kejadian sesudahnya; tugas teratas lawan acak; muka air lapangan lawan indeks | siap (diuji data tiruan) |
 | scripts/05_seasonal_outlook.py | ENSO/IOD vs kekeringan musim (HTH, hujan) multi-tahun, leave-one-year-out | siap (diuji data sintetik) |
 
 Contoh pemakaian:
@@ -83,3 +87,16 @@ Lalu `python scripts/archive_run.py --label "..."` mengarsipkan juga peluang tit
     python scripts/14_fire_model.py --dynamic data/features/dyn_rain_pixels.parquet data/features/dyn_soil_pixels.parquet data/features/dyn_ndmi_cells.parquet data/features/dyn_enso_daily.parquet
     python scripts/15_dryness_cell_model.py                   # perlu model_table.parquet (03) dan fitur dinamis
 Pembaruan harian: 02f hanya meminta tanggal sesudah data terakhir (dikurangi --overlap-days); lalu 02g, 08, 14, 15, 10, 09.
+
+
+## Data partisipatif (v0.20)
+    python tools/build_xlsform.py                             # forms/laporan_lapangan.xlsx -> unggah ke KoboToolbox, isi lewat KoboCollect
+    python scripts/14_fire_model.py ... && python scripts/archive_run.py --label "..."     # tiap terbit: arsip adalah yang dinilai nanti
+    python scripts/19_verification_tasks.py                   # daftar tugas untuk pemeriksa (outputs/verification_tasks.geojson)
+    export KOBO_TOKEN=...                                     # token API akun Kobo; jangan ditempel di obrolan atau berkas
+    python scripts/16_ingest_reports.py --kobo-asset UID      # atau --csv berkas.csv --source bpbd_sekunder
+    python scripts/17_event_ledger.py
+    python scripts/18_score_prospective.py                    # mingguan
+Uji alur tanpa data nyata: `python tests/test_participatory.py` (folder sementara), atau di proyek:
+`python tools/fake_reports.py --out /tmp/tiruan.csv && python scripts/16_ingest_reports.py --csv /tmp/tiruan.csv --source tiruan`
+(hapus data/raw/laporan/tiruan sebelum memakai data nyata).

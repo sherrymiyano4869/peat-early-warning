@@ -130,3 +130,15 @@ Ukuran pada data tiruan pilot sekitar 55x60 km: sekitar 3.100 tile halus dan 75 
   (49 piksel, s.d. 2026-11-02, 212 ribu baris, 160 detik; jeda ERA5-Land di Earth Engine terlihat sekitar sembilan hari). 02f ndmi gagal di jendela pertama (galat proyeksi bawaan; diperbaiki v0.19.1).
 - Pelajaran: Earth Engine tiruan di uji lokal tidak menegakkan aturan server; tests/test_02f_ndmi.py kini menegakkan aturan proyeksi bawaan. Setiap galat Earth Engine baru sebaiknya ditambahkan ke tiruan.
 - Jalankan NDMI bertahap: `--start 2023-01-01 --end 2023-03-31` (tiga jendela) dulu, cek lama per jendela dan EECU, baru perluas. Data L2A global baru ada sejak sekitar Des 2018; jendela sebelumnya "tidak ada citra".
+
+
+## 9. Data partisipatif (12 Nov 2026, v0.20)
+Keputusan: penekanan lomba adalah prediksi yang DIKAITKAN dengan data partisipatif, jadi sistem nomor 2 dimajukan sebagai lapisan di atas prediksi yang ada.
+- Empat peran data lapangan: label kejadian (termasuk nihil dan membara), muka air (menguji indeks 08), sekat kanal (variabel struktural yang hilang), catatan tindakan.
+- Kait ke prediksi dua arah: prediksi -> daftar tugas (19); laporan -> buku besar (17) -> penilaian arsip (18). Laporan BELUM menjadi fitur atau label latih 14:
+  dipakai menilai dulu, supaya tidak melingkar dan karena pelapor tidak merata.
+- Sampel acak di 19 adalah satu-satunya cara mengukur kejadian yang luput dari model; jangan dihapus demi menghemat tenaga lapangan, kecilkan saja.
+- Tingkat A/B/C, radius 1 km, jendela 48 jam, ambang GPS 50 m, dan batas terlambat 3 hari adalah ANGKA AWAL. Setel dengan data sekunder BPBD.
+- Privasi: tidak ada nama; kode pelapor anonim; kolom identitas Kobo dibuang sebelum L0; jangan menampilkan titik laporan mentah di peta publik (perkasar ke sel 1 km).
+- Klaim "partisipatif" yang jujur saat ini: tingkat kontributor + umpan balik. Ko-desain hanya bila ada lokakarya dengan desa.
+- Pertanyaan terbuka: mitra lapangan (BPBD, MPA, desa pilot) dan izin; siapa yang memasang sumur pantau atau papan duga; apakah MPA dihitung petugas (kini tidak).
