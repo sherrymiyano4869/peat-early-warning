@@ -42,6 +42,10 @@ dependencies:
   - folium
   - streamlit
   - streamlit-folium
+  # --- API v1 (api/app.py)
+  - fastapi
+  - uvicorn
+  - httpx            # TestClient di tests/test_api.py
   # --- kerja
   - jupyterlab
   - ipykernel

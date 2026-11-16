@@ -179,8 +179,9 @@ def main() -> None:
     out["issue_date"] = str(dates[-1].date())
     outputs = path("outputs"); outputs.mkdir(parents=True, exist_ok=True)
     out.to_parquet(outputs / "dryness_cell_latest.parquet", index=False)
-    geo = [{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [cell_polygon_lonlat(int(r.cx), int(r.cy))]},
-            "properties": {k: round(float(getattr(r, k)), 3) for k in ("p7", "p14", "d7", "d14", "q10_14", "q90_14")}} for r in out.itertuples()]
+    geo = [{"type": "Feature", "id": str(r.cell_id), "geometry": {"type": "Polygon", "coordinates": [cell_polygon_lonlat(int(r.cx), int(r.cy))]},
+            "properties": {"cell_id": str(r.cell_id), **{k: round(float(getattr(r, k)), 3) for k in ("p7", "p14", "d7", "d14", "q10_14", "q90_14")}}}
+           for r in out.itertuples()]
     (outputs / "dryness_cells.geojson").write_text(json.dumps({"type": "FeatureCollection", "issue_date": str(dates[-1].date()), "features": geo}, ensure_ascii=False))
     metrics["prediksi_terakhir"] = {"tanggal_terbit": str(dates[-1].date()), "n_sel": int(len(out)), "p14_rata2": round(float(out["p14"].mean()), 4), "p14_maks": round(float(out["p14"].max()), 4)}
     (outputs / "dryness_metrics.json").write_text(json.dumps(metrics, indent=1, ensure_ascii=False))

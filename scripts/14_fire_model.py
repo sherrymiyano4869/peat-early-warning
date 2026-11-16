@@ -263,8 +263,9 @@ def main() -> None:
     outputs = path("outputs"); (outputs / "models").mkdir(parents=True, exist_ok=True)
     out.to_parquet(outputs / "fire_prob_latest.parquet", index=False)
     top = out[out["rank"] <= max(1, int(round(len(out) * args.top_frac)))].sort_values("rank")
-    feats_geo = [{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [cell_polygon_lonlat(int(r.cx), int(r.cy))]},
-                  "properties": {"rank": int(r.rank), **{k: round(float(getattr(r, k)), 4) for k in out.columns if k.startswith("p")}}} for r in top.itertuples()]
+    feats_geo = [{"type": "Feature", "id": str(r.cell_id), "geometry": {"type": "Polygon", "coordinates": [cell_polygon_lonlat(int(r.cx), int(r.cy))]},
+                  "properties": {"cell_id": str(r.cell_id), "rank": int(r.rank), **{k: round(float(getattr(r, k)), 4) for k in out.columns if k.startswith("p")}}}
+                 for r in top.itertuples()]
     (outputs / "fire_top_cells.geojson").write_text(json.dumps({"type": "FeatureCollection", "issue_date": str(dates[T].date()), "horizons": args.horizons,
                                                                 "top_fraction": args.top_frac, "features": feats_geo}, ensure_ascii=False))
     for h in args.horizons:

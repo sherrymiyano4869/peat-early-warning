@@ -4,6 +4,7 @@ data/features/
 outputs/
 .env
 *.json
+!docs/api/*.json
 __pycache__/
 .ipynb_checkpoints/
 

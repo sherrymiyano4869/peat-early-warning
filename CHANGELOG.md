@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.22
+- API v1 per sumber daya, pola OGC API - Features (docs/API.md): src/api_store.py memilah keluaran 09, 10, 20 menjadi 8 koleksi (stations, hotspots,
+  fire-cells, dryness-cells, events, tasks, canal-blocks, field-water-levels) dan sumber daya meta, series, susceptibility, layers, validation, scores;
+  penyaring bbox, datetime, days, limit, offset, dan queryables per koleksi; galat baku {code, description}. Tidak ada angka yang dihitung ulang
+- api/app.py (FastAPI, `uvicorn api.app:create_app --factory`): GET untuk semua; satu-satunya tulis PATCH status lapangan tugas dengan token
+  PEAT_API_TOKEN. src/task_updates.py menyimpannya tambah-saja di SQLite (trigger menolak UPDATE dan DELETE), dengan dikunjungi_pada dan dicatat_pada.
+  Status lapangan TIDAK dibaca 17 atau 18; hasil kejadian tetap dari Kobo
+- scripts/21_export_api.py: cermin statis webmap/data/v1 (bentuk sama dengan server) dan --openapi untuk Postman
+- 14 dan 15: fitur GeoJSON kini memuat id dan cell_id (angka tidak berubah). API menurunkan cell_id dari titik tengah poligon untuk keluaran lama
+- tests/test_api.py: penyaring terhadap hitungan mandiri, cell_id cadangan, aturan PATCH, tambah-saja, dan kesamaan cermin statis dengan server
+- Belum: halaman web belum memakai API (masih membaca manifest.json dan response.json); pemecahan app.js per halaman dan pemuatan per lapisan
+
 ## v0.21
 - Halaman Respons (webmap/response.html + response.js, data dari scripts/20_export_response.py): sel 1 km berwarna menurut sumber bukti (satelit, laporan, keduanya, nihil,
   belum terverifikasi), penanda laporan membara, saklar "Hanya satelit" lawan "Satelit + laporan" dengan tabel sebelum dan sesudah, penggeser rentang waktu, tugas pemeriksaan
