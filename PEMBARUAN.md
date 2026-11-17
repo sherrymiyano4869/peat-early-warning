@@ -18,9 +18,9 @@ Halaman web belum memakai API; ia masih membaca `manifest.json` dan `response.js
 | GeoJSON model 14 dan 15 | Tanpa id sel | Memuat `id` dan `cell_id` (angkanya sama) |
 
 Catatan: ini **bukan CRUD penuh**. Semua sumber daya hanya bisa dibaca (GET). Satu-satunya tulis adalah PATCH status tugas,
-yang disimpan tambah-saja (riwayat tidak bisa diubah atau dihapus) dan tidak memengaruhi hasil kejadian, yang tetap berasal dari laporan Kobo.
+yang disimpan tambah-saja (riwayat tidak bisa diubah atau dihapus) dan tidak memengaruhi hasil kejadian, yang tetap berasal dari laporan KoboToolbox.
 
-### Mencoba
+### Cara melakukannya?
 
     conda activate peat
     pip install fastapi uvicorn httpx        # sekali saja; juga tercatat di environment.yml
