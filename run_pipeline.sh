@@ -276,5 +276,5 @@ print_summary
 
 if [[ $SERVE -eq 1 ]]; then
   echo; echo "Webmap: http://localhost:$PORT  (Ctrl+C untuk berhenti)"
-  "$PY" -m http.server -d webmap "$PORT"
+  "$PY" serve_webmap.py "$PORT"
 fi
