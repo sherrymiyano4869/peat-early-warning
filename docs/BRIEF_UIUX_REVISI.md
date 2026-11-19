@@ -41,7 +41,7 @@ Terjemahkan **perilaku kontrol dan susunan halaman**, bukan hanya warna. Id elem
 4. Tiga lencana teks panjang diringkas menjadi satu baris status per model yang bisa dibuka rinciannya.
 
 ### Respons
-Mode (Hanya satelit | Satelit + laporan lapangan) menjadi kontrol segmen; empat lapisan menjadi tombol pil; rentang tanggal menjadi kontrol segmen (7 / 30 / 90 hari) alih-alih `<select>`; penggeser tanggal boleh tetap, tetapi diberi gaya yang sama.
+Mode (Hanya satelit | Satelit + laporan lapangan) menjadi kontrol segmen; empat lapisan menjadi tombol pil; rentang tanggal (7 / 14 / 30 hari / semua) menjadi kontrol segmen alih-alih `<select>`; penggeser tanggal boleh tetap, tetapi diberi gaya yang sama.
 
 ### Halaman yang belum ada
 * **Publik (ponsel)**: cari desa, status satu tingkat untuk desa itu, ramalan 7 hari, saran tindakan, tombol "Lapor asap/api". Butuh poligon desa dari shapefile di atas (potong dulu ke Jambi atau kotak pilot, simpan sebagai `data/raw/batas/desa.gpkg`).
