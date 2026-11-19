@@ -74,6 +74,7 @@ body.fullmap .leaflet-popup-close-button { font-size: 24px; width: 36px; height:
 .pp-chip.kejadian { background: #F6DDD6; color: #93351F; } .pp-chip.nihil { background: #E0EFE6; color: #245C3F; }
 .pp-m { font-size: 13px; color: #6E5C51; margin-top: 8px; }
 .pp-btn { display: flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 12px; border-radius: 10px; background: linear-gradient(135deg, #B5432F, #93351F); color: #fff !important; font-weight: 700; text-decoration: none; }
-.mk-task { display: block; width: 12px; height: 12px; margin: 1px; box-sizing: border-box; border-radius: 2px; border: 2.5px solid #2A1A14; background: #fff; box-shadow: 0 0 0 1.5px #fff, 0 1px 4px rgba(0,0,0,.35); }
+.mk-task { display: block; width: 15px; height: 15px; margin: 1px; box-sizing: border-box; border-radius: 2px; border: 2.4px solid #2A1A14; background: transparent; box-shadow: 0 0 0 1.5px #fff, 0 1px 4px rgba(0,0,0,.35); }
 .mk-task.done { background: #2A1A14; }
+.lg-row .mk-task.open { background: #fff; }
 .lg-row .mk-task { flex: 0 0 auto; margin: 0 3px; box-shadow: 0 0 0 1px #0003; }

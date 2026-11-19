@@ -103,8 +103,9 @@ async function main() {
   const base = (D.basemap && D.basemap.url) ? D.basemap : BASEMAP;
   L.tileLayer(base.url, { maxZoom: base.maxZoom || 19, attribution: base.attribution, className: "basemap-muted", referrerPolicy: "origin" }).addTo(map);
   L.control.scale({ metric: true, imperial: false }).addTo(map);
-  [["topPane", 405], ["tasksPane", 410], ["eventsPane", 420], ["markPane", 640]].forEach(([n, z]) => { map.createPane(n); map.getPane(n).style.zIndex = z; });   // urutan tumpuk: prediksi < tugas < kejadian < penanda
+  [["topPane", 405], ["tasksPane", 410], ["eventsPane", 420], ["taskMarkPane", 415], ["markPane", 640]].forEach(([n, z]) => { map.createPane(n); map.getPane(n).style.zIndex = z; });   // urutan tumpuk: prediksi < tugas < kejadian < penanda
   const ring = id => D.cells[id].map(([lon, lat]) => [lat, lon]);
+  const inset = (pts, k) => { const q = pts.length > 1 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1] ? pts.slice(0, -1) : pts; const c = q.reduce((a, p) => [a[0] + p[0] / q.length, a[1] + p[1] / q.length], [0, 0]); return pts.map(p => [c[0] + (p[0] - c[0]) * k, c[1] + (p[1] - c[1]) * k]); };
   const center = id => { const p = D.cells[id]; return [(p[0][1] + p[2][1]) / 2, (p[0][0] + p[2][0]) / 2]; };
   const all = Object.keys(D.cells);
   // Tampilan awal: area pilot (sel tugas pemeriksaan) bila ada; kejadian di luar area itu tetap bisa dijelajahi dengan menggeser peta.
@@ -146,7 +147,7 @@ async function main() {
         layer = L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#2A1A14", weight: open ? 1.6 : 2.4, fillColor: "#2A1A14", fillOpacity: open ? 0.07 : 0.38 });   // belum = tint tipis, sudah = tint pekat; warna netral gelap agar tidak tertukar dengan kategori kejadian
       } else {
         // Tugas = KOTAK (seperti sel yang diperiksa), kejadian = lingkaran berwarna: beda bentuk dan beda isi, bukan hanya beda biru. Belum = kotak kosong, sudah = kotak terisi.
-        layer = L.marker(center(t.cell_id), { pane: "markPane", icon: L.divIcon({ className: "", iconSize: [16, 16], html: `<span class="mk-task ${open ? "open" : "done"}"></span>` }) });
+        layer = L.marker(center(t.cell_id), { pane: "taskMarkPane", icon: L.divIcon({ className: "", iconSize: [17, 17], html: `<span class="mk-task ${open ? "open" : "done"}"></span>` }) });
       }
       layer.bindPopup(taskPopup(t), { minWidth: 220 }).addTo(groups.tasks);
     });
@@ -174,8 +175,9 @@ async function main() {
       const shown = mode === "satelit" ? rs.filter(x => x.n_viirs > 0).map(x => `<li>${tgl(x.date)}: VIIRS ${x.n_viirs} deteksi</li>`) : rs.slice().sort((a, b) => a.date.localeCompare(b.date)).map(rowText);
       const base = c.hollow ? { color: c.color, weight: 2.4, opacity: 1, dashArray: "5 4", fillColor: c.color, fillOpacity: 0.1 }
                             : { color: "#fff", weight: 1.6, opacity: 0.95, fillColor: c.color, fillOpacity: 0.88 };
-      const poly = near() ? L.polygon(ring(id), Object.assign({ pane: "eventsPane" }, base))
-                          : L.circleMarker(center(id), Object.assign({ pane: "eventsPane", radius: cat === "keduanya" ? 9 : 7 }, base))
+      // Zoom dekat: sel 1 km (sedikit diperkecil agar garis tepi sel tugas di bawahnya tetap terlihat). Zoom jauh: lingkaran kecil yang berada DI ATAS kotak tugas.
+      const poly = (near() ? L.polygon(inset(ring(id), 0.78), Object.assign({ pane: "eventsPane" }, base))
+                           : L.circleMarker(center(id), Object.assign({ pane: "eventsPane", radius: cat === "keduanya" ? 6.5 : 5 }, base)))
         .bindPopup(`<b>${c.label}</b><ul style="margin:4px 0;padding-left:18px">${shown.join("")}</ul>`).addTo(groups.events);
       poly.on("mouseover", () => poly.setStyle({ weight: 3, color: c.hollow ? c.color : "#2A1A14" }).bringToFront());
       poly.on("mouseout", () => poly.setStyle(base));
