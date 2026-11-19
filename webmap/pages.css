@@ -78,3 +78,12 @@ body.fullmap .leaflet-popup-close-button { font-size: 24px; width: 36px; height:
 .mk-task.done { background: #2A1A14; }
 .lg-row .mk-task.open { background: #fff; }
 .lg-row .mk-task { flex: 0 0 auto; margin: 0 3px; box-shadow: 0 0 0 1px #0003; }
+
+/* ---- pilihan bahasa ID/EN (i18n.js) ---- */
+.lang { display: flex; flex: 0 0 auto; background: #FFFFFF22; border-radius: 999px; padding: 3px; gap: 2px; margin-left: 4px; }
+.lang button { font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .04em; min-height: 34px; min-width: 40px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: #FBF7EF; cursor: pointer; }
+.lang button:hover { background: #FFFFFF22; }
+.lang button[aria-pressed="true"] { background: #FBF7EF; color: #4A1F14; }
+.i18n-note { position: fixed; z-index: 2000; bottom: 14px; left: 50%; transform: translateX(-50%); max-width: min(92vw, 640px); display: flex; gap: 10px; align-items: center; background: #2A1A14; color: #FBF7EF; border-radius: 12px; padding: 8px 8px 8px 14px; font-size: 13px; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
+.i18n-note button { font: inherit; font-size: 18px; line-height: 1; width: 32px; height: 32px; border-radius: 8px; border: 0; background: #FFFFFF22; color: #fff; cursor: pointer; flex: 0 0 auto; }
+@media (max-width: 760px) { .lang { margin-left: 0; } .lang button { min-width: 34px; padding: 0 8px; } }

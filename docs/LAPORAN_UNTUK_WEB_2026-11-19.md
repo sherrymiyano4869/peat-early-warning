@@ -28,6 +28,7 @@ Zip berikutnya akan menimpa berkas yang sama. Mohon adopsi isinya ke sumber webm
 | Bilah atas semua halaman (`index`, `monitoring`, `prediction`, `response`, `petugas`, `about`, `team`, `lapor`) | Tautan "Tentang", "Tim", dan tombol "Lapor" (`<a class="nav-cta" href="lapor.html">`); footer "Halaman" ikut | Satu `<link rel="stylesheet" href="pages.css">` ditambahkan di tiap `<head>` |
 | `webmap/response.js` | Hanya gaya dan penyajian; **klasifikasi dan angka tidak berubah** (lihat bagian 3) | |
 | `webmap/timeseries.js` | `num()` menampilkan bilangan bulat tanpa desimal ("0 hari", bukan "0,000 hari") | Perbaikan kecil |
+| `webmap/i18n.js`, `webmap/i18n-en.js`, `tools/extract_i18n_strings.py`, `docs/I18N.md` | Pilihan bahasa ID/EN: kamus teks Indonesia ke Inggris, tombol di bilah atas, terjemahan penuh untuk Beranda, Tentang, Tim, Lapor, menu, dan footer; dua `<script>` di setiap halaman | Halaman data (Monitoring, Prediksi, Respons, Petugas) belum diterjemahkan; sisa pekerjaan ada di `docs/I18N.md` |
 | `serve_webmap.py` | Server statis tanpa cache peramban | Lokal; mengganti `python -m http.server`. Penyebabnya: peramban memakai `response.js` lama dari cache |
 | `run_pipeline.sh`, `update_data.sh`, `PEMBARUAN.md` | Skrip dan dokumen lokal (bukan dari zip) | Jangan ditimpa atau dihapus |
 
@@ -64,6 +65,8 @@ Zip berikutnya akan menimpa berkas yang sama. Mohon adopsi isinya ke sumber webm
 1. Bila memungkinkan, isi otomatis "Kode tugas pemeriksaan" di formulir Kobo lewat parameter Enketo (butuh nama simpul formulir yang belum diketahui sisi lokal).
 2. Tautkan tiap tugas di `petugas.html` ke `lapor.html?tugas=ID`.
 3. Halaman **Publik** (cari desa, status, ramalan 7 hari, lapor) belum ada. Batas desa 1:10.000 dari BIG sudah tersedia di `Downloads\Lomba` (83.518 poligon; 210 di area pilot); perlu dipotong dulu.
+
+**F2. Dua bahasa (ID/EN)**: selesaikan terjemahan halaman data dan kalimat bervariabel di JavaScript sesuai `docs/I18N.md`.
 
 **F. GitHub Pages** (bagian 5): semua jalur harus relatif; `api.js` sudah punya cadangan cermin statis; Petugas berjalan mode demo tanpa server API. Mohon tidak menambahkan ketergantungan pada server di halaman publik.
 
