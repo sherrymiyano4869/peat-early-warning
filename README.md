@@ -40,7 +40,7 @@
 | scripts/18_score_prospective.py | nilai arsip peluang titik api terhadap kejadian sesudahnya; tugas teratas lawan acak; muka air lapangan lawan indeks | siap (diuji data tiruan) |
 | scripts/20_export_response.py | ekspor buku besar, tugas, sekat, muka air lapangan, dan skor ke webmap/data/response.json (halaman Respons) | siap (diuji data tiruan dan peramban tanpa peta dasar) |
 | scripts/21_export_api.py, api/app.py | API v1 per sumber daya (GET; PATCH status tugas) dan cermin statisnya; kontrak di docs/API.md | siap (diuji data tiruan) |
-| webmap/petugas.html, api.js | halaman petugas (tugas dan status kunjungan) dan klien API; tema Ember and Sand di semua halaman | siap (diuji data tiruan dan Chromium tanpa peta dasar) |
+| webmap/index.html, monitoring.html, prediction.html, petugas.html, api.js | halaman web bertata letak mockup (tema Ember and Sand), halaman petugas, dan klien API | siap (diuji data tiruan dan Chromium tanpa peta dasar) |
 | scripts/05_seasonal_outlook.py | ENSO/IOD vs kekeringan musim (HTH, hujan) multi-tahun, leave-one-year-out | siap (diuji data sintetik) |
 
 Contoh pemakaian:

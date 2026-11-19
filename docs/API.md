@@ -92,8 +92,14 @@ Galat selalu `{"code": "...", "description": "..."}`:
 ## Pemakai di webmap
 
 `webmap/api.js` memanggil `v1/...` bila server berjalan, dan `data/v1/....json` bila tidak (alamat relatif, jadi jalan juga di sub-folder hosting).
-Dipakai oleh `monitoring.html` (kartu tugas terbuka dari `collections/tasks/items`) dan `petugas.html` (daftar tugas dan PATCH).
-Halaman lain masih membaca `manifest.json` dan `response.json` langsung.
+
+| Halaman | Endpoint yang dipakai |
+|---|---|
+| Monitoring | `collections/tasks/items` (kartu tugas terbuka), `collections/events/items?days=30` (laporan lapangan terbaru) |
+| Prediksi | `scores` (kartu "tugas teratas lawan acak" dan status prospektif) |
+| Petugas | `collections/tasks/items`, `PATCH collections/tasks/items/{id}` |
+
+Peta, stasiun, dan sel prediksi masih dibaca dari `manifest.json` dan berkas yang ditunjuknya; Respons membaca `response.json`.
 
 ## Mode statis (tanpa server)
 

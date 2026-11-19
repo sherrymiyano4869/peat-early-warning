@@ -133,12 +133,22 @@ def export_hotspots(out: Path, days: int = 7):
             "note": "Tanggal WIB; satelit Suomi NPP 375 m (NASA FIRMS)."}
 
 
+def ensure_cell_ids(gj: dict) -> dict:
+    """Pastikan tiap fitur sel punya id dan properties.cell_id (GeoJSON 14/15 lama belum menyimpannya); angka tidak berubah."""
+    from src.grid import cell_id_from_ring
+    for f in gj["features"]:
+        if "cell_id" not in f["properties"]:
+            f["properties"] = {"cell_id": str(cell_id_from_ring(f["geometry"]["coordinates"][0])), **f["properties"]}
+        f.setdefault("id", f["properties"]["cell_id"])
+    return gj
+
+
 def export_fire(out: Path, outputs: Path):
     """Sel teratas peluang titik api dan ringkasan uji untuk halaman Prediksi."""
     gj, mj = outputs / "fire_top_cells.geojson", outputs / "fire_metrics.json"
     if not gj.exists() or not mj.exists():
         return None
-    g, m = json.loads(gj.read_text(encoding="utf-8")), json.loads(mj.read_text(encoding="utf-8"))
+    g, m = ensure_cell_ids(json.loads(gj.read_text(encoding="utf-8"))), json.loads(mj.read_text(encoding="utf-8"))
     (out / "fire_cells.geojson").write_text(json.dumps(g, ensure_ascii=False), encoding="utf-8")
     h1 = m["horizon"].get("h1", {})
     mod, clim, per = h1.get("model", {}), h1.get("klimatologi", {}), h1.get("persistensi", {})
@@ -155,7 +165,7 @@ def export_dryness(out: Path, outputs: Path):
     gj, mj = outputs / "dryness_cells.geojson", outputs / "dryness_metrics.json"
     if not gj.exists() or not mj.exists():
         return None
-    g, m = json.loads(gj.read_text(encoding="utf-8")), json.loads(mj.read_text(encoding="utf-8"))
+    g, m = ensure_cell_ids(json.loads(gj.read_text(encoding="utf-8"))), json.loads(mj.read_text(encoding="utf-8"))
     (out / "dry_cells.geojson").write_text(json.dumps(g, ensure_ascii=False), encoding="utf-8")
     ev = m.get("uji_ruang_waktu", {})
     return {"file": "dry_cells.geojson", "issue_date": g.get("issue_date"), "n_cells": len(g["features"]), "skill_ok": bool(m.get("skill_ok")), "cap_class": int(m.get("cap_class", 0)),

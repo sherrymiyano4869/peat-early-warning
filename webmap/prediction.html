@@ -4,44 +4,87 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="origin-when-cross-origin">
-<title>Prediksi: 1–14 hari ke depan · peringatan dini kekeringan gambut (prototipe)</title>
+<title>Prediksi per sel 1 km · Peatland Early Warning (prototipe)</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<header class="topbar"><a class="brand" href="index.html"><svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#F2D68A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span><b>Peringatan Dini Gambut</b><small>Prototipe riset · bukan peringatan resmi</small></span></a><nav class="topnav" aria-label="Menu utama"><a href="index.html">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html" class="active" aria-current="page">Prediksi</a><a href="response.html">Respons</a><a href="petugas.html">Petugas</a></nav></header>
-<div id="map"></div>
-<div id="north">&#9650;<br>U</div>
-<div id="legendbox"></div>
-<div id="panel">
-  <h1 id="title">Prediksi: 1–14 hari ke depan</h1>
-  <div class="small" id="subtitle">Peluang ada titik api di sel 1 km (1–3 hari) dan prakiraan muka air di stasiun (7–14 hari). Peluang per sel, bukan titik pasti; bukan peringatan resmi.</div>
-  <div class="meta" id="meta"></div>
-  <div id="badge" class="badge warn">Memuat status...</div>
-  <div id="badge2" class="badge warn"></div>
-  <div id="badge3" class="badge warn"></div>
-  <div class="sect"><b>Tingkat tampilan:</b> <span id="level" class="level">–</span></div>
-  <div class="sect">
-    <b>Lapisan tema</b> <span class="small">(satu per satu)</span><br>
-    <label><input type="radio" name="theme" id="theme-fire" checked> Peluang titik api (1–3 hari)</label><br>
-    <label><input type="radio" name="theme" id="theme-dry"> Pengeringan per sel (7–14 hari)</label><br>
-    <label><input type="radio" name="theme" id="theme-struct"> Kerentanan struktural (konteks)</label><br>
-    <b>Lapisan bantu</b><br>
-    <label><input type="checkbox" id="chk-hillshade" checked> Bayangan relief (hillshade)</label><br>
-    <label><input type="checkbox" id="chk-khg" checked> Batas KHG</label><br>
-    <label><input type="checkbox" id="chk-admin" checked> Batas kabupaten/provinsi</label><br>
-    <label><input type="checkbox" id="chk-canals"> Kanal (garis)</label><br>
-    <label><input type="checkbox" id="chk-stations" checked> Stasiun SiTMAT</label>
+<body class="page">
+<header class="topbar"><a class="brand" href="index.html"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#EBB46A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span><b>Peatland Early Warning</b><small>Prototipe riset · bukan peringatan resmi</small></span></a><nav class="topnav" aria-label="Menu utama"><a href="index.html">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html" class="active" aria-current="page">Prediksi</a><a href="response.html">Respons</a><a href="petugas.html">Petugas</a></nav></header>
+<main class="wrap">
+  <div class="head-row" style="align-items:flex-end;gap:16px">
+    <div>
+      <div class="bar-accent" aria-hidden="true"></div>
+      <h1 id="page-title" style="margin:0;font-size:26px;line-height:1.2">Prediksi per sel 1 km</h1>
+      <p id="page-sub" style="margin:4px 0 0;color:var(--sand-700)">Memuat data...</p>
+    </div>
+    <div class="pills" style="gap:16px">
+      <div class="seg" role="group" aria-label="Tema prediksi" id="seg-theme">
+        <button type="button" data-theme="fire" aria-pressed="true">Peluang titik api</button>
+        <button type="button" data-theme="dry" aria-pressed="false">Pengeringan muka air</button>
+      </div>
+      <div class="seg" role="group" aria-label="Horizon waktu" id="seg-hz"></div>
+    </div>
   </div>
-  <div id="summary"></div>
-  <div id="drivers"></div>
-  <div class="sect" id="support-sect"><b>Lapisan teknis (lanjutan)</b><div id="support" class="small"></div></div>
-  <div class="sect"><b>Opasitas peta</b> <span class="small">(kanan = lebih pekat)</span><br><input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.9" style="width:100%"></div>
-  <div id="legend" class="legend"></div>
-  <details><summary>Atribusi dan penafian</summary><div id="attrib" class="small"></div></details>
-</div>
+  <div id="evidence" aria-label="Status bukti model"></div>
+
+  <div class="row">
+    <section class="card col-main" aria-label="Peta peluang">
+      <div class="head-row">
+        <h2 id="map-title">Peluang</h2>
+        <div class="pills" role="group" aria-label="Lapisan peta">
+          <button type="button" class="pill sm" data-layer="stations" aria-pressed="true">Stasiun</button>
+          <button type="button" class="pill sm" data-layer="canals" aria-pressed="false">Kanal</button>
+        </div>
+      </div>
+      <div class="mapbox"><div id="map"></div></div>
+      <div class="legend-row" id="legend-row"></div>
+      <div class="note" id="meta"></div>
+      <details class="adv"><summary>Lanjutan</summary>
+      <div class="adv-body">
+        <div class="pills" role="group" aria-label="Lapisan tambahan">
+          <button type="button" class="pill sm" data-layer="hillshade" aria-pressed="true">Bayangan relief</button>
+          <button type="button" class="pill sm" data-layer="khg" aria-pressed="true">Batas KHG</button>
+          <button type="button" class="pill sm" data-layer="admin" aria-pressed="true">Batas kabupaten/provinsi</button>
+          <button type="button" class="pill sm" data-layer="struct" aria-pressed="false">Kerentanan struktural (konteks)</button>
+        </div>
+        <label class="opacity" for="opacity">Opasitas peta <input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.9"></label>
+        <div id="support-sect"><b>Lapisan teknis</b><div id="support" class="small"></div></div>
+        <div id="legend" class="legend"></div>
+      </div>
+      </details>
+      <details class="about"><summary>Tentang peta ini</summary><div id="about-map"></div><div class="note" id="level-note"></div></details>
+    </section>
+
+    <aside class="col-side">
+      <section class="card" aria-labelledby="cell-title" id="cell-card">
+        <div id="cell-panel" style="display:flex;flex-direction:column;gap:16px"><div class="note">Klik sel di peta atau pilih dari daftar di bawah.</div></div>
+      </section>
+      <section class="card" aria-labelledby="top-title">
+        <h2 id="top-title">Sel teratas</h2>
+        <div id="top-list"></div>
+      </section>
+    </aside>
+  </div>
+
+  <section class="card" aria-labelledby="val-title" style="padding:24px">
+    <div class="head-row"><h2 id="val-title" class="lg">Seberapa jauh model bisa dipercaya?</h2><span class="note">Untuk juri dan peneliti · angka dari berkas keluaran</span></div>
+    <div class="trust" id="trust"></div>
+  </section>
+  <details class="about"><summary>Atribusi dan penafian</summary><div id="attrib"></div></details>
+</main>
+<footer class="footer"><div class="footer-in">
+  <div class="footer-cols">
+    <div><div class="brand-f"><svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#EBB46A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span>Peatland Early Warning</span></div>
+      <p style="margin:0;max-width:340px">Prakiraan peluang titik api dan pengeringan gambut tropis per sel 1 km, dibuat oleh mahasiswa magister Universitas Gadjah Mada.</p></div>
+    <div><h4>HALAMAN</h4><a href="index.html">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html">Respons</a><a href="petugas.html">Petugas</a></div>
+    <div><h4>SUMBER DATA</h4><span>NASA FIRMS (titik api VIIRS)</span><span>Stasiun muka air SiTMAT</span><span>GSMaP, CHIRPS, ERA5-Land</span><span>Sentinel-2 (NDMI) lewat Google Earth Engine</span><span>FABDEM dan ESA WorldCover</span><span>Indeks ENSO dan IOD</span></div>
+    <div><h4>KONTAK</h4><span>Universitas Gadjah Mada</span><span>Yogyakarta, Indonesia</span></div>
+  </div>
+  <div class="footer-bot"><span>© 2026 Tim Peatland Early Warning</span><span>Prototipe riset · bukan peringatan resmi. Dalam keadaan darurat, hubungi BPBD setempat.</span></div>
+</div></footer>
 <script>window.PAGE = "prediction";</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="api.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -91,11 +91,9 @@ def _polygon(ring: list) -> dict:
 
 
 def _cell_id_from_ring(ring: list) -> str:
-    """Cadangan untuk keluaran 14/15 lama yang belum menyimpan cell_id: sel dari titik tengah poligon."""
-    from src.grid import lonlat_to_cell
-    lon = sum(p[0] for p in ring[:4]) / 4
-    lat = sum(p[1] for p in ring[:4]) / 4
-    return str(int(lonlat_to_cell([lon], [lat])[2][0]))
+    """Cadangan untuk keluaran 14/15 lama yang belum menyimpan cell_id."""
+    from src.grid import cell_id_from_ring
+    return str(cell_id_from_ring(ring))
 
 
 def parse_interval(text: str) -> tuple[date | None, date | None]:

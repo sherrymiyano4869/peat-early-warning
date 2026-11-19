@@ -81,6 +81,13 @@ def cell_center_lonlat(cx, cy, res_m: float = CELL_RES_M):
     return from_grid((np.asarray(cx) + 0.5) * res_m, (np.asarray(cy) + 0.5) * res_m)
 
 
+def cell_id_from_ring(ring) -> int:
+    """id sel dari cincin poligon lon/lat (rata-rata empat sudut pertama); untuk GeoJSON lama tanpa cell_id."""
+    lon = sum(p[0] for p in ring[:4]) / 4
+    lat = sum(p[1] for p in ring[:4]) / 4
+    return int(lonlat_to_cell([lon], [lat])[2][0])
+
+
 def cell_polygon_lonlat(cx: int, cy: int, res_m: float = CELL_RES_M):
     """Poligon sel dalam lon/lat (cincin tertutup) untuk GeoJSON."""
     xs = [cx * res_m, (cx + 1) * res_m, (cx + 1) * res_m, cx * res_m, cx * res_m]

@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.24
+- Tata letak Beranda, Monitoring, dan Prediksi mengikuti mockup (Home, Main, Prediksi .dc.html), bukan hanya warnanya. Respons dan Petugas dipertahankan; hanya bilah atasnya disamakan
+- Beranda: hero bergambar kontur, kartu angka ringkas, tiga kartu fitur (kartu "Informasi" ditandai "Segera hadir" karena halaman Publik belum ada), empat langkah, ilustrasi peta
+  (diberi label "ilustrasi, bukan data nyata"), ajakan kemitraan, footer
+- Monitoring: kartu status + empat kartu angka (titik api 7 hari, harapan sel berapi besok, stasiun di bawah -40 cm dengan tren 7 hari dari wl_d7_cm, tugas terbuka dari API),
+  peta dalam kartu dengan tombol pil (Kerentanan, Titik api 7 hari, Stasiun, Kanal; panel "Lanjutan" untuk hillshade, KHG, batas admin, opasitas), legenda di atas peta,
+  daftar "Sel prioritas besok" (klik = peta memusatkan sel), kartu muka air per stasiun dengan sparkline dan ambang -40 cm, deret waktu, laporan lapangan terbaru
+  (hanya sel 1 km dan tingkat A/B/C menurut definisi skrip 17), "Tentang peta ini" menampung legenda panjang, tingkat tampilan, dan faktor penyusun
+- Prediksi: dua kontrol segmen (Tema: titik api | pengeringan; Horizon: Besok/3 hari atau 7/14 hari), klik sel membuka panel rincian (bukan popup) dengan angka dari berkas
+  fire_cells/dry_cells, kepercayaan model (3 batang, dari cap_class; bukan per sel), daftar sel teratas, tiga baris status bukti yang bisa dibuka, kartu "Seberapa jauh model bisa
+  dipercaya?" dari metrik nyata (PR-AUC model lawan pembanding, skill MAE, tugas teratas lawan acak dari skrip 18, cara pengujian). Faktor pendorong per sel hanya tampil bila
+  properties.drivers ada; kini belum diekspor, jadi panel menyatakannya dan tidak menggambar batang
+- Tidak dibawa dari mockup: status wilayah (ALERT dst.), angka ilustrasi, kurva kalibrasi, tombol "Buat tugas pemeriksaan", "Cell History", "Download PDF", tombol "Report Fire"
+  (belum ada URL formulir), dan legenda A/B/C versi mockup (definisi tingkat memakai skrip 17)
+- scripts/09_export_web.py: fire_cells.geojson dan dry_cells.geojson selalu memuat id dan properties.cell_id (dihitung dari poligon bila keluaran 14/15 lama belum memilikinya);
+  src/grid.py: cell_id_from_ring. Angka tidak berubah
+- app.js: fireCellStyle dan dryCellStyle menerima kunci horizon (p1/p3, p7/p14); FIRE_CLASSES dan DRY_CLASSES punya label pendek; main() ditulis ulang untuk kontrol baru
+- Id elemen: dihapus chk-*, theme-*, mode-*, badge/badge2/badge3, level, legendbox (Monitoring dan Prediksi), panel, north, title, subtitle, summary, drivers. Baru: atribut data-layer
+  pada tombol pil, seg-theme, seg-hz, cell-panel, top-list, trust, evidence, legend-row, maplegend, about-map, level-note, prio-list, stn-list, rep-list, kpis, status-text, asof,
+  page-sub. Dipertahankan: map, opacity, support, support-sect, legend, attrib, meta, timeseries. Respons memakai body.fullmap dan idnya tidak berubah
+
+## v0.23
+- Tampilan webmap mengikuti desain Ember and Sand (Palette.dc.html): style.css memakai token warna dan font (Space Grotesk, Inter; cadangan sistem tanpa internet),
+  bilah atas bersama di semua halaman, panel dan legenda bergaya kartu, lembar bawah di layar sempit. Id elemen tidak berubah, jadi app.js dan response.js tetap jalan
+- Warna lapisan di app.js: titik api teramati dan peluang titik api per sel memakai ramp Ember, pengeringan per sel memakai ramp Water (gelap = peluang lebih tinggi).
+  Batas kelas dan angka tidak berubah. Warna kelas muka air stasiun dan kategori bukti halaman Respons sengaja tidak diubah (pengkodean bermakna)
+- scripts/10_build_tiles.py: PALETTE kerawanan memakai ramp Ember 5 kelas (sebelumnya YlOrRd); berlaku setelah 10 dan 09 dijalankan ulang
+- Monitoring: kartu angka di atas peta (titik api 7 hari, stasiun di bawah -40 cm, tugas terbuka, tanggal data), dari API v1 lewat webmap/api.js.
+  Tanpa kartu "status regional": belum ada aturan tervalidasi yang menurunkan satu tingkat untuk seluruh wilayah
+- webmap/api.js: klien API (server di v1/..., atau cermin statis data/v1/....json bila server tidak ada)
+- webmap/petugas.html + petugas.js: daftar tugas dan pencatatan status kunjungan. Server berjalan: PATCH tambah-saja dengan token tim. Tanpa server: mode demo (localStorage).
+  Alasan dan peluang tugas tidak ditampilkan (pemeriksa tetap buta, sesuai 19)
+
 ## v0.22
 - API v1 per sumber daya, pola OGC API - Features (docs/API.md): src/api_store.py memilah keluaran 09, 10, 20 menjadi 8 koleksi (stations, hotspots,
   fire-cells, dryness-cells, events, tasks, canal-blocks, field-water-levels) dan sumber daya meta, series, susceptibility, layers, validation, scores;
@@ -11,16 +44,6 @@
 - 14 dan 15: fitur GeoJSON kini memuat id dan cell_id (angka tidak berubah). API menurunkan cell_id dari titik tengah poligon untuk keluaran lama
 - tests/test_api.py: penyaring terhadap hitungan mandiri, cell_id cadangan, aturan PATCH, tambah-saja, dan kesamaan cermin statis dengan server
 - Belum: pemecahan app.js per halaman dan pemuatan per lapisan dari API (peta masih membaca manifest.json dan response.json)
-- Tampilan webmap mengikuti desain Ember and Sand (Palette.dc.html): style.css memakai token warna dan font (Space Grotesk, Inter; cadangan sistem tanpa internet),
-  bilah atas bersama di semua halaman, panel dan legenda bergaya kartu, lembar bawah di layar sempit. Id elemen tidak berubah, jadi app.js dan response.js tetap jalan
-- Warna lapisan di app.js: titik api teramati dan peluang titik api per sel memakai ramp Ember, pengeringan per sel memakai ramp Water (gelap = peluang lebih tinggi).
-  Batas kelas dan angka tidak berubah. Warna kelas muka air stasiun dan kategori bukti halaman Respons sengaja tidak diubah (pengkodean bermakna)
-- scripts/10_build_tiles.py: PALETTE kerawanan memakai ramp Ember 5 kelas (sebelumnya YlOrRd); berlaku setelah 10 dan 09 dijalankan ulang
-- Monitoring: kartu angka di atas peta (titik api 7 hari, stasiun di bawah -40 cm, tugas terbuka, tanggal data), dari API v1 lewat webmap/api.js.
-  Tanpa kartu "status regional": belum ada aturan tervalidasi yang menurunkan satu tingkat untuk seluruh wilayah
-- webmap/api.js: klien API (server di v1/..., atau cermin statis data/v1/....json bila server tidak ada)
-- webmap/petugas.html + petugas.js: daftar tugas dan pencatatan status kunjungan. Server berjalan: PATCH tambah-saja dengan token tim. Tanpa server: mode demo (localStorage).
-  Alasan dan peluang tugas tidak ditampilkan (pemeriksa tetap buta, sesuai 19)
 
 ## v0.21
 - Halaman Respons (webmap/response.html + response.js, data dari scripts/20_export_response.py): sel 1 km berwarna menurut sumber bukti (satelit, laporan, keduanya, nihil,
