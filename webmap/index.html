@@ -5,21 +5,28 @@
 <title>Peringatan dini kekeringan gambut (prototipe)</title>
 <link rel="stylesheet" href="style.css">
 </head>
-<body style="background:#f4f4f1;height:auto">
-<div style="max-width:900px;margin:0 auto;padding:16px">
-  <h1 style="font-size:22px;margin:16px 24px 0">Peringatan dini kekeringan gambut <span class="small">(prototipe riset, bukan peringatan resmi)</span></h1>
+<body class="home">
+<header class="topbar"><a class="brand" href="index.html"><svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#F2D68A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span><b>Peringatan Dini Gambut</b><small>Prototipe riset · bukan peringatan resmi</small></span></a><nav class="topnav" aria-label="Menu utama"><a href="index.html" class="active" aria-current="page">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html">Respons</a><a href="petugas.html">Petugas</a></nav></header>
+<section class="hero"><div>
+  <h1>Peringatan dini kekeringan dan kebakaran gambut</h1>
+  <p>Prototipe riset untuk gambut Jambi: kondisi kini, peluang titik api di sel 1 km, dan verifikasi lapangan. Estimasi riset, bukan peringatan resmi.</p>
+</div></section>
+<main>
   <div class="cards">
     <a class="card" href="monitoring.html"><h2>Monitoring: kondisi kini</h2>
-      <p>Apa yang terjadi sampai hari ini: kerentanan struktural gambut, titik api yang teramati, dan muka air di stasiun SiTMAT.</p>
+      <p>Kerentanan struktural gambut, titik api yang teramati, dan muka air di stasiun SiTMAT.</p>
       <p class="small">Estimasi saja, tanpa prakiraan.</p></a>
-    <a class="card" href="prediction.html"><h2>Prediksi: 1–14 hari ke depan</h2>
-      <p>Peluang ada titik api di sel 1 km (1–3 hari) dan prakiraan muka air stasiun (7–14 hari), lengkap dengan status bukti dan kepercayaan.</p>
+    <a class="card" href="prediction.html"><h2>Prediksi: 1–14 hari</h2>
+      <p>Peluang ada titik api di sel 1 km (1–3 hari) dan prakiraan muka air stasiun (7–14 hari), dengan status bukti dan kepercayaan.</p>
       <p class="small">Peluang per sel, bukan titik pasti.</p></a>
     <a class="card" href="response.html"><h2>Respons: laporan lapangan</h2>
-      <p>Laporan warga dan petugas dicocokkan dengan satelit, tugas pemeriksaan dari prediksi, dan penilaian prediksi terhadap kejadian sesudahnya.</p>
+      <p>Laporan warga dan petugas dicocokkan dengan satelit, tugas pemeriksaan, dan penilaian prediksi terhadap kejadian sesudahnya.</p>
       <p class="small">Per sel 1 km; titik laporan tidak ditampilkan.</p></a>
+    <a class="card" href="petugas.html"><h2>Petugas: tugas pemeriksaan</h2>
+      <p>Daftar tugas terbitan terakhir dan pencatatan status kunjungan. Hasil kejadian tetap dilaporkan lewat formulir Kobo.</p>
+      <p class="small">Tampilan ponsel.</p></a>
   </div>
-  <p class="small" style="margin:0 24px">Buka lewat server: <code>python -m http.server -d webmap 8000</code>, lalu <code>http://localhost:8000</code>.</p>
-</div>
+  <p class="small" style="margin-top:20px">Buka lewat server: <code>python -m http.server -d webmap 8000</code>, atau <code>uvicorn api.app:create_app --factory</code> bila ingin mencatat status tugas.</p>
+</main>
 </body>
 </html>

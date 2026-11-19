@@ -9,11 +9,12 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<header class="topbar"><a class="brand" href="index.html"><svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#F2D68A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span><b>Peringatan Dini Gambut</b><small>Prototipe riset · bukan peringatan resmi</small></span></a><nav class="topnav" aria-label="Menu utama"><a href="index.html">Beranda</a><a href="monitoring.html" class="active" aria-current="page">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html">Respons</a><a href="petugas.html">Petugas</a></nav></header>
 <div id="map"></div>
+<div id="kpis" aria-label="Angka ringkas"></div>
 <div id="north">&#9650;<br>U</div>
 <div id="legendbox"></div>
 <div id="panel">
-  <div class="nav"><a href="index.html">Beranda</a><a href="monitoring.html" class="active">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html">Respons</a></div>
   <h1 id="title">Monitoring: kondisi kini</h1>
   <div class="small" id="subtitle">Estimasi kondisi gambut sampai hari ini: kerentanan struktural, titik api teramati, dan muka air di stasiun. Indeks relatif, bukan peluang kebakaran.</div>
   <div class="meta" id="meta"></div>
@@ -38,6 +39,7 @@
 </div>
 <script>window.PAGE = "monitoring";</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="api.js"></script>
 <script src="app.js"></script>
 <script src="timeseries.js"></script>
 </body>

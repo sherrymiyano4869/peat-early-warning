@@ -136,9 +136,9 @@ function unitStyle(classes, props) {
 }
 
 function boundaryStyle(kind) {
-  if (kind === "khg") return { color: "#2d2d2d", weight: 1.6, dashArray: "6 4", fill: false };
+  if (kind === "khg") return { color: "#4A1F14", weight: 1.6, dashArray: "6 4", fill: false };
   if (kind === "admin") return { color: "#8a8a8a", weight: 0.9, fill: false };
-  return { color: "#3b83bd", weight: 0.7, opacity: 0.85 };   // kanal: garis biru tipis, bukan peta panas
+  return { color: "#3E7CA6", weight: 0.7, opacity: 0.85 };   // kanal: garis biru tipis, bukan peta panas
 }
 
 function unitPopupHtml(p, k) {
@@ -152,9 +152,9 @@ function unitPopupHtml(p, k) {
 function kerawananLegendHtml(k) {
   if (!k) return "";
   const cls = k.classes.map(c => `<span class="swatch" style="background:${c.color}"></span>${c.label}`).join("<br>");
-  const conf = `<span class="swatch" style="background:#bd0026"></span>pekat: kepercayaan tinggi<br>` +
-               `<span class="swatch" style="background:#bd0026;opacity:.7"></span>agak transparan: sedang<br>` +
-               `<span class="swatch hatch" style="background-color:#fd8d3c;opacity:.6"></span>transparan dan diarsir: rendah`;
+  const conf = `<span class="swatch" style="background:#B5432F"></span>pekat: kepercayaan tinggi<br>` +
+               `<span class="swatch" style="background:#B5432F;opacity:.7"></span>agak transparan: sedang<br>` +
+               `<span class="swatch hatch" style="background-color:#D77A3C;opacity:.6"></span>transparan dan diarsir: rendah`;
   const mode = k.mode === "struktural" ? "Hanya kerentanan struktural (belum ada tekanan dinamis)." : "Kerentanan struktural + tekanan dinamis.";
   const unmapped = k.unmapped ? `<div class="small" style="margin-top:4px">${k.unmapped}</div>` : "";
   const scheme = k.class_scheme ? `<div class="small" style="margin-top:2px">${k.class_scheme}</div>` : "";
@@ -185,9 +185,9 @@ function ageDays(dateStr, refStr) {
 }
 
 const HOT_AGE = [
-  { max: 0, color: "#b10026", label: "hari ini" },
-  { max: 3, color: "#fd8d3c", label: "1–3 hari lalu" },
-  { max: 7, color: "#fed976", label: "4–7 hari lalu" },
+  { max: 0, color: "#B5432F", label: "hari ini" },
+  { max: 3, color: "#D77A3C", label: "1–3 hari lalu" },
+  { max: 7, color: "#F2D68A", label: "4–7 hari lalu" },
 ];
 
 function hotspotColor(age) {
@@ -214,10 +214,10 @@ function hotspotLegendHtml(h) {
 
 // ---- peluang titik api (prediksi) ---------------------------------------------
 const FIRE_CLASSES = [
-  { min: 0.30, color: "#980043", label: "peluang ≥ 30%" },
-  { min: 0.10, color: "#dd1c77", label: "10–30%" },
-  { min: 0.03, color: "#df65b0", label: "3–10%" },
-  { min: 0, color: "#d7b5d8", label: "di bawah 3% (tetap 5% teratas)" },
+  { min: 0.30, color: "#B5432F", label: "peluang ≥ 30%" },
+  { min: 0.10, color: "#D77A3C", label: "10–30%" },
+  { min: 0.03, color: "#EBB46A", label: "3–10%" },
+  { min: 0, color: "#F2D68A", label: "di bawah 3% (tetap 5% teratas)" },
 ];
 
 function fireClass(p) {
@@ -258,11 +258,11 @@ function fireBadge(fire) {
 
 // ---- prakiraan pengeringan per sel (prediksi) ----------------------------------
 const DRY_CLASSES = [
-  { min: 0.60, color: "#bd0026", label: "≥ 60%" },
-  { min: 0.45, color: "#f03b20", label: "45–60%" },
-  { min: 0.30, color: "#fd8d3c", label: "30–45%" },
-  { min: 0.15, color: "#fecc5c", label: "15–30%" },
-  { min: 0, color: "#ffffb2", label: "di bawah 15%" },
+  { min: 0.60, color: "#2C6A8E", label: "≥ 60%" },
+  { min: 0.45, color: "#5B93B3", label: "45–60%" },
+  { min: 0.30, color: "#93BBD0", label: "30–45%" },
+  { min: 0.15, color: "#C9DCE6", label: "15–30%" },
+  { min: 0, color: "#EEF3F6", label: "di bawah 15%" },
 ];
 
 function dryClass(p) {
@@ -321,6 +321,23 @@ function monitoringSummaryHtml(stations, hot, manifest) {
     hotTxt = `Titik api VIIRS: <b>${d0}</b> hari ini · <b>${hot.features.length}</b> dalam 7 hari (sampai ${hot.date_max})`;
   }
   return `<b>Ringkasan kondisi kini</b><br>Stasiun SiTMAT (${s.total}), muka air terakhir:<br>${rows}${s.nodata ? `<br><span class="dot" style="background:${NODATA_COLOR}"></span>tanpa data: <b>${s.nodata}</b>` : ""}<br>${hotTxt}`;
+}
+
+// Tugas terbuka = belum ada hasil dari Kobo DAN belum ditandai diperiksa atau tidak terjangkau oleh petugas
+function openTasks(tasks) {
+  const done = f => f.properties.hasil !== "belum" || ["diperiksa", "tidak_terjangkau"].includes(f.properties.status_lapangan);
+  return { total: tasks.length, open: tasks.filter(f => !done(f)).length };
+}
+
+function kpiHtml(stations, hot, manifest, tasks) {
+  const s = stationSummary(stations), withData = s.total - s.nodata, below = withData - s.byClass[0].n;
+  const card = (label, value, sub) => `<div class="kpi"><span>${label}</span><b>${value}</b><small>${sub}</small></div>`;
+  const out = [];
+  if (hot) out.push(card("Titik api VIIRS, 7 hari", hot.features.length, `${hot.features.filter(f => ageDays(f.properties.date, hot.date_max) <= 0).length} hari ini`));
+  out.push(card("Stasiun di bawah −40 cm", `${below}/${withData}`, s.nodata ? `${s.nodata} tanpa data` : "semua punya data"));
+  if (tasks) { const t = openTasks(tasks); out.push(card("Tugas pemeriksaan terbuka", t.open, `dari ${t.total} tugas`)); }
+  if (manifest.data_through) out.push(card("Data stasiun sampai", manifest.data_through, "tanggal data terakhir"));
+  return out.join("");
 }
 
 function predictionSummaryHtml(fire, dry) {
@@ -486,6 +503,10 @@ async function main() {
   });
 
   // ringkasan dan faktor penyusun
+  if (PAGE === "monitoring" && $("kpis")) {
+    const tasks = await Api.get("collections/tasks/items").then(r => r.features, () => null);   // opsional: tanpa 20, kartu tugas dilewati
+    $("kpis").innerHTML = kpiHtml(gj.features, hotData, manifest, tasks);
+  }
   if ($("summary")) $("summary").innerHTML = PAGE === "prediction" ? predictionSummaryHtml(manifest.fire, manifest.dryness) : monitoringSummaryHtml(gj.features, hotData, manifest);
   if ($("drivers")) $("drivers").innerHTML = driversHtml(manifest.drivers, PAGE === "prediction" ? "Masukan model" : "Faktor penyusun kondisi kini");
 
@@ -512,7 +533,7 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = { fmt, wlColor, wlClass, isStale, stationLegendHtml, trendText, predictionSentences, stationPopupHtml, sparklinePath, validationBadge, predictionTable, legendHtml, startupHint,
                      levelForZoom, levelLabel, classColor, unitStyle, boundaryStyle, unitPopupHtml, kerawananLegendHtml,
                      ageDays, hotspotColor, hotspotStyle, hotspotPopupHtml, hotspotLegendHtml, fireClass, fireCellStyle, firePopupHtml, fireLegendHtml, fireBadge, dryClass, dryCellStyle, dryPopupHtml, dryLegendHtml, dryBadge,
-                     stationSummary, monitoringSummaryHtml, predictionSummaryHtml, driversHtml, monitoringBadge };
+                     stationSummary, openTasks, kpiHtml, monitoringSummaryHtml, predictionSummaryHtml, driversHtml, monitoringBadge };
 } else {
   main().catch(err => {
     document.getElementById("title").textContent = "Data belum dapat dimuat";

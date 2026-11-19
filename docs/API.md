@@ -89,6 +89,12 @@ Galat selalu `{"code": "...", "description": "..."}`:
 | 404 | `tidak_ditemukan` | koleksi atau item tidak ada |
 | 503 | `data_belum_ada` | berkas pipeline belum dibuat; pesan menyebut skripnya |
 
+## Pemakai di webmap
+
+`webmap/api.js` memanggil `v1/...` bila server berjalan, dan `data/v1/....json` bila tidak (alamat relatif, jadi jalan juga di sub-folder hosting).
+Dipakai oleh `monitoring.html` (kartu tugas terbuka dari `collections/tasks/items`) dan `petugas.html` (daftar tugas dan PATCH).
+Halaman lain masih membaca `manifest.json` dan `response.json` langsung.
+
 ## Mode statis (tanpa server)
 
 `scripts/21_export_api.py` menulis respons yang sama ke `webmap/data/v1/…json` (alamat server + `.json`), misalnya

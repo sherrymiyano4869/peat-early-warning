@@ -38,7 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.common import ROOT, path  # noqa: E402
 from src.confidence import CLASS_LABEL, cap_from_skill, combine_confidence  # noqa: E402
 
-PALETTE = [(255, 255, 178), (254, 204, 92), (253, 141, 60), (240, 59, 32), (189, 0, 38)]  # YlOrRd, 5 kelas
+PALETTE = [(251, 243, 220), (242, 214, 138), (235, 180, 106), (215, 122, 60), (181, 67, 47)]  # ramp Ember desain (#FBF3DC ... #B5432F), 5 kelas
 LABELS = ["sangat rendah", "rendah", "sedang", "tinggi", "sangat tinggi"]
 ALPHA = {2: 235, 1: 190, 0: 150}  # menurut kelas kepercayaan
 HATCH_COLOR = (50, 50, 50, 170)

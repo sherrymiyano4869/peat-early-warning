@@ -10,7 +10,17 @@
 - scripts/21_export_api.py: cermin statis webmap/data/v1 (bentuk sama dengan server) dan --openapi untuk Postman
 - 14 dan 15: fitur GeoJSON kini memuat id dan cell_id (angka tidak berubah). API menurunkan cell_id dari titik tengah poligon untuk keluaran lama
 - tests/test_api.py: penyaring terhadap hitungan mandiri, cell_id cadangan, aturan PATCH, tambah-saja, dan kesamaan cermin statis dengan server
-- Belum: halaman web belum memakai API (masih membaca manifest.json dan response.json); pemecahan app.js per halaman dan pemuatan per lapisan
+- Belum: pemecahan app.js per halaman dan pemuatan per lapisan dari API (peta masih membaca manifest.json dan response.json)
+- Tampilan webmap mengikuti desain Ember and Sand (Palette.dc.html): style.css memakai token warna dan font (Space Grotesk, Inter; cadangan sistem tanpa internet),
+  bilah atas bersama di semua halaman, panel dan legenda bergaya kartu, lembar bawah di layar sempit. Id elemen tidak berubah, jadi app.js dan response.js tetap jalan
+- Warna lapisan di app.js: titik api teramati dan peluang titik api per sel memakai ramp Ember, pengeringan per sel memakai ramp Water (gelap = peluang lebih tinggi).
+  Batas kelas dan angka tidak berubah. Warna kelas muka air stasiun dan kategori bukti halaman Respons sengaja tidak diubah (pengkodean bermakna)
+- scripts/10_build_tiles.py: PALETTE kerawanan memakai ramp Ember 5 kelas (sebelumnya YlOrRd); berlaku setelah 10 dan 09 dijalankan ulang
+- Monitoring: kartu angka di atas peta (titik api 7 hari, stasiun di bawah -40 cm, tugas terbuka, tanggal data), dari API v1 lewat webmap/api.js.
+  Tanpa kartu "status regional": belum ada aturan tervalidasi yang menurunkan satu tingkat untuk seluruh wilayah
+- webmap/api.js: klien API (server di v1/..., atau cermin statis data/v1/....json bila server tidak ada)
+- webmap/petugas.html + petugas.js: daftar tugas dan pencatatan status kunjungan. Server berjalan: PATCH tambah-saja dengan token tim. Tanpa server: mode demo (localStorage).
+  Alasan dan peluang tugas tidak ditampilkan (pemeriksa tetap buta, sesuai 19)
 
 ## v0.21
 - Halaman Respons (webmap/response.html + response.js, data dari scripts/20_export_response.py): sel 1 km berwarna menurut sumber bukti (satelit, laporan, keduanya, nihil,
