@@ -87,7 +87,7 @@ function legendHtml(mode, show, round) {
   let h = "<h2>Kejadian per sel 1 km</h2>" + Object.entries(CATS).filter(([k]) => mode === "gabungan" || k === "satelit").map(([, c]) => row(cell(c), c.short || c.label)).join("");
   if (mode === "gabungan") h += row("<span class=\"lg-pulse\"></span>", "Ada laporan membara");
   if (show.top) h += "<h2>Prediksi</h2>" + row("<span class=\"lg-cell wash\"></span>", "Sel berpeluang tertinggi");
-  if (show.tasks) h += "<h2>Tugas pemeriksaan</h2>" + row("<span class=\"lg-cell task dashed\"></span>", "Belum diperiksa") + row("<span class=\"lg-cell task\"></span>", "Sudah diperiksa");
+  if (show.tasks) h += "<h2>Tugas pemeriksaan</h2><div class=\"small\">Sel 1 km yang harus dicek petugas</div>" + row(`<span class="lg-cell task dashed${round ? " round" : ""}"></span>`, "Belum diperiksa") + row(`<span class="lg-cell task${round ? " round" : ""}"></span>`, "Sudah diperiksa");
   if (show.sekat) h += "<h2>Sekat kanal (kondisi terakhir)</h2>" + Object.entries(SEKAT).map(([k, c]) => row(`<span class="lg-dia" style="--c:${c}"></span>`, k)).join("");
   if (show.water) h += "<h2>Muka air lapangan (bacaan terakhir)</h2>" + WL.map(([, c, l]) => row(`<span class="lg-dot" style="--c:${c}"></span>`, l)).join("");
   return h + "<div class=\"small lg-note\">Sel 1 km, bukan titik laporan (privasi pelapor). Tanpa warna = tidak ada bukti, bukan berarti aman.</div>";
@@ -129,13 +129,25 @@ async function main() {
 
   (D.top_cells ? D.top_cells.features : []).forEach(f => L.polygon(f.geometry.coordinates[0].map(([lon, lat]) => [lat, lon]), { pane: "topPane", color: "#6E2717", weight: 1, opacity: 0.55, fillColor: "#6E2717", fillOpacity: 0.08, interactive: false }).addTo(groups.top));   // lapisan lembut, bukan jaring garis hitam
   const near = () => map.getZoom() >= 12;   // generalisasi menurut skala: jauh = penanda berukuran tetap, dekat = sel 1 km sebenarnya
+  function taskPopup(t) {
+    return `<div class="pp-k">TUGAS PEMERIKSAAN</div><div class="pp-t">${t.id_tugas}</div><span class="pp-chip ${t.hasil}">${TASK[t.hasil]}</span>` +
+      `<div class="pp-m">Terbit ${tgl(D.tasks.issue_date)} &middot; sel ${t.cell_id}</div>` +
+      (t.hasil === "belum" ? `<a class="pp-btn" href="lapor.html?tugas=${encodeURIComponent(t.id_tugas)}">Laporkan hasil pemeriksaan</a>` : "");
+  }
+  // Tugas = sel 1 km yang harus dicek petugas. Jauh: lingkaran padat (terlihat dan mudah ditekan); dekat: sel berisi tint (seluruh luasnya bisa ditekan, bukan hanya garis tepi).
   function drawTasks() {
     groups.tasks.clearLayers();
-    const w = near() ? [4.5, 2] : [2.8, 1.2];
+    const zoomIn = near();
     D.tasks.items.forEach(t => {
-      L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#fff", weight: w[0], opacity: 0.85, fill: false, interactive: false }).addTo(groups.tasks);   // bingkai putih agar garis tugas terbaca di atas warna apa pun
-      L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#0B5C8A", weight: w[1], dashArray: t.hasil === "belum" ? "5 4" : null, fill: false })
-        .bindPopup(`<b>Tugas ${t.id_tugas}</b><br>Terbit ${D.tasks.issue_date}<br>${TASK[t.hasil]}`).addTo(groups.tasks);
+      const open = t.hasil === "belum";
+      let layer;
+      if (zoomIn) {
+        L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#fff", weight: 3.6, opacity: 0.8, fill: false, interactive: false }).addTo(groups.tasks);   // bingkai putih
+        layer = L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#0B5C8A", weight: open ? 1.6 : 2.4, fillColor: "#0B5C8A", fillOpacity: open ? 0.14 : 0.42 });   // belum = tint tipis, sudah = tint pekat (tanpa garis putus-putus)
+      } else {
+        layer = L.circleMarker(center(t.cell_id), { pane: "tasksPane", radius: 6, color: "#fff", weight: 1.8, fillColor: open ? "#6FB1D6" : "#0B5C8A", fillOpacity: 1 });
+      }
+      layer.bindPopup(taskPopup(t), { minWidth: 220 }).addTo(groups.tasks);
     });
   }
   drawTasks();
@@ -180,7 +192,7 @@ async function main() {
     const t = D.tasks.items, done = t.filter(x => x.hasil !== "belum");
     const chip = (cls, label, v) => `<div class="kc ${cls}"><b>${v}</b><span>${label}</span></div>`;
     strip.innerHTML = chip("k1", "Kejadian tercatat", fmt(k.kejadian[col])) +
-      (mode === "gabungan" ? chip("k2", "Dikonfirmasi lapangan", fmt(k.terkonfirmasi[1])) + chip("k3", "Lolos dari satelit", fmt(k.lolos[1])) + chip("k4", "Tugas belum diperiksa", fmt(t.length - done.length)) : "");
+      (mode === "gabungan" ? chip("k2", "Dikonfirmasi lapangan", fmt(k.terkonfirmasi[1])) + chip("k3", "Lolos dari satelit", fmt(k.lolos[1])) + chip("k4", "Tugas belum dicek petugas", fmt(t.length - done.length)) : "");
     $("tasksum").innerHTML = t.length ? `<b>Tugas pemeriksaan</b> <span class="small">terbit ${D.tasks.issue_date}</span><br>${t.length} tugas, ${done.length} sudah diperiksa ` +
       `(${done.filter(x => x.hasil === "kejadian").length} ada kejadian, ${done.filter(x => x.hasil === "nihil").length} nihil)` : "<b>Tugas pemeriksaan</b><br><span class=\"small\">Belum ada daftar tugas (19).</span>";
 
