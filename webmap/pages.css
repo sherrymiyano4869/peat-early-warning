@@ -46,13 +46,12 @@ body.fullmap .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0
 #kpi-strip .kc { pointer-events: auto; background: #FBF7EFF2; border-radius: 12px; padding: 8px 14px 8px 12px; border-left: 5px solid var(--k, #D77A3C); box-shadow: 0 2px 12px rgba(42,26,20,.22); display: flex; flex-direction: column; min-width: 92px; }
 #kpi-strip .kc b { font-family: var(--font-head, inherit); font-size: 24px; line-height: 1.05; color: #2A1A14; }
 #kpi-strip .kc span { font-size: 11px; color: #6E5C51; margin-top: 2px; }
-#kpi-strip .k1 { --k: #E69F00; } #kpi-strip .k2 { --k: #D55E00; } #kpi-strip .k3 { --k: #AA4499; } #kpi-strip .k4 { --k: #0B5C8A; }
+#kpi-strip .k1 { --k: #E69F00; } #kpi-strip .k2 { --k: #D55E00; } #kpi-strip .k3 { --k: #AA4499; } #kpi-strip .k4 { --k: #2A1A14; }
 .lg-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; line-height: 1.25; }
 .lg-cell { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 3px; background: var(--c); box-shadow: 0 0 0 1.5px #fff, 0 0 0 2.5px rgba(42,26,20,.28); margin: 0 2px; }
 .lg-cell.hollow { background: transparent; border: 2px dashed var(--c); box-shadow: none; box-sizing: border-box; margin: 0; width: 20px; height: 20px; }
 .lg-cell.wash { background: #6E271714; border: 1px solid #6E271788; box-shadow: none; box-sizing: border-box; margin: 0; width: 20px; height: 20px; }
-.lg-cell.task { background: #0B5C8A66; border: 2px solid #0B5C8A; box-shadow: 0 0 0 1.5px #fff; box-sizing: border-box; margin: 0 1px; width: 18px; height: 18px; } .lg-cell.task.dashed { border-width: 1.5px; background: #0B5C8A24; }
-.lg-cell.task.round { background: #0B5C8A; border: 2px solid #fff; box-shadow: 0 0 0 1px #0B5C8A66; } .lg-cell.task.dashed.round { background: #6FB1D6; border-style: solid; }
+.lg-cell.task { background: #2A1A1461; border: 2.4px solid #2A1A14; box-shadow: 0 0 0 1.5px #fff; box-sizing: border-box; margin: 0 1px; width: 18px; height: 18px; } .lg-cell.task.dashed { border-width: 1.6px; background: #2A1A1412; }
 .lg-dia { flex: 0 0 auto; width: 11px; height: 11px; background: var(--c); border: 2px solid #fff; box-shadow: 0 0 0 1px #222; transform: rotate(45deg); margin: 0 5px; }
 .lg-dot { flex: 0 0 auto; width: 13px; height: 13px; border-radius: 50%; background: var(--c); border: 2.5px solid #fff; box-shadow: 0 0 0 1px #222; margin: 0 3px; }
 .lg-pulse { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2.5px solid #2A1A14; margin: 0 4px; }
@@ -71,7 +70,10 @@ body.fullmap .leaflet-popup-content ul { font-size: 14px; }
 body.fullmap .leaflet-popup-close-button { font-size: 24px; width: 36px; height: 36px; line-height: 34px; }
 .pp-k { font-size: 11px; letter-spacing: .08em; font-weight: 700; color: #6E5C51; }
 .pp-t { font-family: var(--font-head, inherit); font-size: 20px; font-weight: 700; margin: 2px 0 8px; }
-.pp-chip { display: inline-block; font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #DCE9F2; color: #0B5C8A; }
+.pp-chip { display: inline-block; font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #EDE3D3; color: #2A1A14; }
 .pp-chip.kejadian { background: #F6DDD6; color: #93351F; } .pp-chip.nihil { background: #E0EFE6; color: #245C3F; }
 .pp-m { font-size: 13px; color: #6E5C51; margin-top: 8px; }
 .pp-btn { display: flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 12px; border-radius: 10px; background: linear-gradient(135deg, #B5432F, #93351F); color: #fff !important; font-weight: 700; text-decoration: none; }
+.mk-task { display: block; width: 12px; height: 12px; margin: 1px; box-sizing: border-box; border-radius: 2px; border: 2.5px solid #2A1A14; background: #fff; box-shadow: 0 0 0 1.5px #fff, 0 1px 4px rgba(0,0,0,.35); }
+.mk-task.done { background: #2A1A14; }
+.lg-row .mk-task { flex: 0 0 auto; margin: 0 3px; box-shadow: 0 0 0 1px #0003; }

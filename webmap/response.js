@@ -87,7 +87,7 @@ function legendHtml(mode, show, round) {
   let h = "<h2>Kejadian per sel 1 km</h2>" + Object.entries(CATS).filter(([k]) => mode === "gabungan" || k === "satelit").map(([, c]) => row(cell(c), c.short || c.label)).join("");
   if (mode === "gabungan") h += row("<span class=\"lg-pulse\"></span>", "Ada laporan membara");
   if (show.top) h += "<h2>Prediksi</h2>" + row("<span class=\"lg-cell wash\"></span>", "Sel berpeluang tertinggi");
-  if (show.tasks) h += "<h2>Tugas pemeriksaan</h2><div class=\"small\">Sel 1 km yang harus dicek petugas</div>" + row(`<span class="lg-cell task dashed${round ? " round" : ""}"></span>`, "Belum diperiksa") + row(`<span class="lg-cell task${round ? " round" : ""}"></span>`, "Sudah diperiksa");
+  if (show.tasks) h += "<h2>Tugas pemeriksaan</h2><div class=\"small\">Sel 1 km yang harus dicek petugas</div>" + row(round ? "<span class=\"mk-task open\"></span>" : "<span class=\"lg-cell task dashed\"></span>", "Belum diperiksa (kotak kosong)") + row(round ? "<span class=\"mk-task done\"></span>" : "<span class=\"lg-cell task\"></span>", "Sudah diperiksa (kotak terisi)");
   if (show.sekat) h += "<h2>Sekat kanal (kondisi terakhir)</h2>" + Object.entries(SEKAT).map(([k, c]) => row(`<span class="lg-dia" style="--c:${c}"></span>`, k)).join("");
   if (show.water) h += "<h2>Muka air lapangan (bacaan terakhir)</h2>" + WL.map(([, c, l]) => row(`<span class="lg-dot" style="--c:${c}"></span>`, l)).join("");
   return h + "<div class=\"small lg-note\">Sel 1 km, bukan titik laporan (privasi pelapor). Tanpa warna = tidak ada bukti, bukan berarti aman.</div>";
@@ -143,9 +143,10 @@ async function main() {
       let layer;
       if (zoomIn) {
         L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#fff", weight: 3.6, opacity: 0.8, fill: false, interactive: false }).addTo(groups.tasks);   // bingkai putih
-        layer = L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#0B5C8A", weight: open ? 1.6 : 2.4, fillColor: "#0B5C8A", fillOpacity: open ? 0.14 : 0.42 });   // belum = tint tipis, sudah = tint pekat (tanpa garis putus-putus)
+        layer = L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#2A1A14", weight: open ? 1.6 : 2.4, fillColor: "#2A1A14", fillOpacity: open ? 0.07 : 0.38 });   // belum = tint tipis, sudah = tint pekat; warna netral gelap agar tidak tertukar dengan kategori kejadian
       } else {
-        layer = L.circleMarker(center(t.cell_id), { pane: "tasksPane", radius: 6, color: "#fff", weight: 1.8, fillColor: open ? "#6FB1D6" : "#0B5C8A", fillOpacity: 1 });
+        // Tugas = KOTAK (seperti sel yang diperiksa), kejadian = lingkaran berwarna: beda bentuk dan beda isi, bukan hanya beda biru. Belum = kotak kosong, sudah = kotak terisi.
+        layer = L.marker(center(t.cell_id), { pane: "markPane", icon: L.divIcon({ className: "", iconSize: [16, 16], html: `<span class="mk-task ${open ? "open" : "done"}"></span>` }) });
       }
       layer.bindPopup(taskPopup(t), { minWidth: 220 }).addTo(groups.tasks);
     });
