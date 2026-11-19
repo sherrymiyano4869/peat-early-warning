@@ -70,3 +70,15 @@ Mode (Hanya satelit | Satelit + laporan lapangan) menjadi kontrol segmen; empat 
 2. Pindah tema dan horizon di Prediksi: legenda, peta, dan ringkasan ikut berganti, nilainya sama dengan berkas sumber.
 3. Klik satu sel di daftar prioritas dan satu sel di peta: panel detail memuat angka yang sama dengan `fire_cells.geojson`.
 4. Cek tiap poin di bagian 4 dengan membaca kode, bukan hanya melihat tampilannya.
+
+## 7. Status setelah v0.24 (diperiksa 2026-11-19) dan tambahan lokal
+
+Sudah mengikuti mockup: Beranda, Monitoring, Prediksi (kontrol pil dan segmen, panel rincian sel, kartu kepercayaan model).
+
+Tambahan LOKAL (di luar zip web; mohon diadopsi agar tidak tertimpa): `about.html`, `team.html` (terjemahan About dan Team dari mockup; peran dan deskripsi anggota tim masih kosong di sumbernya, "XXXX"), `pages.css`, dan dua tautan "Tentang" dan "Tim" di bilah atas dan footer semua halaman.
+
+Masih perlu dikerjakan:
+1. **Respons**: kontrol masih radio, kotak centang, penggeser, dan `<select>`; peta awal terbuka di seluruh Asia Tenggara (area pilot hanya sebintik).
+2. **Monitoring**: ruang kosong di bawah kartu peta (kolom kanan lebih panjang); nama stasiun panjang terbungkus dan tertimpa sparkline; di Beranda kartu ke-4 hero jatuh sendirian di baris kedua.
+3. **Keluaran model titik api (14_fire_model)**: hanya 10 nilai `p1` unik di 215 sel (5 teratas semuanya 0,571), dan 54 dari 215 sel punya `p3` < `p1`, padahal "ada titik api dalam 3 hari" tidak mungkin lebih kecil daripada "besok". Daftar prioritas jadi tidak informatif. Periksa kalibrasi.
+4. **Formulir laporan** (lihat jawaban terpisah di percakapan): belum ada halaman; keputusan jalur pengiriman ke Kobo belum diambil.
