@@ -1,4 +1,418 @@
-/* i18n-en.js: kamus Indonesia -> Inggris. Kunci = teks Indonesia persis (spasi dinormalkan). Tambah pasangan baru di sini; lihat docs/I18N.md. Berkas lokal, bukan dari zip web. */
+/* i18n-en.js: kamus Indonesia -> Inggris. Kunci = teks Indonesia persis (spasi dinormalkan); pola untuk teks bervariabel di I18N_EN_RX. Lihat docs/I18N.md. Berkas lokal, bukan dari zip web. */
+window.I18N_EN_RX = [
+[
+"Versi (\\S+) · dibuat (\\S+) · data sampai (\\S+) · tanggal terbit prediksi (\\S+)",
+"Version {1} · generated {2} · data up to {3} · forecasts issued {4}"
+],
+[
+"Versi (\\S+) · dibuat (\\S+)",
+"Version {1} · generated {2}"
+],
+[
+"Buku besar (.+) s/d (.+)",
+"Ledger {1:d} to {2:d}"
+],
+[
+"([\\d.]+) titik api VIIRS dalam 7 hari terakhir \\(sampai (.+?)\\)\\. Muka air di (\\d+) dari (\\d+) stasiun SiTMAT berada di bawah −40 cm pada pembacaan terakhir\\.",
+"{1:n} VIIRS hotspots in the last 7 days (up to {2:d}). The water table at {3} of {4} SiTMAT stations was below −40 cm at the latest reading."
+],
+[
+"([\\d.]+) titik api VIIRS dalam 7 hari terakhir \\(sampai (.+?)\\)\\.",
+"{1:n} VIIRS hotspots in the last 7 days (up to {2:d})."
+],
+[
+"Muka air di (\\d+) dari (\\d+) stasiun SiTMAT berada di bawah −40 cm pada pembacaan terakhir\\.",
+"The water table at {1} of {2} SiTMAT stations was below −40 cm at the latest reading."
+],
+[
+"(\\d+) kelas dari batas tetap \\(kuintil teoretis rata-rata dua peringkat terhadap riwayat: (.+)\\); kelas relatif, bukan ambang absolut",
+"{1} classes from fixed breaks (theoretical quintiles of the mean of two ranks against history: {2}); relative classes, not absolute thresholds"
+],
+[
+"Uji retrospektif \\((\\S+) s/d (\\S+), bulan api\\): PR-AUC model (\\S+) lawan klimatologi (\\S+) dan persistensi (\\S+); skill Brier (\\S+)\\. Belum diuji prospektif pada arsip\\. Kepercayaan: (\\w+)\\.",
+"Retrospective test ({1} to {2}, fire months): model PR-AUC {3:n} vs climatology {4:n} and persistence {5:n}; Brier skill {6:n}. Not yet tested prospectively on the archive. Confidence: {7:t}."
+],
+[
+"Model titik api belum terbukti mengalahkan klimatologi dan persistensi pada uji \\(PR-AUC (\\S+) lawan (\\S+) dan (\\S+)\\)\\. Kepercayaan: (\\w+)\\.",
+"The hotspot model has not yet been shown to beat climatology and persistence in testing (PR-AUC {1:n} vs {2:n} and {3:n}). Confidence: {4:t}."
+],
+[
+"Uji retrospektif (\\S+) s/d (\\S+); skill Brier (\\S+)\\. Belum diuji prospektif pada arsip\\.",
+"Retrospective test {1} to {2}; Brier skill {3:n}. Not yet tested prospectively on the archive."
+],
+[
+"Uji retrospektif titik api: (\\S+) s/d (\\S+)",
+"Retrospective hotspot test: {1} to {2}"
+],
+[
+"Model belum terbukti lebih baik daripada persistensi \\(skill (\\S+)\\)\\. Kepercayaan: (\\w+)\\. Rentang q10–q90 mencakup (\\S+) kenyataan \\(target 80%\\)\\.",
+"The model has not yet been shown to beat persistence (skill {1:n}). Confidence: {2:t}. The q10–q90 range covers {3:n} of outcomes (target 80%)."
+],
+[
+"Model belum terbukti lebih baik daripada persistensi \\(skill (\\S+)\\)\\. Kepercayaan: (\\w+)\\.",
+"The model has not yet been shown to beat persistence (skill {1:n}). Confidence: {2:t}."
+],
+[
+"Prakiraan muka air stasiun: (.+)",
+"Station water-table forecast: {1:t}"
+],
+[
+"Skill kecil terhadap persistensi \\((\\S+)\\)\\. Kepercayaan: (\\w+)\\.(?: Rentang q10–q90 mencakup (\\S+) kenyataan \\(target 80%\\)\\.)?",
+"Small skill against persistence ({1:n}). Confidence: {2:t}."
+],
+[
+"Pengeringan per sel belum terbukti pada stasiun baru dan tanggal baru \\(skill MAE (\\S+), cakupan q10–q90 (\\S+), (\\d+) stasiun\\)\\. Kepercayaan: (\\w+)\\.",
+"Per-cell drying is not yet proven at new stations and new dates (MAE skill {1:n}, q10–q90 coverage {2:n}, {3} stations). Confidence: {4:t}."
+],
+[
+"Uji ruang-waktu \\((\\d+) stasiun\\): skill MAE (\\S+) lawan \\\"tetap\\\", cakupan q10–q90 (\\S+)\\. Belum diuji di luar klaster stasiun\\. Kepercayaan: (\\w+)\\.",
+"Space-time test ({1} stations): MAE skill {2:n} vs \"unchanged\", q10–q90 coverage {3:n}. Not tested outside the station clusters. Confidence: {4:t}."
+],
+[
+"Pengeringan: uji ruang-waktu pada (\\d+) stasiun",
+"Drying: space-time test at {1} stations"
+],
+[
+"(\\d+) hari: skill MAE (\\S+) lawan \\\"tetap\\\"; cakupan q10–q90 (\\S+) \\(target 80%\\); (\\S+) uji",
+"{1} days: MAE skill {2:n} vs \"unchanged\"; q10–q90 coverage {3:n} (target 80%); {4:n} tests"
+],
+[
+"Prediksi diarsipkan sebelum kejadian, lalu dinilai: lolos uji prospektif (ya|belum)",
+"Forecasts are archived before events, then scored: passed the prospective test: {1:t}"
+],
+[
+"Data sampai (.+)",
+"Data up to {1:d}"
+],
+[
+"([\\d.]+) hari ini",
+"{1:n} today"
+],
+[
+"dari ([\\d.]+) sel · kepercayaan (\\w+)",
+"of {1:n} cells · {2:t} confidence"
+],
+[
+"([+−-]?\\d+) dibanding 7 hari lalu",
+"{1} vs 7 days ago"
+],
+[
+"dari (\\d+) tugas",
+"of {1} tasks"
+],
+[
+"(\\d+) tanpa data",
+"{1} no data"
+],
+[
+"Semua stasiun \\((\\d+)\\)",
+"All stations ({1})"
+],
+[
+"(\\d+)\\. Sel (\\d+)",
+"{1}. Cell {2}"
+],
+[
+"3 hari: (.+) · rata-rata bulan ini (.+)",
+"3 days: {1:n} · this month's average {2:n}"
+],
+[
+"7 hari: (.+) · median 14 hari (.+) cm",
+"7 days: {1:n} · 14-day median {2:n} cm"
+],
+[
+"Median (\\d+) stasiun SiTMAT di area pilot; negatif = di bawah permukaan tanah\\. Data stasiun baru ada sejak (\\S+)\\.",
+"Median of {1} SiTMAT stations in the pilot area; negative = below the ground surface. Station data only start on {2}."
+],
+[
+"Ringkasan (.+), bukan nilai per sel\\. Arahkan kursor ke grafik untuk membaca nilai\\.",
+"Summary {1:t}, not per-cell values. Hover over a chart to read values."
+],
+[
+"normal (\\d{4}–\\d{4})",
+"normal {1}"
+],
+[
+"\\(normal ([^)]+)\\) · (.+)",
+"(normal {1:n}) · {2:d}"
+],
+[
+"· (\\d{1,2} \\S+ \\d{4})",
+"· {1:d}"
+],
+[
+"tidak ada nilai di (.+)",
+"no value on {1:d}"
+],
+[
+"([−-]?[\\d.,]+) hari",
+"{1:n} days"
+],
+[
+"([\\d.,]+) titik",
+"{1:n} hotspots"
+],
+[
+"([−-]?[\\d.,]+) indeks",
+"{1:n} index"
+],
+[
+"(.+) · (sumatra|kalimantan|papua)",
+"{1} · {2:t}"
+],
+[
+"· (\\d+) stasiun",
+"· {1} stations"
+],
+[
+"· ([\\d.]+) titik, sampai (\\S+)",
+"· {1:n} hotspots, up to {2}"
+],
+[
+"· ([\\d.]+) sel; kepercayaan (\\w+)",
+"· {1:n} cells; {2:t} confidence"
+],
+[
+"Tingkat tampilan peta kerentanan pada zoom ini: (.+)\\.",
+"Susceptibility map display level at this zoom: {1:t}."
+],
+[
+"Hanya (\\S+) sel teratas menurut peluang besok yang digambar, juga untuk horizon 3 hari\\.",
+"Only the top {1:n} of cells by tomorrow's probability are drawn, also for the 3-day horizon."
+],
+[
+"Hanya sel teratas menurut peluang besok yang digambar, juga untuk horizon 3 hari\\.",
+"Only the top cells by tomorrow's probability are drawn, also for the 3-day horizon."
+],
+[
+"Hanya (\\S+) sel teratas yang digambar\\. Peluang dikalibrasi; harapan jumlah sel berapi besok (\\S+) dari (\\S+) sel\\.",
+"Only the top {1:n} of cells are drawn. Probabilities are calibrated; expected number of cells with fire tomorrow: {2:n} of {3:n}."
+],
+[
+"dari ([\\d.]+)",
+"of {1:n}"
+],
+[
+"per sel \\(([\\d.]+) sel\\)",
+"per cell ({1:n} cells)"
+],
+[
+"peringkat (\\d+) dari (\\d+) sel teratas · terbit (.+)",
+"rank {1} of {2} top cells · issued {3:d}"
+],
+[
+"prakiraan pengeringan · terbit (.+)",
+"drying forecast · issued {1:d}"
+],
+[
+"rata-rata sel ini bulan ini (\\S+)",
+"this cell's average this month {1:n}"
+],
+[
+"\\(rata-rata sel ini pada bulan ini (\\S+)\\)",
+"(this cell's average this month {1:n})"
+],
+[
+"\\(rata-rata (\\S+)\\)",
+"(average {1:n})"
+],
+[
+"rata-rata (\\S+)",
+"average {1:n}"
+],
+[
+"median (\\S+) cm \\(rentang (\\S+) s/d (\\S+)\\)",
+"median {1:n} cm (range {2:n} to {3:n})"
+],
+[
+"median (\\S+) cm",
+"median {1:n} cm"
+],
+[
+"(\\w+) \\(dari uji model, bukan per sel\\)",
+"{1:t} (from the model test, not per cell)"
+],
+[
+"PR-AUC (\\S+)",
+"PR-AUC {1:n}"
+],
+[
+"(\\d+) (\\S+) \\((\\d+) dari (\\d+)\\)",
+"{1} {2:n} ({3} of {4})"
+],
+[
+"Bagian sel yang kejadiannya ditemukan saat diperiksa \\(skrip 18\\)\\. Jumlah kecil: baca sebagai petunjuk\\.(.*)",
+"Share of checked cells where an event was found (script 18). Small numbers: read as a hint.{1:t}"
+],
+[
+"(\\d+) tugas, (\\d+) sudah diperiksa \\((\\d+) ada kejadian, (\\d+) nihil\\)",
+"{1} tasks, {2} checked ({3} with an event, {4} nothing found)"
+],
+[
+"(\\d+) tugas, (\\d+) sudah diperiksa",
+"{1} tasks, {2} checked"
+],
+[
+"\\((\\d+) ada kejadian, (\\d+) nihil\\)",
+"({1} with an event, {2} nothing found)"
+],
+[
+"Terbit (.+) · sel (\\d+)",
+"Issued {1:d} · cell {2}"
+],
+[
+"Terbit (.+)",
+"Issued {1:d}"
+],
+[
+"terbit (.+)",
+"issued {1:d}"
+],
+[
+"Tugas (T\\d{8}-\\d{3})",
+"Task {1}"
+],
+[
+"Sel (\\d+)",
+"Cell {1}"
+],
+[
+"Sel (\\d+) · (.+)",
+"Cell {1} · {2:d}"
+],
+[
+"(\\d+) terbuka",
+"{1} open"
+],
+[
+"Status sel (\\d+)",
+"Status of cell {1}"
+],
+[
+"kunjungan (.+)",
+"visit {1}"
+],
+[
+"Titik muka air (.+)",
+"Water-level point {1}"
+],
+[
+"Bacaan terakhir \\((.+)\\):",
+"Latest reading ({1:d}):"
+],
+[
+"(\\d+) laporan",
+"{1} report(s)"
+],
+[
+"(\\d+) bacaan",
+"{1} reading(s)"
+],
+[
+"\\((\\d{1,2} \\S+ \\d{4})\\)",
+"({1:d})"
+],
+[
+"Sekat (.+)",
+"Block {1}"
+],
+[
+"(\\d{1,2} \\S+ \\d{4}): (.+)",
+"{1:d}: {2:p}"
+],
+[
+"VIIRS (\\d+) deteksi",
+"VIIRS {1} detections"
+],
+[
+"(\\d+) laporan (membara|api|asap) \\(tingkat (\\w), cocok dengan satelit\\)",
+"{1} {2:t} report(s) (level {3}, matches satellite)"
+],
+[
+"(\\d+) laporan (membara|api|asap) \\(tingkat (\\w)\\)",
+"{1} {2:t} report(s) (level {3})"
+],
+[
+"(\\d+) laporan nihil \\(tingkat (\\w)\\)",
+"{1} nothing-found report(s) (level {2})"
+],
+[
+"(\\d+) laporan nihil",
+"{1} nothing-found report(s)"
+],
+[
+"Laporan lapangan dikumpulkan lewat KoboToolbox; identitas pelapor tidak disimpan dan titik laporan hanya ditampilkan per sel 1 km\\. Titik api: VIIRS 375 m \\(NASA FIRMS\\)\\. Satelit tidak dipakai sebagai bukti nihil karena awan, asap, dan api membara lolos dari deteksi\\. Laporan dianggap cocok dengan satelit bila berjarak ≤ (\\S+) m dan ≤ (\\S+) jam \\(angka awal\\)\\.",
+"Field reports are collected through KoboToolbox; reporter identities are not stored and report points are only shown per 1 km cell. Hotspots: VIIRS 375 m (NASA FIRMS). Satellites are not used as evidence of no fire because clouds, smoke, and smouldering fires escape detection. A report counts as matching the satellite when it is within {1:n} m and {2:n} hours (initial values)."
+],
+[
+"Laporan lapangan dikumpulkan lewat KoboToolbox; identitas pelapor tidak disimpan dan titik laporan hanya ditampilkan per sel 1 km\\. Titik api: VIIRS 375 m \\(NASA FIRMS\\)\\. Satelit tidak dipakai sebagai bukti nihil karena awan, asap, dan api membara lolos dari deteksi\\.",
+"Field reports are collected through KoboToolbox; reporter identities are not stored and report points are only shown per 1 km cell. Hotspots: VIIRS 375 m (NASA FIRMS). Satellites are not used as evidence of no fire because clouds, smoke, and smouldering fires escape detection."
+],
+[
+"Muka air terakhir \\((.+)\\):",
+"Latest water table ({1}):"
+],
+[
+"(turun|naik) ([\\d.,]+) cm dalam 7 hari terakhir",
+"{1:t} {2:n} cm over the last 7 days"
+],
+[
+"muka air harian, (\\S+) s/d (\\S+)",
+"daily water table, {1} to {2}"
+],
+[
+"(\\d+) hari ke depan:",
+"Next {1} days:"
+],
+[
+"(tetap|turun|naik) ([\\d.,]+) cm \\(rentang (\\S+) s/d (\\S+)\\); peluang turun ≥ 10 cm (\\S+)",
+"{1:t} {2:n} cm (range {3:n} to {4:n}); probability of a ≥ 10 cm drop {5:n}"
+],
+[
+"\\(rata-rata di data latih (\\S+)\\)",
+"(training-data average {1:n})"
+],
+[
+"Tanggal \\(WIB\\): (\\S+) · (malam|siang)",
+"Date (WIB): {1} · {2:t}"
+],
+[
+"Keyakinan deteksi: (\\w+) · FRP: (\\S+) MW",
+"Detection confidence: {1:t} · FRP: {2:n} MW"
+],
+[
+"\\(indeks rata-rata (\\S+)\\)",
+"(mean index {1:n})"
+],
+[
+"Bagian sel kelas tinggi atau sangat tinggi: (\\S+)",
+"Share of cells in the high or very high class: {1:n}"
+],
+[
+"Cakupan data: (\\S+) · kepercayaan rendah: (\\S+)",
+"Data coverage: {1:n} · low confidence: {2:n}"
+],
+[
+"Sel 1 km · peringkat (\\d+)",
+"1 km cell · rank {1}"
+],
+[
+"(\\d{1,2} \\S+ \\d{4}) – (\\d{1,2} \\S+ \\d{4})",
+"{1:d} – {2:d}"
+],
+[
+"(\\d{1,2} (?:Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des) \\d{4})",
+"{1:d}"
+],
+[
+"· (.+)",
+"· {1:t}"
+],
+[
+"([−+-]?\\d{1,3}(?:\\.\\d{3})*(?:,\\d+)?|[−+-]?\\d+,\\d+)( ?(?:%|cm|mm|MW|m³/m³|km|m))?",
+"{1:n}{2}"
+]
+];
 window.I18N_EN = {
  "Menu utama": "Main menu",
  "Beranda": "Home",
@@ -175,5 +589,343 @@ window.I18N_EN = {
  "Indira": "Indira",
  "I Made Andi Arsana, S.T., M.E., Ph.D.": "I Made Andi Arsana, S.T., M.E., Ph.D.",
  "Wilayah": "Region",
- "Pilot: pesisir Jambi": "Pilot: coastal Jambi"
+ "Pilot: pesisir Jambi": "Pilot: coastal Jambi",
+ "Monitoring: kondisi kini · Peatland Early Warning (prototipe)": "Monitoring: current conditions · Peatland Early Warning (prototype)",
+ "Prediksi per sel 1 km · Peatland Early Warning (prototipe)": "Predictions per 1 km cell · Peatland Early Warning (prototype)",
+ "Respons: laporan lapangan dan penilaian · peringatan dini kekeringan gambut (prototipe)": "Response: field reports and scoring · peatland drought early warning (prototype)",
+ "Petugas: tugas pemeriksaan · peringatan dini kekeringan gambut (prototipe)": "Field officers: inspection tasks · peatland drought early warning (prototype)",
+ "Kondisi kini": "Current conditions",
+ "Angka diambil dari berkas keluaran pipeline. Estimasi riset, bukan peringatan resmi.": "Figures come from the pipeline output files. Research estimates, not an official warning.",
+ "Angka ringkas": "Key figures",
+ "Lihat sel prioritas": "View priority cells",
+ "Buka prediksi": "Open predictions",
+ "Titik api VIIRS, 7 hari": "VIIRS hotspots, 7 days",
+ "hari ini": "today",
+ "Harapan sel berapi besok": "Expected cells with fire tomorrow",
+ "Stasiun di bawah −40 cm": "Stations below −40 cm",
+ "Tugas pemeriksaan terbuka": "Open inspection tasks",
+ "sama dengan 7 hari lalu": "same as 7 days ago",
+ "perubahan 7 hari tidak lengkap": "7-day change incomplete",
+ "belum ada data tugas": "no task data yet",
+ "belum dimuat": "not loaded",
+ "model belum dijalankan": "model not run yet",
+ "Peta kerentanan per sel 1 km": "Susceptibility map per 1 km cell",
+ "Kerentanan": "Susceptibility",
+ "Titik api 7 hari": "Hotspots, 7 days",
+ "Stasiun": "Stations",
+ "Kanal": "Canals",
+ "Lapisan peta": "Map layers",
+ "Lanjutan": "Advanced",
+ "Lapisan tambahan": "Extra layers",
+ "Lapisan teknis": "Technical layers",
+ "Bayangan relief": "Hillshade",
+ "Batas KHG": "Peat hydrological unit (KHG) boundaries",
+ "Batas kabupaten/provinsi": "District/province boundaries",
+ "Opasitas peta": "Map opacity",
+ "Tentang peta ini": "About this map",
+ "Kerentanan relatif": "Relative susceptibility",
+ "sangat tinggi": "very high",
+ "tinggi": "high",
+ "sedang": "medium",
+ "rendah": "low",
+ "sangat rendah": "very low",
+ "Titik api, 7 hari": "Hotspots, 7 days",
+ "Stasiun di atas ambang (≥ −40 cm)": "Stations above the threshold (≥ −40 cm)",
+ "Indeks kondisi kini (indeks relatif)": "Current-condition index (relative index)",
+ "Kerentanan struktural + tekanan dinamis.": "Structural susceptibility + dynamic pressure.",
+ "Hanya kerentanan struktural (belum ada tekanan dinamis).": "Structural susceptibility only (no dynamic pressure yet).",
+ "tanpa warna = bukan gambut, air, atau terbangun (tidak dinilai)": "no colour = not peat, water, or built-up (not assessed)",
+ "Bayangan relief dari FABDEM; sinar dari barat laut; relief diperbesar 15x dan kontras diregangkan otomatis (relief gambut sangat landai; kesalahan vertikal DEM sebanding dengan relief).": "Hillshade from FABDEM; light from the north-west; relief exaggerated 15x and contrast stretched automatically (peat relief is very flat; DEM vertical error is comparable to the relief).",
+ "Indeks relatif, bukan peluang kebakaran. Kelas dari ambang acuan tetap; kepercayaan ditunjukkan oleh transparansi dan arsiran.": "A relative index, not a fire probability. Classes use fixed reference breaks; confidence is shown by transparency and hatching.",
+ "Kepercayaan peta": "Map confidence",
+ "pekat: kepercayaan tinggi": "solid: high confidence",
+ "agak transparan: sedang": "semi-transparent: medium",
+ "transparan dan diarsir: rendah": "transparent and hatched: low",
+ "Arsiran berarti jauh dari stasiun atau kondisi lahan berbeda dari stasiun.": "Hatching means far from stations, or land conditions unlike those at the stations.",
+ "Titik api teramati (VIIRS)": "Observed hotspots (VIIRS)",
+ "1–3 hari lalu": "1–3 days ago",
+ "4–7 hari lalu": "4–7 days ago",
+ "Ukuran lingkaran = daya radiasi api (FRP). Tanggal WIB; satelit Suomi NPP 375 m (NASA FIRMS).": "Circle size = fire radiative power (FRP). Dates in WIB (UTC+7); Suomi NPP satellite, 375 m (NASA FIRMS).",
+ "Stasiun SiTMAT: muka air terakhir": "SiTMAT stations: latest water table",
+ "di atas ambang (≥ −40 cm)": "above the threshold (≥ −40 cm)",
+ "−40 s/d −80 cm": "−40 to −80 cm",
+ "−80 s/d −120 cm": "−80 to −120 cm",
+ "lebih dalam dari −120 cm": "deeper than −120 cm",
+ "tanpa data": "no data",
+ "berhenti melapor (> 3 hari)": "stopped reporting (> 3 days)",
+ "Sel prioritas besok": "Priority cells for tomorrow",
+ "Semua sel dan peluangnya": "All cells and their probabilities",
+ "Kepercayaan model titik api: bukti terbatas": "Hotspot model confidence: limited evidence",
+ "Kepercayaan model titik api": "Hotspot model confidence",
+ "Muka air stasiun SiTMAT": "SiTMAT station water table",
+ "30 hari terakhir · ambang −40 cm (garis putus-putus)": "Last 30 days · −40 cm threshold (dashed line)",
+ "Deret waktu area pilot": "Pilot-area time series",
+ "Ringkasan rata-rata area pilot (seluruh grid), bukan nilai per sel. Arahkan kursor ke grafik untuk membaca nilai.": "Averages over the pilot area (whole grid), not per-cell values. Hover over a chart to read values.",
+ "90 hari": "90 days",
+ "1 tahun": "1 year",
+ "3 tahun": "3 years",
+ "Rentang waktu": "Time range",
+ "Muka air gambut (median stasiun)": "Peat water table (station median)",
+ "Hujan 30 hari terakhir": "Rainfall, last 30 days",
+ "Hari tanpa hujan berturut-turut": "Consecutive dry days",
+ "Kelembapan tanah 0–7 cm": "Soil moisture 0–7 cm",
+ "NDMI vegetasi (Sentinel-2)": "Vegetation NDMI (Sentinel-2)",
+ "Titik api VIIRS per hari": "VIIRS hotspots per day",
+ "teramati": "observed",
+ "Jumlah hujan GSMaP 30 hari, rata-rata area pilot.": "30-day GSMaP rainfall total, pilot-area average.",
+ "Rata-rata area pilot dari piksel GSMaP (0,1°).": "Pilot-area average of GSMaP pixels (0.1°).",
+ "ERA5-Land (model reanalisis tanah mineral, bukan pengamatan gambut); tertinggal sekitar 9 hari.": "ERA5-Land (a reanalysis model for mineral soil, not peat observations); lags about 9 days.",
+ "Komposit 30 hari, rata-rata area pilot; titik = akhir jendela. Makin rendah makin kering.": "30-day composites, pilot-area average; point = end of window. Lower means drier.",
+ "Deteksi Suomi NPP 375 m di area pilot; tidak terdeteksi bukan berarti tidak ada api (awan dan asap menutup).": "Suomi NPP 375 m detections in the pilot area; no detection does not mean no fire (clouds and smoke can hide it).",
+ "Unduh data deret waktu (JSON)": "Download time-series data (JSON)",
+ "tidak ada data pada rentang ini": "no data in this range",
+ "Belum tersedia.": "Not available yet.",
+ "Laporan lapangan terbaru": "Latest field reports",
+ "Belum ada laporan lapangan pada rentang data.": "No field reports in the data range yet.",
+ "A = cocok dengan VIIRS, atau dari petugas dengan foto dan GPS baik. B = foto dengan GPS baik, atau dua pelapor berbeda atau lebih. C = belum cukup (tidak dipakai menilai model). Hanya sel 1 km; lokasi pelapor tidak ditampilkan.": "A = matches VIIRS, or from an officer with a photo and good GPS. B = photo with good GPS, or two or more different reporters. C = not enough (not used to score the model). 1 km cells only; reporter locations are not shown.",
+ "Kejadian: laporan cocok dengan VIIRS": "Event: report matches VIIRS",
+ "Kejadian dilaporkan": "Event reported",
+ "Kunjungan tanpa kejadian": "Visit without event",
+ "Faktor penyusun kondisi kini": "Components of current conditions",
+ "● tersedia · ◐ sebagian · ○ belum tersedia": "● available · ◐ partial · ○ not yet available",
+ "tersedia": "available",
+ "sebagian": "partial",
+ "belum tersedia": "not yet available",
+ "Sensor muka air (SiTMAT)": "Water-level sensors (SiTMAT)",
+ "Hujan (GSMaP, CHIRPS)": "Rainfall (GSMaP, CHIRPS)",
+ "Indeks kelembapan tanah": "Soil-moisture index",
+ "ENSO dan IOD (DMI)": "ENSO and IOD (DMI)",
+ "Topografi (FABDEM) dan kanal": "Topography (FABDEM) and canals",
+ "Tutupan lahan (WorldCover)": "Land cover (WorldCover)",
+ "Titik api VIIRS": "VIIRS hotspots",
+ "Prakiraan pengeringan per sel (7–14 hari)": "Per-cell drying forecast (7–14 days)",
+ "· per sel": "· per cell",
+ "· ERA5-Land 0–7 cm (reanalisis, bukan pengamatan gambut)": "· ERA5-Land 0–7 cm (reanalysis, not peat observations)",
+ "· komposit bulanan per sel": "· monthly composite per cell",
+ "· indeks bulanan": "· monthly indices",
+ "· grid 100 m, grid induk equal-area": "· 100 m grid, equal-area master grid",
+ "· 2021, tanpa kelas sawit": "· 2021, no oil-palm class",
+ "Indeks kondisi kini memuat kerentanan struktural dan tekanan dinamis. Kalibrasi terhadap stasiun SiTMAT belum diuji.": "The current-condition index combines structural susceptibility and dynamic pressure. Calibration against SiTMAT stations has not been tested yet.",
+ "Indeks kondisi kini baru memuat kerentanan struktural (kanal dan relief). Hujan, kelembapan tanah, dan muka air belum disertakan per sel.": "The current-condition index only includes structural susceptibility so far (canals and relief). Rainfall, soil moisture, and water table are not yet included per cell.",
+ "Peta kerentanan belum dibuat (jalankan 07, 08, 10, lalu 09).": "The susceptibility map has not been built yet (run 07, 08, 10, then 09).",
+ "Prototipe riset. Bukan peringatan resmi. Prediksi belum dikalibrasi; baca status validasi dan kelas kepercayaan sebelum memakai hasilnya.": "Research prototype. Not an official warning. Forecasts are not calibrated yet; read the validation status and confidence class before using the results.",
+ "(c) OpenStreetMap contributors (ODbL); kanal dan batas gambut/KHG dari BRGM BlueBook 2026. Peta dasar: OpenStreetMap (tile standar; patuhi kebijakan tile OSM, ganti lewat manifest.basemap bila lalu lintas besar).": "(c) OpenStreetMap contributors (ODbL); canals and peat/KHG boundaries from BRGM BlueBook 2026. Basemap: OpenStreetMap (standard tiles; follow the OSM tile usage policy and switch via manifest.basemap for heavy traffic).",
+ "Titik api: NRT/standar VIIRS 375 m Active Fire (VNP14IMG) dari NASA LANCE/FIRMS, doi:10.5067/FIRMS/VIIRS/VNP14IMGT_NRT.002; ikuti ketentuan sitasi dan penafian NASA LANCE/FIRMS saat membagikan ulang.": "Hotspots: VIIRS 375 m Active Fire NRT/standard (VNP14IMG) from NASA LANCE/FIRMS, doi:10.5067/FIRMS/VIIRS/VNP14IMGT_NRT.002; follow the NASA LANCE/FIRMS citation and disclaimer terms when redistributing.",
+ "Hujan: JAXA GSMaP (Global Rainfall Map in Near-Real-Time) dan CHIRPS; citra: Copernicus Sentinel-1/2.": "Rainfall: JAXA GSMaP (Global Rainfall Map in Near-Real-Time) and CHIRPS; imagery: Copernicus Sentinel-1/2.",
+ "Muka air dan stasiun: SiTMAT (KLH/BRGM), diambil dengan jeda sopan; data dapat berubah atau terkoreksi.": "Water table and stations: SiTMAT (KLH/BRGM), fetched with polite delays; data may change or be corrected.",
+ "Tutupan lahan: ESA WorldCover 10 m 2021 (CC BY 4.0).": "Land cover: ESA WorldCover 10 m 2021 (CC BY 4.0).",
+ "FABDEM is produced using Copernicus WorldDEM-30 (c) DLR e.V. (CC BY-NC-SA 4.0), Hawker dkk. 2022.": "FABDEM is produced using Copernicus WorldDEM-30 (c) DLR e.V. (CC BY-NC-SA 4.0), Hawker et al. 2022.",
+ "Atribusi dan penafian": "Attribution and disclaimer",
+ "Memuat...": "Loading...",
+ "Deret waktu tidak tersedia.": "Time series not available.",
+ "Prakiraan muka air (prototipe)": "Water-table forecast (prototype)",
+ "Belum ada prakiraan untuk stasiun ini.": "No forecast for this station yet.",
+ "Belum ada prediksi untuk stasiun ini.": "No prediction for this station yet.",
+ "Prakiraan belum dapat diandalkan: model belum terbukti lebih baik daripada tebakan \"muka air tetap\". Angka hanya untuk tinjauan.": "The forecast is not reliable yet: the model has not been shown to beat the guess \"water table unchanged\". Numbers are for review only.",
+ "stabil dalam 7 hari terakhir": "stable over the last 7 days",
+ "perubahan 7 hari tidak tersedia": "7-day change not available",
+ "Pengamatan satelit 375 m; tidak terdeteksi bukan berarti tidak ada api (awan dan asap menutup).": "375 m satellite observation; no detection does not mean no fire (clouds and smoke can hide it).",
+ "Ringkasan tingkat unit; perbesar peta untuk melihat sel.": "Unit-level summary; zoom in to see cells.",
+ "blok 5 km (sementara, tanpa batas KHG)": "5 km block (temporary, no KHG boundaries)",
+ "Kelas:": "Class:",
+ "per blok 5 km": "per 5 km block",
+ "sel 500 m": "500 m cells",
+ "sel 100 m": "100 m cells",
+ "lapisan mati": "layer off",
+ "sumatra": "Sumatra",
+ "kalimantan": "Kalimantan",
+ "papua": "Papua",
+ "turun": "down",
+ "naik": "up",
+ "tetap": "unchanged",
+ "malam": "night",
+ "siang": "day",
+ "Validasi belum tersedia. Perlakukan prediksi sebagai prototipe.": "Validation not available yet. Treat the forecasts as a prototype.",
+ "Prediksi per sel 1 km": "Predictions per 1 km cell",
+ "Peluang, bukan kepastian. Klik sel untuk melihat rinciannya. · Terbit": "Probabilities, not certainties. Click a cell to see its details. · Issued",
+ "Peluang, bukan kepastian. Klik sel untuk melihat rinciannya.": "Probabilities, not certainties. Click a cell to see its details.",
+ "Tema prediksi": "Prediction theme",
+ "Horizon waktu": "Time horizon",
+ "Peluang titik api": "Hotspot probability",
+ "Pengeringan muka air": "Water-table drying",
+ "Besok": "Tomorrow",
+ "3 hari": "3 days",
+ "7 hari": "7 days",
+ "14 hari": "14 days",
+ "30 hari": "30 days",
+ "semua": "all",
+ "Status bukti model": "Model evidence status",
+ "Titik api: bukti terbatas": "Hotspots: limited evidence",
+ "Pengeringan per sel: belum terbukti": "Per-cell drying: not yet proven",
+ "Prakiraan stasiun: belum terbukti": "Station forecast: not yet proven",
+ "Titik api": "Hotspots",
+ "Pengeringan per sel": "Per-cell drying",
+ "Prakiraan stasiun": "Station forecast",
+ "belum terbukti": "not yet proven",
+ "bukti terbatas": "limited evidence",
+ "belum ada": "none yet",
+ "Peta peluang": "Probability map",
+ "Peluang ada titik api besok": "Probability of a hotspot tomorrow",
+ "Peluang ada titik api dalam 3 hari": "Probability of a hotspot within 3 days",
+ "Peluang muka air turun ≥ 10 cm dalam 7 hari": "Probability of a ≥ 10 cm water-table drop within 7 days",
+ "Peluang muka air turun ≥ 10 cm dalam 14 hari": "Probability of a ≥ 10 cm water-table drop within 14 days",
+ "Peluang muka air turun ≥ 10 cm, 7 hari": "Probability of a ≥ 10 cm drop, 7 days",
+ "Peluang turun ≥ 10 cm, 14 hari": "Probability of a ≥ 10 cm drop, 14 days",
+ "Garis tebal = sel terpilih": "Thick outline = selected cell",
+ "Warna dipucatkan: model belum terbukti mengalahkan pembanding.": "Faded colours: the model has not yet been shown to beat the baselines.",
+ "Kerentanan struktural (konteks)": "Structural susceptibility (context)",
+ "SEL TERPILIH": "SELECTED CELL",
+ "Peluang titik api besok": "Hotspot probability tomorrow",
+ "Dalam 3 hari": "Within 3 days",
+ "Kepercayaan model:": "Model confidence:",
+ "Pengeringan 14 hari untuk sel ini:": "14-day drying for this cell:",
+ "Peluang titik api besok untuk sel ini:": "Hotspot probability tomorrow for this cell:",
+ "Faktor pendorong per sel belum diekspor oleh model (perlu keluaran faktor dari skrip 14 dan 15), jadi tidak ditampilkan.": "Per-cell drivers are not yet exported by the model (requires driver output from scripts 14 and 15), so they are not shown.",
+ "Mengapa sel ini tinggi?": "Why is this cell high?",
+ "Sel teratas peluang titik api": "Top cells by hotspot probability",
+ "Sel teratas peluang pengeringan": "Top cells by drying probability",
+ "Ringkasan prakiraan": "Forecast summary",
+ "Harapan sel 1 km berapi besok:": "Expected 1 km cells with fire tomorrow:",
+ "Sel teratas digambar:": "Top cells drawn:",
+ "Pengeringan 14 hari: peluang rata-rata": "14-day drying: mean probability",
+ "Masukan model": "Model inputs",
+ "Seberapa jauh model bisa dipercaya?": "How far can the model be trusted?",
+ "Untuk juri dan peneliti · angka dari berkas keluaran": "For judges and researchers · figures from output files",
+ "Titik api besok: model lawan pembanding": "Hotspots tomorrow: model vs baselines",
+ "Model": "Model",
+ "Klimatologi": "Climatology",
+ "Persistensi": "Persistence",
+ "Tugas teratas lawan acak": "Top-ranked vs random tasks",
+ "Belum ada penilaian prospektif. Jalankan 18, lalu 20 dan 21.": "No prospective scoring yet. Run 18, then 20 and 21.",
+ "Cara pengujian": "How it was tested",
+ "Dibandingkan dengan pembanding sederhana: klimatologi dan persistensi": "Compared with simple baselines: climatology and persistence",
+ "Penilaian prospektif (arsip prediksi lawan kejadian): belum ada": "Prospective scoring (forecast archive vs events): none yet",
+ "Pengeringan per sel: uji ruang-waktu": "Per-cell drying: space-time test",
+ "Sel prioritas model": "Model priority cells",
+ "Sel acak": "Random cells",
+ "Metrik belum diekspor (jalankan 14, lalu 09).": "Metrics not exported yet (run 14, then 09).",
+ "Metrik belum diekspor (jalankan 15, lalu 09).": "Metrics not exported yet (run 15, then 09).",
+ "tidak termasuk sel teratas yang diekspor (peluang sel ini tidak tersedia)": "not among the exported top cells (probability for this cell not available)",
+ "sel ini tidak dinilai model pengeringan": "this cell is not scored by the drying model",
+ "di bawah 3% (tetap 5% teratas)": "below 3% (still in the top 5%)",
+ "peluang ≥ 30%": "probability ≥ 30%",
+ "Model titik api belum dijalankan.": "The hotspot model has not been run yet.",
+ "Model pengeringan per sel belum dijalankan.": "The per-cell drying model has not been run yet.",
+ "Belum ada prediksi (jalankan 13 dan 14, lalu 09).": "No predictions yet (run 13 and 14, then 09).",
+ "Belum ada prediksi (jalankan 13, 14, dan 15, lalu 09).": "No predictions yet (run 13, 14 and 15, then 09).",
+ "Belum terbukti mengalahkan pembanding sederhana pada uji; perlakukan sebagai petunjuk.": "Not yet shown to beat simple baselines in testing; treat as a hint.",
+ "Belum terbukti lebih baik daripada \"muka air tetap\" pada stasiun baru dan tanggal baru; perlakukan sebagai petunjuk.": "Not yet shown to beat \"water table unchanged\" at new stations and dates; treat as a hint.",
+ "teratas": "top",
+ "Data belum dapat dimuat": "Data could not be loaded",
+ "Respons: laporan lapangan dan penilaian": "Response: field reports and scoring",
+ "Apa yang ditambahkan laporan warga dan petugas pada pengamatan satelit, tugas pemeriksaan dari prediksi, dan apakah prediksi terbukti.": "What reports from residents and officers add to satellite observations, the inspection tasks drawn from the forecasts, and whether the forecasts held up.",
+ "Prototipe riset, bukan peringatan resmi. Tingkat keyakinan laporan memakai aturan awal yang belum disetel.": "Research prototype, not an official warning. Report confidence levels use initial rules that have not been tuned yet.",
+ "Bandingkan": "Compare",
+ "Hanya satelit": "Satellite only",
+ "Satelit + laporan lapangan": "Satellite + field reports",
+ "Rentang waktu:": "Time range:",
+ "Tanggal akhir rentang": "Range end date",
+ "Panjang rentang": "Range length",
+ "Sebelum dan sesudah laporan": "Before and after reports",
+ "sel-hari pada rentang ini": "cell-days in this range",
+ "Dengan laporan": "With reports",
+ "Kejadian tercatat": "Events recorded",
+ "dikonfirmasi di lapangan": "confirmed in the field",
+ "sel baru di sebelah deteksi satelit": "new cell next to a satellite detection",
+ "lolos dari satelit": "missed by satellite",
+ "di antaranya membara": "of which smouldering",
+ "Diperiksa, tidak ada kejadian": "Checked, no event",
+ "Laporan belum terverifikasi": "Unverified reports",
+ "Sel-hari dikunjungi": "Cell-days visited",
+ "Sel-hari dengan tindakan": "Cell-days with action",
+ "Lapisan": "Layers",
+ "Tugas pemeriksaan (terbitan terakhir)": "Inspection tasks (latest issue)",
+ "Sel berpeluang tertinggi (prediksi)": "Highest-probability cells (prediction)",
+ "Sekat kanal": "Canal blocks",
+ "Muka air lapangan": "Field water levels",
+ "Tugas pemeriksaan": "Inspection tasks",
+ "Apakah prediksi terbukti?": "Did the forecasts hold up?",
+ "arsip prediksi lawan kejadian sesudahnya": "forecast archive vs later events",
+ "Belum ada skor. Jalankan 18_score_prospective.py lalu 20_export_response.py.": "No scores yet. Run 18_score_prospective.py, then 20_export_response.py.",
+ "Indeks kerentanan lawan muka air lapangan.": "Susceptibility index vs field water levels.",
+ "belum ada bacaan muka air pada bulan yang dipilih": "no water-level readings in the selected month yet",
+ "Kejadian per sel 1 km": "Events per 1 km cell",
+ "Satelit dan laporan lapangan": "Satellite and field reports",
+ "Hanya satelit (belum ada laporan)": "Satellite only (no reports yet)",
+ "Hanya laporan, tingkat A/B (lolos dari satelit)": "Reports only, level A/B (missed by satellite)",
+ "Hanya laporan A/B (lolos dari satelit)": "Reports only, A/B (missed by satellite)",
+ "Laporan belum terverifikasi (tingkat C)": "Unverified report (level C)",
+ "Laporan belum terverifikasi (C)": "Unverified report (C)",
+ "Ada laporan membara": "Smouldering reported",
+ "Sel berpeluang tertinggi": "Highest-probability cells",
+ "Sel 1 km yang harus dicek petugas": "1 km cells that officers must check",
+ "Belum diperiksa (kotak kosong)": "Not yet checked (empty square)",
+ "Sudah diperiksa (kotak terisi)": "Checked (filled square)",
+ "Sekat kanal (kondisi terakhir)": "Canal blocks (latest condition)",
+ "Muka air lapangan (bacaan terakhir)": "Field water levels (latest reading)",
+ "Sel 1 km, bukan titik laporan (privasi pelapor). Tanpa warna = tidak ada bukti, bukan berarti aman.": "1 km cells, not report points (reporter privacy). No colour = no evidence, not the same as safe.",
+ "Dikonfirmasi lapangan": "Confirmed in the field",
+ "Lolos dari satelit": "Missed by satellite",
+ "Tugas belum dicek petugas": "Tasks not yet checked",
+ "TUGAS PEMERIKSAAN": "INSPECTION TASK",
+ "Belum diperiksa": "Not yet checked",
+ "Diperiksa: tidak ada kejadian": "Checked: no event",
+ "Diperiksa: ada kejadian": "Checked: event found",
+ "Laporkan hasil pemeriksaan": "Report inspection result",
+ "Kondisi terakhir:": "Latest condition:",
+ "baik": "good",
+ "rusak": "damaged",
+ "jebol": "breached",
+ "ada tindakan": "action taken",
+ "konflik: nihil dan kejadian di sel-hari yang sama": "conflict: nothing found and an event on the same cell-day",
+ "kunjungan lain (muka air atau sekat)": "other visit (water level or block)",
+ "DATA TIRUAN.": "SYNTHETIC DATA.",
+ "DATA TIRUAN": "SYNTHETIC DATA",
+ "Laporan di halaman ini buatan untuk menguji alur. Angka di bawah bukan bukti kinerja.": "Reports on this page were generated to test the workflow. The numbers below are not evidence of performance.",
+ "Tugas pemeriksaan Belum ada daftar tugas (19).": "Inspection tasks: no task list yet (19).",
+ "Belum ada daftar tugas (19).": "No task list yet (19).",
+ "Saring tugas": "Filter tasks",
+ "Semua": "All",
+ "Terbuka": "Open",
+ "Selesai": "Done",
+ "Belum mulai": "Not started",
+ "Dalam perjalanan": "On the way",
+ "Sudah diperiksa": "Checked",
+ "Tidak terjangkau": "Unreachable",
+ "Navigasi": "Navigate",
+ "Perbarui status": "Update status",
+ "Status tugas": "Task status",
+ "Status lapangan": "Field status",
+ "Waktu kunjungan (WIB)": "Visit time (WIB)",
+ "Catatan (opsional, tanpa nama orang)": "Note (optional, no personal names)",
+ "mis. akses lewat kanal, jalan terputus": "e.g. access via canal, road cut off",
+ "Kunci tim (PEAT_API_TOKEN)": "Team key (PEAT_API_TOKEN)",
+ "Batal": "Cancel",
+ "Simpan status": "Save status",
+ "Mode demo: server API tidak berjalan, status hanya tersimpan di peramban ini.": "Demo mode: the API server is not running; status is only saved in this browser.",
+ "Terhubung ke server API: status disimpan tambah-saja.": "Connected to the API server: status is saved append-only.",
+ "Isi waktu kunjungan.": "Fill in the visit time.",
+ "Hasil Kobo: ada kejadian": "Kobo result: event found",
+ "Kejadian yang teramati (api, asap) dilaporkan lewat formulir KoboCollect. Status di sini hanya catatan kunjungan. Alasan dan peluang tiap tugas sengaja tidak ditampilkan agar pemeriksa tetap buta terhadap prediksi.": "Observed events (fire, smoke) are reported through the KoboCollect form. The status here is only a visit log. The reason and probability of each task are deliberately hidden so inspectors stay blind to the forecast.",
+ "Server API tidak berjalan; perubahan tidak bisa disimpan.": "The API server is not running; changes cannot be saved.",
+ "Tugas belum dapat dimuat:": "Tasks could not be loaded:",
+ "(jalankan 20 dan 21, lalu buka lewat server).": "(run 20 and 21, then open via the server).",
+ "ya": "yes",
+ "belum": "not yet",
+ "membara": "smouldering",
+ "api": "fire",
+ "asap": "smoke",
+ "nominal": "nominal",
+ "Dalam 3 hari:": "Within 3 days:",
+ "Peluang ada titik api besok:": "Probability of a hotspot tomorrow:",
+ "Memuat data...": "Loading data...",
+ "Memuat tugas...": "Loading tasks...",
+ "Peluang": "Probability",
+ "Klik sel di peta atau pilih dari daftar di bawah.": "Click a cell on the map or pick one from the list below.",
+ "Sel teratas": "Top cells",
+ "Gagal memuat data:": "Failed to load data:",
+ "Hasil Kobo: nihil": "Kobo result: nothing found",
+ "data/response.json belum ada. Jalankan python scripts/20_export_response.py": "data/response.json does not exist yet. Run python scripts/20_export_response.py",
+ "Deret waktu belum dibuat. Jalankan: python scripts/09b_export_timeseries.py (atau ./run_pipeline.sh peta).": "The time series has not been built yet. Run: python scripts/09b_export_timeseries.py (or ./run_pipeline.sh peta).",
+ "U": "N"
 };

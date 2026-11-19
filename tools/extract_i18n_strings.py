@@ -69,27 +69,35 @@ def load_dict():
     return json.loads(m.group(1)) if m else {}
 
 
+def load_rx():
+    f = WEB / "i18n-en.js"
+    m = re.search(r"window\.I18N_EN_RX\s*=\s*(\[.*?\]);\s*\nwindow\.I18N_EN", f.read_text(encoding="utf-8"), re.S) if f.exists() else None
+    return [re.compile("^(?:" + p.replace("\\d", "\\d") + ")$") for p, _ in (json.loads(m.group(1)) if m else [])]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--tsv")
     args = ap.parse_args()
     d = load_dict()
+    rx = load_rx()
+    covered = lambda s: s in d or any(r.match(s) for r in rx)
     rows = []
     for f in sorted(glob.glob(str(WEB / "*.html"))):
         for s in dict.fromkeys(html_strings(Path(f))):
-            if s not in d:
+            if not covered(s):
                 rows.append((Path(f).name, s))
     for f in sorted(glob.glob(str(WEB / "*.js"))):
         name = Path(f).name
         if name.startswith("i18n"):
             continue
         for s in dict.fromkeys(js_strings(Path(f))):
-            if s not in d:
+            if not covered(s):
                 rows.append((name, s))
     per = {}
     for f, s in rows:
         per[f] = per.get(f, 0) + 1
-    print(f"kamus: {len(d)} entri; belum diterjemahkan: {len(rows)} string")
+    print(f"kamus: {len(d)} entri, {len(rx)} pola; belum diterjemahkan: {len(rows)} string")
     for f, n in sorted(per.items()):
         print(f"  {f:18s} {n}")
     if args.tsv:

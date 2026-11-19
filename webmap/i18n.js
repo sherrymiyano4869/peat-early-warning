@@ -7,11 +7,28 @@
 // Berkas lokal, bukan dari zip web. Lihat docs/I18N.md.
 (function () {
   const DICT = window.I18N_EN || {};
-  const PARTIAL = ["monitoring.html", "prediction.html", "response.html", "petugas.html"];   // isi panel dan peta halaman ini belum diterjemahkan
+  const PARTIAL = [];   // halaman yang isinya belum diterjemahkan (menampilkan catatan di bahasa Inggris); kosong = semua sudah
   const ATTRS = ["aria-label", "title", "alt", "placeholder"];
   const norm = s => s.replace(/\s+/g, " ").trim();
   const has = Object.prototype.hasOwnProperty;
-  const tr = s => { const k = norm(s); return has.call(DICT, k) ? DICT[k] : null; };
+  // Pola untuk teks bervariabel (angka, tanggal, nama): [regex, pengganti]; {1} = tangkapan apa adanya, {1:n} = angka gaya Indonesia ke gaya Inggris,
+  // {1:d} = nama bulan Indonesia ke Inggris, {1:t} = tangkapan diterjemahkan lewat kamus, {1:p} = bagian-bagian dipisah "; " diterjemahkan satu per satu.
+  const RX = (window.I18N_EN_RX || []).map(([p, r]) => [new RegExp("^(?:" + p + ")$"), r]);
+  const MON = { Mei: "May", Agu: "Aug", Okt: "Oct", Des: "Dec" };
+  const numEn = v => v.replace(/(\d{1,3}(?:\.\d{3})+|\d+)(,\d+)?/g, (m, i, d) => i.replace(/\./g, ",") + (d ? "." + d.slice(1) : ""));
+  const dateEn = v => v.replace(/\b(\d{1,2}) (Mei|Agu|Okt|Des)\b/g, (m, d, mo) => d + " " + MON[mo]);
+  const conv = (v, f) => f === "n" ? numEn(v) : f === "d" ? dateEn(v) : f === "t" ? (tr(v) !== null ? tr(v) : v)
+    : f === "p" ? v.split("; ").map(x => (tr(x) !== null ? tr(x) : x)).join("; ") : v;
+  function tr(s) {
+    const k = norm(s);
+    if (!k) return null;
+    if (has.call(DICT, k)) return DICT[k];
+    for (const [re, r] of RX) {
+      const m = k.match(re);
+      if (m) return r.replace(/\{(\d+)(?::([ndtp]))?\}/g, (_, i, f) => conv(m[+i] === undefined ? "" : m[+i], f));
+    }
+    return null;
+  }
   const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* abaikan */ } };
   const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 

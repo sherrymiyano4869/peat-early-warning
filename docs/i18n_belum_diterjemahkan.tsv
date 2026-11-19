@@ -1,152 +1,34 @@
 berkas	indonesia	inggris
-monitoring.html	Monitoring: kondisi kini · Peatland Early Warning (prototipe)	
-monitoring.html	Kondisi kini	
-monitoring.html	Memuat...	
-monitoring.html	Memuat data...	
-monitoring.html	Lihat sel prioritas	
-monitoring.html	Buka prediksi	
-monitoring.html	Angka diambil dari berkas keluaran pipeline. Estimasi riset, bukan peringatan resmi.	
-monitoring.html	Angka ringkas	
-monitoring.html	Peta kerentanan per sel 1 km	
-monitoring.html	Lapisan peta	
-monitoring.html	Kerentanan	
-monitoring.html	Titik api 7 hari	
-monitoring.html	Stasiun	
-monitoring.html	Kanal	
-monitoring.html	Lanjutan	
-monitoring.html	Lapisan tambahan	
-monitoring.html	Bayangan relief	
-monitoring.html	Batas KHG	
-monitoring.html	Batas kabupaten/provinsi	
-monitoring.html	Opasitas peta	
-monitoring.html	Lapisan teknis	
-monitoring.html	Tentang peta ini	
-monitoring.html	Sel prioritas besok	
-monitoring.html	Semua sel dan peluangnya	
-monitoring.html	Muka air stasiun SiTMAT	
-monitoring.html	30 hari terakhir · ambang −40 cm (garis putus-putus)	
-monitoring.html	Deret waktu area pilot	
-monitoring.html	Laporan lapangan terbaru	
-monitoring.html	A = cocok dengan VIIRS, atau dari petugas dengan foto dan GPS baik. B = foto dengan GPS baik, atau dua pelapor berbeda atau lebih. C = belum cukup (tidak dipakai menilai model). Hanya sel 1 km; lokasi pelapor tidak ditampilkan.	
-monitoring.html	Atribusi dan penafian	
-petugas.html	Petugas: tugas pemeriksaan · peringatan dini kekeringan gambut (prototipe)	
-petugas.html	Tugas pemeriksaan	
-petugas.html	Saring tugas	
-petugas.html	Semua	
-petugas.html	Terbuka	
-petugas.html	Selesai	
-petugas.html	Memuat tugas...	
-petugas.html	Kejadian yang teramati (api, asap) dilaporkan lewat formulir KoboCollect. Status di sini hanya catatan kunjungan. Alasan dan peluang tiap tugas sengaja tidak ditampilkan agar pemeriksa tetap buta terhadap prediksi.	
-petugas.html	Status tugas	
-petugas.html	Status lapangan	
-petugas.html	Waktu kunjungan (WIB)	
-petugas.html	Catatan (opsional, tanpa nama orang)	
-petugas.html	mis. akses lewat kanal, jalan terputus	
-petugas.html	Kunci tim (PEAT_API_TOKEN)	
-petugas.html	Batal	
-petugas.html	Simpan status	
-prediction.html	Prediksi per sel 1 km · Peatland Early Warning (prototipe)	
-prediction.html	Prediksi per sel 1 km	
-prediction.html	Memuat data...	
-prediction.html	Tema prediksi	
-prediction.html	Peluang titik api	
-prediction.html	Pengeringan muka air	
-prediction.html	Horizon waktu	
-prediction.html	Status bukti model	
-prediction.html	Peta peluang	
-prediction.html	Peluang	
-prediction.html	Lapisan peta	
-prediction.html	Stasiun	
-prediction.html	Kanal	
-prediction.html	Lanjutan	
-prediction.html	Lapisan tambahan	
-prediction.html	Bayangan relief	
-prediction.html	Batas KHG	
-prediction.html	Batas kabupaten/provinsi	
-prediction.html	Kerentanan struktural (konteks)	
-prediction.html	Opasitas peta	
-prediction.html	Lapisan teknis	
-prediction.html	Tentang peta ini	
-prediction.html	Klik sel di peta atau pilih dari daftar di bawah.	
-prediction.html	Sel teratas	
-prediction.html	Seberapa jauh model bisa dipercaya?	
-prediction.html	Untuk juri dan peneliti · angka dari berkas keluaran	
-prediction.html	Atribusi dan penafian	
-response.html	Respons: laporan lapangan dan penilaian · peringatan dini kekeringan gambut (prototipe)	
-response.html	Respons: laporan lapangan dan penilaian	
-response.html	Apa yang ditambahkan laporan warga dan petugas pada pengamatan satelit, tugas pemeriksaan dari prediksi, dan apakah prediksi terbukti.	
-response.html	Memuat data...	
-response.html	Bandingkan	
-response.html	Hanya satelit	
-response.html	Satelit + laporan lapangan	
-response.html	Rentang waktu:	
-response.html	Tanggal akhir rentang	
-response.html	Panjang rentang	
-response.html	7 hari	
-response.html	14 hari	
-response.html	30 hari	
-response.html	semua	
-response.html	Lapisan	
-response.html	Tugas pemeriksaan (terbitan terakhir)	
-response.html	Sel berpeluang tertinggi (prediksi)	
-response.html	Sekat kanal	
-response.html	Muka air lapangan	
-response.html	Atribusi dan penafian	
 api.js	, { headers: { Accept:	
 api.js	+ new URLSearchParams(params) :	
-api.js	Server API tidak berjalan; perubahan tidak bisa disimpan.	
 app.js	&& window.PAGE) ||	
 app.js	&copy; <a href=\	
 app.js	>OpenStreetMap</a> contributors	
-app.js	di atas ambang (≥ −40 cm)	
-app.js	lebih dalam dari −120 cm	
 app.js	></span>berhenti melapor (> 3 hari)	
-app.js	perubahan 7 hari tidak tersedia	
-app.js	stabil dalam 7 hari terakhir	
 app.js	margin:4px 0 0 16px;padding:0\	
 app.js	>Belum ada prakiraan untuk stasiun ini.</div>	
 app.js	>Prakiraan belum dapat diandalkan: model belum terbukti lebih baik daripada tebakan &quot;muka air tetap&quot;. Angka hanya untuk tinjauan.</div>	
 app.js	) + (pad + (p[0] - x0) * sx).toFixed(1) +	
 app.js	+ (h - pad - (p[1] - y0) * sy).toFixed(1)).join(	
-app.js	Validasi belum tersedia. Perlakukan prediksi sebagai prototipe.	
 app.js	>Belum ada prediksi untuk stasiun ini.</div>	
 app.js	<table class=\	
 app.js	><tr><th>Horizon</th><th>&Delta; (cm)</th><th>q10 s/d q90</th><th>P(turun&ge;10)</th><th>basis</th></tr>	
 app.js	) return { color:	
 app.js	, weight: 1.6, dashArray:	
 app.js	>Ringkasan tingkat unit; perbesar peta untuk melihat sel.</div>	
-app.js	Hanya kerentanan struktural (belum ada tekanan dinamis).	
-app.js	Kerentanan struktural + tekanan dinamis.	
 app.js	Halaman dibuka lewat berkas (file://), dan peramban memblokir pengambilan data. Jalankan di terminal:	
 app.js	python -m http.server -d webmap 8000, lalu buka http://localhost:8000	
-app.js	Gagal memuat data:	
 app.js	. Pastikan python scripts/09_export_web.py sudah dijalankan dan folder webmap/data ada.	
 app.js	>Pengamatan satelit 375 m; tidak terdeteksi bukan berarti tidak ada api (awan dan asap menutup).</span>	
-app.js	di bawah 3% (tetap 5% teratas)	
-app.js	Model titik api belum dijalankan.	
 app.js	>Perkiraan model dari stasiun SiTMAT, per sel 1 km	
 app.js	; warna dipucatkan karena belum terbukti mengalahkan pembanding	
-app.js	Model pengeringan per sel belum dijalankan.	
 app.js	>Titik api teramati belum dimuat (jalankan 12, 13, lalu 09).</span>	
 app.js	<b>Ringkasan prakiraan</b><br><span class=\	
 app.js	>Belum ada prediksi titik api (jalankan 13 dan 14, lalu 09).</span>	
 app.js	<b>Ringkasan prakiraan</b> <span class=	
 app.js	<div><span title=	
-app.js	Peta kerentanan belum dibuat (jalankan 07, 08, 10, lalu 09).	
-app.js	Indeks kondisi kini baru memuat kerentanan struktural (kanal dan relief). Hujan, kelembapan tanah, dan muka air belum disertakan per sel.	
-app.js	Indeks kondisi kini memuat kerentanan struktural dan tekanan dinamis. Kalibrasi terhadap stasiun SiTMAT belum diuji.	
-app.js	Titik api VIIRS, 7 hari	
-app.js	Harapan sel berapi besok	
-app.js	model belum dijalankan	
-app.js	Stasiun di bawah −40 cm	
-app.js	perubahan 7 hari tidak lengkap	
-app.js	sama dengan 7 hari lalu	
-app.js	Tugas pemeriksaan terbuka	
-app.js	belum ada data tugas	
 app.js	<b>Kerentanan relatif</b>	
 app.js	radial-gradient(circle, #F2D68A 0%, #D77A3C 45%, #4A1F14 100%)	
-app.js	Titik api, 7 hari	
-app.js	Stasiun di atas ambang (≥ −40 cm)	
 app.js	) + row(WL_CLASSES[2].color,	
 app.js	preserveAspectRatio=	
 app.js	stroke-dasharray=	
@@ -157,17 +39,9 @@ app.js	<details class=
 app.js	>Belum ada prediksi (jalankan 13 dan 14, lalu 09).</div>	
 app.js	>Belum ada laporan lapangan pada rentang data.</div>	
 app.js	? (p.sumber ===	
-app.js	Kejadian: laporan cocok dengan VIIRS	
-app.js	Kejadian dilaporkan	
-app.js	Diperiksa: tidak ada kejadian	
-app.js	Kunjungan tanpa kejadian	
 app.js	)}</span><div><div class=	
-app.js	belum terbukti	
-app.js	bukti terbatas	
-app.js	tidak termasuk sel teratas yang diekspor (peluang sel ini tidak tersedia)	
 app.js	+ pctTxt(p.p1_klim) :	
 app.js	+ pctTxt(p.p3_klim) :	
-app.js	sel ini tidak dinilai model pengeringan	
 app.js	>Faktor pendorong per sel belum diekspor oleh model (perlu keluaran faktor dari skrip 14 dan 15), jadi tidak ditampilkan.</div>	
 app.js	<div><div class=	
 app.js	>SEL TERPILIH</div><h2 class=	
@@ -180,10 +54,7 @@ app.js	<h3>Pengeringan per sel: uji ruang-waktu</h3>
 app.js	].filter(h => m[h]).map(h =>	
 app.js	>Metrik belum diekspor (jalankan 15, lalu 09).</div>	
 app.js	<h3>Tugas teratas lawan acak</h3>	
-app.js	Sel prioritas model	
 app.js	>Belum ada penilaian prospektif. Jalankan 18, lalu 20 dan 21.</div>	
-app.js	Dibandingkan dengan pembanding sederhana: klimatologi dan persistensi	
-app.js	Penilaian prospektif (arsip prediksi lawan kejadian): belum ada	
 app.js	Access blocked	
 app.js	) throw new Error(	
 app.js	, referrerPolicy:	
@@ -203,10 +74,6 @@ app.js	>Deret waktu tidak tersedia.</div>
 app.js	<label><input type=	
 app.js	); if (!manifest.layers.length && ss) ss.style.display =	
 app.js	).forEach(b => b.setAttribute(	
-app.js	Peluang ada titik api besok	
-app.js	Peluang ada titik api dalam 3 hari	
-app.js	Peluang muka air turun ≥ 10 cm dalam 7 hari	
-app.js	Peluang muka air turun ≥ 10 cm dalam 14 hari	
 app.js	#seg-theme button	
 app.js	).innerHTML = HZ[T.theme].map(([key, label]) =>	
 app.js	aria-pressed=	
@@ -214,10 +81,7 @@ app.js	</div><span>Garis tebal = sel terpilih</span>
 app.js	}sel teratas menurut peluang besok yang digambar, juga untuk horizon 3 hari.</span>	
 app.js	>Warna dipucatkan: model belum terbukti mengalahkan pembanding.</span>	
 app.js	).textContent = T.theme ===	
-app.js	Sel teratas peluang titik api	
-app.js	Sel teratas peluang pengeringan	
 app.js	).innerHTML = priorityHtml(topRows(), hzKey(), p => T.theme ===	
-app.js	Tentang peta ini	
 app.js	+ [kerawananLegendHtml(k), hotData ? hotspotLegendHtml(manifest.hotspots) :	
 app.js	, stationLegendHtml(), driversHtml(manifest.drivers,	
 app.js	).innerHTML = [T.theme ===	
@@ -238,16 +102,10 @@ app.js	>DATA TIRUAN</span>
 app.js	>Belum ada data laporan (jalankan 17 dan 20).</div>	
 app.js	) || document.getElementById(	
 app.js	), title = document.getElementById(	
-app.js	Data belum dapat dimuat	
 lapor.js	); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand(	
 lapor.js	, e => copy(form.href, e.currentTarget,	
 lapor.js	).textContent = kode; $(	
 lapor.js	, e => copy(kode, e.currentTarget,	
-petugas.js	Dalam perjalanan	
-petugas.js	Sudah diperiksa	
-petugas.js	Tidak terjangkau	
-petugas.js	Hasil Kobo: ada kejadian	
-petugas.js	Hasil Kobo: nihil	
 petugas.js	, active: null, pick:	
 petugas.js	, token: sessionStorage.getItem(	
 petugas.js	).textContent =	
@@ -262,24 +120,11 @@ petugas.js	aria-checked=
 petugas.js	).hidden = false; $(	
 petugas.js	; sessionStorage.removeItem(	
 petugas.js	+ (state.server ?	
-petugas.js	Terhubung ke server API: status disimpan tambah-saja.	
-petugas.js	Mode demo: server API tidak berjalan, status hanya tersimpan di peramban ini.	
 petugas.js	.pt-filters button	
 petugas.js	, e => { const b = e.target.closest(	
 petugas.js	+ err.message +	
 response.js	&copy; <a href=\	
 response.js	>OpenStreetMap</a> contributors	
-response.js	Satelit dan laporan lapangan	
-response.js	Satelit + laporan lapangan	
-response.js	Hanya satelit (belum ada laporan)	
-response.js	Hanya laporan, tingkat A/B (lolos dari satelit)	
-response.js	Hanya laporan A/B (lolos dari satelit)	
-response.js	Laporan belum terverifikasi (tingkat C)	
-response.js	Laporan belum terverifikasi (C)	
-response.js	Diperiksa, tidak ada kejadian	
-response.js	Belum diperiksa	
-response.js	Diperiksa: tidak ada kejadian	
-response.js	Diperiksa: ada kejadian	
 response.js	: Number(x).toLocaleString(	
 response.js	|| r.tingkat ===	
 response.js	) return sat ?	
@@ -287,7 +132,6 @@ response.js	(tanpa laporan) dan
 response.js	&& (r.tingkat ===	
 response.js	: (r.menyala ?	
 response.js	<b>konflik: nihil dan kejadian di sel-hari yang sama</b>	
-response.js	kunjungan lain (muka air atau sekat)	
 response.js	<b>Apakah prediksi terbukti?</b><br><span class=\	
 response.js	>Belum ada skor. Jalankan 18_score_prospective.py lalu 20_export_response.py.</span>	
 response.js	<b>Apakah prediksi terbukti?</b> <span class=\	
@@ -297,24 +141,18 @@ response.js	Kenyataan = satelit + laporan
 response.js	<div><b>Indeks kerentanan lawan muka air lapangan.</b> <span class=	
 response.js	<h2>Kejadian per sel 1 km</h2>	
 response.js	).map(([, c]) => row(cell(c), c.short || c.label)).join(	
-response.js	Ada laporan membara	
-response.js	Sel berpeluang tertinggi	
 response.js	<h2>Tugas pemeriksaan</h2><div class=\	
 response.js	>Sel 1 km yang harus dicek petugas</div>	
 response.js	lg-cell task dashed\	
-response.js	Belum diperiksa (kotak kosong)	
-response.js	Sudah diperiksa (kotak terisi)	
 response.js	<h2>Sekat kanal (kondisi terakhir)</h2>	
 response.js	<h2>Muka air lapangan (bacaan terakhir)</h2>	
 response.js	small lg-note\	
 response.js	) throw new Error(	
-response.js	data/response.json belum ada. Jalankan python scripts/20_export_response.py	
 response.js	, referrerPolicy:	
 response.js	).innerHTML =	
 response.js	).className =	
 response.js	+ (D.tiruan ?	
 response.js	).innerHTML = D.tiruan ?	
-response.js	Prototipe riset, bukan peringatan resmi. Tingkat keyakinan laporan memakai aturan awal yang belum disetel.	
 response.js	Titik api: VIIRS 375 m (NASA FIRMS). Satelit tidak dipakai sebagai bukti nihil karena awan, asap, dan api membara lolos dari deteksi.	
 response.js	, weight: 1, opacity: 0.55, fillColor:	
 response.js	>TUGAS PEMERIKSAAN</div><div class=	
@@ -336,17 +174,10 @@ response.js	: fmt(v[0])}</td><td class=
 response.js	>sel-hari pada rentang ini</span>	
 response.js	<table class=\	
 response.js	><tr><th></th><th>Hanya satelit</th><th>Dengan laporan</th></tr>	
-response.js	Kejadian tercatat	
 response.js	&nbsp;&nbsp;dikonfirmasi di lapangan	
 response.js	&nbsp;&nbsp;sel baru di sebelah deteksi satelit	
 response.js	&nbsp;&nbsp;lolos dari satelit	
 response.js	&nbsp;&nbsp;&nbsp;&nbsp;di antaranya membara	
-response.js	Laporan belum terverifikasi	
-response.js	Sel-hari dikunjungi	
-response.js	Sel-hari dengan tindakan	
-response.js	Dikonfirmasi lapangan	
-response.js	Lolos dari satelit	
-response.js	Tugas belum dicek petugas	
 response.js	).innerHTML = t.length ?	
 response.js	).length} nihil)	
 response.js	<b>Tugas pemeriksaan</b><br><span class=\	
@@ -358,9 +189,7 @@ response.js	).textContent =
 timeseries.js	, days: 90 }, { id:	
 timeseries.js	, days: 365 }, { id:	
 timeseries.js	, { minimumFractionDigits: d, maximumFractionDigits: d }) + (unit ?	
-timeseries.js	Belum tersedia.	
 timeseries.js	, { width: width, height: H, role:	
-timeseries.js	tidak ada data pada rentang ini	
 timeseries.js	, { x1: M.l, x2: M.l + iw, y1: sy(v), y2: sy(v), class:	
 timeseries.js	: anchor, class:	
 timeseries.js	, { x1: M.l, x2: M.l + iw, y1: sy(s.threshold.value), y2: sy(s.threshold.value), class:	
@@ -373,7 +202,4 @@ timeseries.js	, { x1: 0, x2: 0, y1: M.t, y2: M.t + ih, class:
 timeseries.js	, visibility:	
 timeseries.js	); readout.textContent =	
 timeseries.js	, sx(times[best])); cross.setAttribute(	
-timeseries.js	Deret waktu belum dibuat. Jalankan: python scripts/09b_export_timeseries.py (atau ./run_pipeline.sh peta).	
-timeseries.js	Deret waktu area pilot	
 timeseries.js	).forEach(b => b.setAttribute(	
-timeseries.js	Unduh data deret waktu (JSON)	
