@@ -22,7 +22,7 @@
   };
   const num = (v, unit) => {
     if (v === null || v === undefined) return "–";
-    const d = Math.abs(v) < 1 ? 3 : (Math.abs(v) < 20 ? 1 : 0);
+    const d = Number.isInteger(v) ? 0 : (Math.abs(v) < 1 ? 3 : (Math.abs(v) < 20 ? 1 : 0));
     return Number(v).toLocaleString("id-ID", { minimumFractionDigits: d, maximumFractionDigits: d }) + (unit ? " " + unit : "");
   };
   const dateLabel = t => { const d = new Date(t); return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
