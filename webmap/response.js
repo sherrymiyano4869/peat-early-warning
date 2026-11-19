@@ -3,11 +3,11 @@
 // Data: data/response.json dari scripts/20_export_response.py. Titik laporan kejadian tidak ada di data; hanya sel 1 km.
 const BASEMAP = { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors", maxZoom: 19 };
 const CATS = {   // warna Okabe-Ito dan Tol: tetap terbedakan pada buta warna merah-hijau
-  keduanya: { color: "#D55E00", label: "Satelit dan laporan lapangan" },
-  satelit: { color: "#E69F00", label: "Hanya satelit (belum ada laporan)" },
-  laporan: { color: "#AA4499", label: "Hanya laporan, tingkat A/B (lolos dari satelit)" },
-  laporan_c: { color: "#AA4499", label: "Laporan belum terverifikasi (tingkat C)", hollow: true },
-  nihil: { color: "#56B4E9", label: "Diperiksa, tidak ada kejadian" },
+  keduanya: { color: "#D55E00", label: "Satelit dan laporan lapangan", short: "Satelit + laporan lapangan" },
+  satelit: { color: "#E69F00", label: "Hanya satelit (belum ada laporan)", short: "Hanya satelit" },
+  laporan: { color: "#AA4499", label: "Hanya laporan, tingkat A/B (lolos dari satelit)", short: "Hanya laporan A/B (lolos dari satelit)" },
+  laporan_c: { color: "#AA4499", label: "Laporan belum terverifikasi (tingkat C)", short: "Laporan belum terverifikasi (C)", hollow: true },
+  nihil: { color: "#56B4E9", label: "Diperiksa, tidak ada kejadian", short: "Diperiksa, tidak ada kejadian" },
 };
 const SEKAT = { baik: "#2c7bb6", rusak: "#dfc27d", jebol: "#a6611a" };
 const WL = [[-40, "#2c7bb6", "≥ −40 cm"], [-80, "#dfc27d", "−40 s/d −80 cm"], [-120, "#a6611a", "−80 s/d −120 cm"], [-Infinity, "#543005", "< −120 cm"]];   // sama dengan stasiun SiTMAT
@@ -81,15 +81,16 @@ function scoresHtml(s) {
   return out.join("");
 }
 
-function legendHtml(mode, show) {
-  const sw = c => `<span class="swatch" style="${c.hollow ? `background:transparent;border:2px dashed ${c.color}` : `background:${c.color}`}"></span>`;
-  let h = "<h2>Kejadian per sel 1 km</h2>" + Object.entries(CATS).filter(([k]) => mode === "gabungan" || k === "satelit").map(([, c]) => `${sw(c)}${c.label}<br>`).join("");
-  if (mode === "gabungan") h += "<span class=\"dot\" style=\"background:#fff;border:2px solid #111\"></span>Ada laporan membara<br>";
-  if (show.top) h += "<h2>Prediksi</h2><span class=\"swatch\" style=\"background:transparent;border:1.5px solid #333\"></span>Sel berpeluang tertinggi<br>";
-  if (show.tasks) h += "<h2>Tugas pemeriksaan</h2><span class=\"swatch\" style=\"background:transparent;border:2px dashed #0072B2\"></span>Belum diperiksa<br><span class=\"swatch\" style=\"background:transparent;border:2px solid #0072B2\"></span>Sudah diperiksa<br>";
-  if (show.sekat) h += "<h2>Sekat kanal (kondisi terakhir)</h2>" + Object.entries(SEKAT).map(([k, c]) => `<span class="swatch" style="background:${c};transform:rotate(45deg)"></span>${k}<br>`).join("");
-  if (show.water) h += "<h2>Muka air lapangan (bacaan terakhir)</h2>" + WL.map(([, c, l]) => `<span class="dot" style="background:${c}"></span>${l}<br>`).join("");
-  return h + "<div class=\"small\">Sel 1 km, bukan titik laporan (privasi pelapor). Tanpa warna = tidak ada bukti, bukan berarti aman.</div>";
+function legendHtml(mode, show, round) {
+  const cell = c => `<span class="lg-cell${c.hollow ? " hollow" : ""}${round ? " round" : ""}" style="--c:${c.color}"></span>`;
+  const row = (sym, txt) => `<div class="lg-row">${sym}<span>${txt}</span></div>`;
+  let h = "<h2>Kejadian per sel 1 km</h2>" + Object.entries(CATS).filter(([k]) => mode === "gabungan" || k === "satelit").map(([, c]) => row(cell(c), c.short || c.label)).join("");
+  if (mode === "gabungan") h += row("<span class=\"lg-pulse\"></span>", "Ada laporan membara");
+  if (show.top) h += "<h2>Prediksi</h2>" + row("<span class=\"lg-cell wash\"></span>", "Sel berpeluang tertinggi");
+  if (show.tasks) h += "<h2>Tugas pemeriksaan</h2>" + row("<span class=\"lg-cell task dashed\"></span>", "Belum diperiksa") + row("<span class=\"lg-cell task\"></span>", "Sudah diperiksa");
+  if (show.sekat) h += "<h2>Sekat kanal (kondisi terakhir)</h2>" + Object.entries(SEKAT).map(([k, c]) => row(`<span class="lg-dia" style="--c:${c}"></span>`, k)).join("");
+  if (show.water) h += "<h2>Muka air lapangan (bacaan terakhir)</h2>" + WL.map(([, c, l]) => row(`<span class="lg-dot" style="--c:${c}"></span>`, l)).join("");
+  return h + "<div class=\"small lg-note\">Sel 1 km, bukan titik laporan (privasi pelapor). Tanpa warna = tidak ada bukti, bukan berarti aman.</div>";
 }
 
 async function main() {
@@ -102,10 +103,13 @@ async function main() {
   const base = (D.basemap && D.basemap.url) ? D.basemap : BASEMAP;
   L.tileLayer(base.url, { maxZoom: base.maxZoom || 19, attribution: base.attribution, className: "basemap-muted", referrerPolicy: "origin" }).addTo(map);
   L.control.scale({ metric: true, imperial: false }).addTo(map);
+  [["topPane", 405], ["tasksPane", 410], ["eventsPane", 420], ["markPane", 640]].forEach(([n, z]) => { map.createPane(n); map.getPane(n).style.zIndex = z; });   // urutan tumpuk: prediksi < tugas < kejadian < penanda
   const ring = id => D.cells[id].map(([lon, lat]) => [lat, lon]);
   const center = id => { const p = D.cells[id]; return [(p[0][1] + p[2][1]) / 2, (p[0][0] + p[2][0]) / 2]; };
   const all = Object.keys(D.cells);
-  if (all.length) map.fitBounds(L.latLngBounds(all.flatMap(ring)).pad(0.1));
+  // Tampilan awal: area pilot (sel tugas pemeriksaan) bila ada; kejadian di luar area itu tetap bisa dijelajahi dengan menggeser peta.
+  const focusIds = D.tasks && D.tasks.items.length ? D.tasks.items.map(t => t.cell_id) : all;
+  if (focusIds.length) map.fitBounds(L.latLngBounds(focusIds.flatMap(ring)).pad(0.35));
 
   $("meta").innerHTML = `Versi ${D.version} &middot; dibuat ${D.generated_at}<br>Buku besar ${tgl(D.date_min)} s/d ${tgl(D.date_max)}`;
   $("badge").className = "badge " + (D.tiruan ? "bad" : "warn");
@@ -123,14 +127,24 @@ async function main() {
   $("end").value = days.length - 1;
   const groups = { events: L.layerGroup().addTo(map), top: L.layerGroup(), tasks: L.layerGroup(), sekat: L.layerGroup(), water: L.layerGroup() };
 
-  (D.top_cells ? D.top_cells.features : []).forEach(f => L.polygon(f.geometry.coordinates[0].map(([lon, lat]) => [lat, lon]), { color: "#333", weight: 1.5, fill: false, interactive: false }).addTo(groups.top));
-  D.tasks.items.forEach(t => L.polygon(ring(t.cell_id), { color: "#0072B2", weight: 2.5, dashArray: t.hasil === "belum" ? "5 5" : null, fill: false })
-    .bindPopup(`<b>Tugas ${t.id_tugas}</b><br>Terbit ${D.tasks.issue_date}<br>${TASK[t.hasil]}`).addTo(groups.tasks));
-  D.sekat.forEach(s => L.marker([s.lat, s.lon], { icon: L.divIcon({ className: "", iconSize: [12, 12], html: `<div style="width:10px;height:10px;transform:rotate(45deg);border:1px solid #222;background:${SEKAT[s.kondisi] || "#9e9e9e"}"></div>` }) })
+  (D.top_cells ? D.top_cells.features : []).forEach(f => L.polygon(f.geometry.coordinates[0].map(([lon, lat]) => [lat, lon]), { pane: "topPane", color: "#6E2717", weight: 1, opacity: 0.55, fillColor: "#6E2717", fillOpacity: 0.08, interactive: false }).addTo(groups.top));   // lapisan lembut, bukan jaring garis hitam
+  const near = () => map.getZoom() >= 12;   // generalisasi menurut skala: jauh = penanda berukuran tetap, dekat = sel 1 km sebenarnya
+  function drawTasks() {
+    groups.tasks.clearLayers();
+    const w = near() ? [4.5, 2] : [2.8, 1.2];
+    D.tasks.items.forEach(t => {
+      L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#fff", weight: w[0], opacity: 0.85, fill: false, interactive: false }).addTo(groups.tasks);   // bingkai putih agar garis tugas terbaca di atas warna apa pun
+      L.polygon(ring(t.cell_id), { pane: "tasksPane", color: "#0B5C8A", weight: w[1], dashArray: t.hasil === "belum" ? "5 4" : null, fill: false })
+        .bindPopup(`<b>Tugas ${t.id_tugas}</b><br>Terbit ${D.tasks.issue_date}<br>${TASK[t.hasil]}`).addTo(groups.tasks);
+    });
+  }
+  drawTasks();
+  D.sekat.forEach(s => L.marker([s.lat, s.lon], { pane: "markPane", icon: L.divIcon({ className: "", iconSize: [14, 14], html: `<div class="mk-dia" style="--c:${SEKAT[s.kondisi] || "#9e9e9e"}"></div>` }) })
     .bindPopup(`<b>Sekat ${s.titik}</b><br>Kondisi terakhir: <b>${s.kondisi || "–"}</b> (${tgl(s.tanggal)})<br>${s.n} laporan`).addTo(groups.sekat));
-  D.water.forEach(w => L.circleMarker([w.lat, w.lon], { radius: 6, color: "#222", weight: 1, fillOpacity: 1, fillColor: WL.find(c => w.muka_air_cm >= c[0])[1] })
+  D.water.forEach(w => L.circleMarker([w.lat, w.lon], { pane: "markPane", radius: 6.5, color: "#fff", weight: 2.5, fillOpacity: 1, fillColor: WL.find(c => w.muka_air_cm >= c[0])[1] })
     .bindPopup(`<b>Titik muka air ${w.titik}</b><br>Bacaan terakhir (${tgl(w.tanggal)}): <b>${fmt(w.muka_air_cm)} cm</b><br>${w.n} bacaan`).addTo(groups.water));
 
+  const strip = document.createElement("div"); strip.id = "kpi-strip"; strip.setAttribute("aria-live", "polite"); document.body.appendChild(strip);
   function update() {
     const mode = $("mode-sat").checked ? "satelit" : "gabungan";
     const iEnd = +$("end").value, span = +$("span").value || days.length;
@@ -145,9 +159,14 @@ async function main() {
       if (!cat) return;
       const c = CATS[cat];
       const shown = mode === "satelit" ? rs.filter(x => x.n_viirs > 0).map(x => `<li>${tgl(x.date)}: VIIRS ${x.n_viirs} deteksi</li>`) : rs.slice().sort((a, b) => a.date.localeCompare(b.date)).map(rowText);
-      L.polygon(ring(id), { color: c.color, weight: c.hollow ? 2 : 1, dashArray: c.hollow ? "4 4" : null, fillColor: c.color, fillOpacity: c.hollow ? 0 : 0.75 })
+      const base = c.hollow ? { color: c.color, weight: 2.4, opacity: 1, dashArray: "5 4", fillColor: c.color, fillOpacity: 0.1 }
+                            : { color: "#fff", weight: 1.6, opacity: 0.95, fillColor: c.color, fillOpacity: 0.88 };
+      const poly = near() ? L.polygon(ring(id), Object.assign({ pane: "eventsPane" }, base))
+                          : L.circleMarker(center(id), Object.assign({ pane: "eventsPane", radius: cat === "keduanya" ? 9 : 7 }, base))
         .bindPopup(`<b>${c.label}</b><ul style="margin:4px 0;padding-left:18px">${shown.join("")}</ul>`).addTo(groups.events);
-      if (mode === "gabungan" && rs.some(x => x.membara)) L.circleMarker(center(id), { radius: 4, color: "#111", weight: 2, fillColor: "#fff", fillOpacity: 1, interactive: false }).addTo(groups.events);
+      poly.on("mouseover", () => poly.setStyle({ weight: 3, color: c.hollow ? c.color : "#2A1A14" }).bringToFront());
+      poly.on("mouseout", () => poly.setStyle(base));
+      if (mode === "gabungan" && rs.some(x => x.membara)) L.marker(center(id), { pane: "markPane", interactive: false, icon: L.divIcon({ className: "", iconSize: [14, 14], html: "<span class=\"mk-pulse\"></span>" }) }).addTo(groups.events);
     });
 
     const k = counters(rows), col = mode === "satelit" ? 0 : 1;
@@ -159,15 +178,20 @@ async function main() {
       line("&nbsp;&nbsp;&nbsp;&nbsp;di antaranya membara", na(k.lolos_membara)) + line("Diperiksa, tidak ada kejadian", na(k.nihil)) + line("Laporan belum terverifikasi", na(k.belum_verif)) +
       line("Sel-hari dikunjungi", na(k.kunjungan)) + line("Sel-hari dengan tindakan", na(k.tindakan)) + "</table>";
     const t = D.tasks.items, done = t.filter(x => x.hasil !== "belum");
+    const chip = (cls, label, v) => `<div class="kc ${cls}"><b>${v}</b><span>${label}</span></div>`;
+    strip.innerHTML = chip("k1", "Kejadian tercatat", fmt(k.kejadian[col])) +
+      (mode === "gabungan" ? chip("k2", "Dikonfirmasi lapangan", fmt(k.terkonfirmasi[1])) + chip("k3", "Lolos dari satelit", fmt(k.lolos[1])) + chip("k4", "Tugas belum diperiksa", fmt(t.length - done.length)) : "");
     $("tasksum").innerHTML = t.length ? `<b>Tugas pemeriksaan</b> <span class="small">terbit ${D.tasks.issue_date}</span><br>${t.length} tugas, ${done.length} sudah diperiksa ` +
       `(${done.filter(x => x.hasil === "kejadian").length} ada kejadian, ${done.filter(x => x.hasil === "nihil").length} nihil)` : "<b>Tugas pemeriksaan</b><br><span class=\"small\">Belum ada daftar tugas (19).</span>";
 
     const show = { top: $("chk-top").checked && mode === "gabungan", tasks: $("chk-tasks").checked && mode === "gabungan", sekat: $("chk-sekat").checked && mode === "gabungan", water: $("chk-water").checked && mode === "gabungan" };
     Object.entries(show).forEach(([name, onNow]) => onNow ? groups[name].addTo(map) : map.removeLayer(groups[name]));
     document.querySelectorAll(".field-only").forEach(e => { e.style.opacity = mode === "gabungan" ? 1 : 0.4; });
-    $("legendbox").innerHTML = legendHtml(mode, show);
+    $("legendbox").innerHTML = legendHtml(mode, show, !near());   // simbol legenda mengikuti simbol di peta (lingkaran saat jauh, sel saat dekat)
   }
   ["mode-sat", "mode-all", "end", "span", "chk-top", "chk-tasks", "chk-sekat", "chk-water"].forEach(id => $(id).addEventListener("input", update));
+  let lastNear = near();
+  map.on("zoomend", () => { if (near() !== lastNear) { lastNear = near(); drawTasks(); update(); } });   // gambar ulang hanya saat melewati ambang skala
   update();
 }
 

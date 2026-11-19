@@ -26,3 +26,40 @@
 .pg-av { flex: 0 0 auto; width: 128px; height: 128px; border-radius: 50%; background: linear-gradient(160deg, #EBB46A, #B5432F); display: flex; align-items: center; justify-content: center; }
 .pg-advt { flex: 1 1 320px; display: flex; flex-direction: column; gap: 6px; } .pg-advt p { margin: 4px 0 0; font-size: 14px; color: #E8D2C4; }
 @media (max-width: 640px) { .hero.short h1 { font-size: 32px; } .pg-band { padding: 28px 20px; } .pg { gap: 40px; } }
+
+/* ---- tombol Lapor, formulir, dan halaman Lapor ---- */
+.topnav a.nav-cta { margin-left: auto; background: linear-gradient(135deg, #F2D68A 0%, #EBB46A 100%); color: #3A1E06; font-weight: 700; padding: 0 16px; border-radius: 10px; }
+.topnav a.nav-cta:hover { background: linear-gradient(135deg, #F7E0A0 0%, #F0BC78 100%); color: #3A1E06; }
+.btn.big { min-height: 52px; padding: 0 26px; font-size: 17px; }
+.task-box { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; background: #FFFFFF22; border: 1px solid #FFFFFF55; border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+.task-box b { font-size: 18px; letter-spacing: .04em; } .task-box button { font: inherit; font-weight: 600; min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #FFFFFF99; background: transparent; color: #fff; cursor: pointer; } .task-box small { flex-basis: 100%; color: #FBEFE2; }
+.hero .btns button.btn { font: inherit; font-weight: 600; }
+
+/* ---- halaman Respons: kartografi (v0.24 + perbaikan lokal) ----
+   Prinsip: peta dasar mundur (hangat, pucat, kontras rendah) supaya data menjadi figur; kejadian = isi pekat dengan bingkai putih;
+   prediksi dan tugas = lapisan sekunder yang lembut; satu penanda bergerak hanya untuk keadaan paling berbahaya (membara). */
+body.fullmap #map { background: #EFE7D8; }
+body.fullmap .basemap-muted { filter: grayscale(1) sepia(.38) contrast(.8) brightness(1.1) !important; opacity: .55 !important; }
+body.fullmap .leaflet-control-scale-line { background: #FBF7EFCC; border-color: #6E5C51; color: #4A3A31; }
+body.fullmap .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 6px 22px rgba(42,26,20,.28); }
+#kpi-strip { position: absolute; z-index: 1000; top: calc(var(--topbar-h, 68px) + 12px); left: 64px; right: 360px; display: flex; flex-wrap: wrap; gap: 10px; pointer-events: none; }
+#kpi-strip .kc { pointer-events: auto; background: #FBF7EFF2; border-radius: 12px; padding: 8px 14px 8px 12px; border-left: 5px solid var(--k, #D77A3C); box-shadow: 0 2px 12px rgba(42,26,20,.22); display: flex; flex-direction: column; min-width: 92px; }
+#kpi-strip .kc b { font-family: var(--font-head, inherit); font-size: 24px; line-height: 1.05; color: #2A1A14; }
+#kpi-strip .kc span { font-size: 11px; color: #6E5C51; margin-top: 2px; }
+#kpi-strip .k1 { --k: #E69F00; } #kpi-strip .k2 { --k: #D55E00; } #kpi-strip .k3 { --k: #AA4499; } #kpi-strip .k4 { --k: #0B5C8A; }
+.lg-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; line-height: 1.25; }
+.lg-cell { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 3px; background: var(--c); box-shadow: 0 0 0 1.5px #fff, 0 0 0 2.5px rgba(42,26,20,.28); margin: 0 2px; }
+.lg-cell.hollow { background: transparent; border: 2px dashed var(--c); box-shadow: none; box-sizing: border-box; margin: 0; width: 20px; height: 20px; }
+.lg-cell.wash { background: #6E271714; border: 1px solid #6E271788; box-shadow: none; box-sizing: border-box; margin: 0; width: 20px; height: 20px; }
+.lg-cell.task { background: transparent; border: 2px solid #0B5C8A; box-shadow: 0 0 0 1.5px #fff; box-sizing: border-box; margin: 0 1px; width: 18px; height: 18px; } .lg-cell.task.dashed { border-style: dashed; }
+.lg-dia { flex: 0 0 auto; width: 11px; height: 11px; background: var(--c); border: 2px solid #fff; box-shadow: 0 0 0 1px #222; transform: rotate(45deg); margin: 0 5px; }
+.lg-dot { flex: 0 0 auto; width: 13px; height: 13px; border-radius: 50%; background: var(--c); border: 2.5px solid #fff; box-shadow: 0 0 0 1px #222; margin: 0 3px; }
+.lg-pulse { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2.5px solid #2A1A14; margin: 0 4px; }
+.lg-cell.round, .lg-cell.hollow.round { border-radius: 50%; }
+.lg-note { margin-top: 8px; }
+.mk-dia { width: 11px; height: 11px; margin: 1.5px; transform: rotate(45deg); background: var(--c); border: 2px solid #fff; box-shadow: 0 0 0 1px #222, 0 1px 4px rgba(0,0,0,.35); }
+.mk-pulse { position: relative; display: block; width: 12px; height: 12px; margin: 1px; border-radius: 50%; background: #fff; border: 2.5px solid #2A1A14; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.mk-pulse::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 2px solid #D55E00; animation: mk-pulse 2.4s ease-out infinite; }
+@keyframes mk-pulse { 0% { transform: scale(.45); opacity: .95; } 100% { transform: scale(1.5); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .mk-pulse::after { animation: none; opacity: .55; } }
+@media (max-width: 760px) { #kpi-strip { display: none; } }
