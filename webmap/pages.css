@@ -87,3 +87,7 @@ body.fullmap .leaflet-popup-close-button { font-size: 24px; width: 36px; height:
 .i18n-note { position: fixed; z-index: 2000; bottom: 14px; left: 50%; transform: translateX(-50%); max-width: min(92vw, 640px); display: flex; gap: 10px; align-items: center; background: #2A1A14; color: #FBF7EF; border-radius: 12px; padding: 8px 8px 8px 14px; font-size: 13px; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
 .i18n-note button { font: inherit; font-size: 18px; line-height: 1; width: 32px; height: 32px; border-radius: 8px; border: 0; background: #FFFFFF22; color: #fff; cursor: pointer; flex: 0 0 auto; }
 @media (max-width: 760px) { .lang { margin-left: 0; } .lang button { min-width: 34px; padding: 0 8px; } }
+
+/* tagline merek (rename_brand.py) */
+.brand small.tagline { display: none; max-width: 420px; font-size: 11px; line-height: 1.35; color: #E5C9B8; white-space: normal; }
+@media (min-width: 1700px) { .brand small.tagline { display: block; } .topnav a { white-space: nowrap; } }
