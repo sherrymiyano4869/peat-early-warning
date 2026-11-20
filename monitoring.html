@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="origin-when-cross-origin">
+<title>Monitoring: kondisi kini · GEOFLAME (prototipe)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body class="page">
+<header class="topbar"><a class="brand" href="index.html"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#EBB46A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span><b>GEOFLAME</b><small class="tagline">Platform geospasial berbasis AI untuk memantau, memprediksi, dan merespons kebakaran gambut dengan lebih cepat, lebih tepat, dan lebih efektif</small></span></a><nav class="topnav" aria-label="Menu utama"><a href="index.html">Beranda</a><a href="monitoring.html" class="active" aria-current="page">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html">Respons</a><a href="petugas.html">Petugas</a><a href="about.html">Tentang</a><a href="team.html">Tim</a><a class="nav-cta" href="lapor.html">Lapor</a></nav><div class="region"><label for="region">Wilayah</label><select id="region"><option>Pilot: pesisir Jambi</option></select></div></header>
+<main class="wrap">
+  <section class="card status" aria-labelledby="status-title">
+    <div class="lead">
+      <div class="title-row"><h1 id="status-title">Kondisi kini</h1><span class="chip" id="asof">Memuat...</span></div>
+      <p id="status-text">Memuat data...</p>
+      <div class="btns"><a class="btn primary" href="#prioritas">Lihat sel prioritas</a><a class="btn" href="prediction.html">Buka prediksi</a></div>
+      <div class="note">Angka diambil dari berkas keluaran pipeline. Estimasi riset, bukan peringatan resmi.</div>
+    </div>
+    <div class="kpis" id="kpis" aria-label="Angka ringkas"></div>
+  </section>
+
+  <div class="row">
+    <section class="card col-main" aria-labelledby="map-title">
+      <div class="head-row">
+        <h2 id="map-title" class="lg">Peta kerentanan per sel 1 km</h2>
+        <div class="pills" role="group" aria-label="Lapisan peta">
+          <button type="button" class="pill" data-layer="kerawanan" aria-pressed="true">Kerentanan</button>
+          <button type="button" class="pill" data-layer="hotspots" aria-pressed="true">Titik api 7 hari</button>
+          <button type="button" class="pill" data-layer="stations" aria-pressed="true">Stasiun</button>
+          <button type="button" class="pill" data-layer="canals" aria-pressed="false">Kanal</button>
+        </div>
+      </div>
+      <div class="mapbox"><div id="map"></div><div class="maplegend" id="maplegend"></div></div>
+      <div class="note" id="meta"></div>
+      <details class="adv"><summary>Lanjutan</summary>
+      <div class="adv-body">
+        <div class="pills" role="group" aria-label="Lapisan tambahan">
+          <button type="button" class="pill sm" data-layer="hillshade" aria-pressed="true">Bayangan relief</button>
+          <button type="button" class="pill sm" data-layer="khg" aria-pressed="true">Batas KHG</button>
+          <button type="button" class="pill sm" data-layer="admin" aria-pressed="true">Batas kabupaten/provinsi</button>
+          
+        </div>
+        <label class="opacity" for="opacity">Opasitas peta <input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.9"></label>
+        <div id="support-sect"><b>Lapisan teknis</b><div id="support" class="small"></div></div>
+        <div id="legend" class="legend"></div>
+      </div>
+      </details>
+      <details class="about"><summary>Tentang peta ini</summary><div id="about-map"></div><div class="note" id="level-note"></div></details>
+    </section>
+
+    <aside class="col-side">
+      <section class="card" id="prioritas" aria-labelledby="prio-title">
+        <h2 id="prio-title">Sel prioritas besok</h2>
+        <div id="prio-list">Memuat...</div>
+        <div id="prio-status"></div>
+        <a href="prediction.html" style="font-weight:600;font-size:14px">Semua sel dan peluangnya</a>
+      </section>
+      <section class="card" aria-labelledby="st-title">
+        <h2 id="st-title">Muka air stasiun SiTMAT</h2>
+        <div class="note">30 hari terakhir · ambang −40 cm (garis putus-putus)</div>
+        <div id="stn-list">Memuat...</div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="row">
+    <section class="card" style="flex:2 1 560px" aria-labelledby="ts-title">
+      <h2 id="ts-title">Deret waktu area pilot</h2>
+      <div id="timeseries"></div>
+    </section>
+    <section class="card" style="flex:1 1 340px" aria-labelledby="rep-title">
+      <h2 id="rep-title">Laporan lapangan terbaru</h2>
+      <div id="rep-list" style="display:flex;flex-direction:column;gap:12px">Memuat...</div>
+      <div class="note">A = cocok dengan VIIRS, atau dari petugas dengan foto dan GPS baik. B = foto dengan GPS baik, atau dua pelapor berbeda atau lebih. C = belum cukup (tidak dipakai menilai model). Hanya sel 1 km; lokasi pelapor tidak ditampilkan.</div>
+    </section>
+  </div>
+  <details class="about"><summary>Atribusi dan penafian</summary><div id="attrib"></div></details>
+</main>
+<footer class="footer"><div class="footer-in">
+  <div class="footer-cols">
+    <div><div class="brand-f"><svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#EBB46A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span>GEOFLAME</span></div>
+      <p style="margin:0;max-width:340px">Prakiraan peluang titik api dan pengeringan gambut tropis per sel 1 km, dibuat oleh mahasiswa magister Universitas Gadjah Mada.</p></div>
+    <div><h4>HALAMAN</h4><a href="index.html">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html">Respons</a><a href="petugas.html">Petugas</a><a href="about.html">Tentang</a><a href="team.html">Tim</a></div>
+    <div><h4>SUMBER DATA</h4><span>NASA FIRMS (titik api VIIRS)</span><span>Stasiun muka air SiTMAT</span><span>GSMaP, CHIRPS, ERA5-Land</span><span>Sentinel-2 (NDMI) lewat Google Earth Engine</span><span>FABDEM dan ESA WorldCover</span><span>Indeks ENSO dan IOD</span></div>
+    <div><h4>KONTAK</h4><span>Universitas Gadjah Mada</span><span>Yogyakarta, Indonesia</span></div>
+  </div>
+  <div class="footer-bot"><span>© 2026 Tim GEOFLAME</span><span>Prototipe riset · bukan peringatan resmi. Dalam keadaan darurat, hubungi BPBD setempat.</span></div>
+</div></footer>
+<script>window.PAGE = "monitoring";</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="api.js"></script>
+<script src="app.js"></script>
+<script src="timeseries.js"></script>
+<script src="i18n-en.js" defer></script>
+<script src="i18n.js" defer></script>
+</body>
+</html>

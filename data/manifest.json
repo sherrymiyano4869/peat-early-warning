@@ -1,0 +1,274 @@
+{
+ "title": "Peringatan dini kekeringan gambut (prototipe)",
+ "version": "v0.24",
+ "generated_at": "2026-11-19T15:15:24Z",
+ "data_through": "2026-11-16",
+ "issue_date": "2026-11-14",
+ "center": [
+  0.1342554761904762,
+  104.84232833333333
+ ],
+ "validation": {
+  "available": true,
+  "skill_h7": -0.03676689010865464,
+  "skill_h14": -0.03324019650237786,
+  "coverage_q10_q90_h7": 0.5888594164456233,
+  "coverage_q10_q90_h14": 0.48464163822525597,
+  "cap_class": 0,
+  "cap_label": "rendah",
+  "n_issue_dates": 9,
+  "note": "Skill terhadap persistensi pada walk-forward mingguan; kelas kepercayaan dibatasi oleh skill terburuk."
+ },
+ "layers": [],
+ "stations": {
+  "file": "stations.geojson",
+  "n": 42,
+  "series_dir": "series/"
+ },
+ "basemap": null,
+ "kerawanan": {
+  "title": "Indeks kondisi kini",
+  "mode": "struktural+dinamis",
+  "components": {
+   "struktural": {
+    "canal_kde_500m": 0.35,
+    "canal_kde_250m": 0.25,
+    "fabdem_relief_1km": 0.25,
+    "fabdem_relief_500m": 0.15
+   },
+   "dinamis": {
+    "dry_days": 0.3,
+    "rain_deficit_mm": 0.25,
+    "soil_moisture_dry": 0.2,
+    "ndmi_dryness": 0.25
+   },
+   "gabungan": {
+    "struktural": 0.5,
+    "dinamis": 0.5
+   }
+  },
+  "unit_type": "blok 5 km (sementara, tanpa batas KHG)",
+  "classes": [
+   {
+    "id": 1,
+    "label": "sangat rendah",
+    "color": "#fbf3dc"
+   },
+   {
+    "id": 2,
+    "label": "rendah",
+    "color": "#f2d68a"
+   },
+   {
+    "id": 3,
+    "label": "sedang",
+    "color": "#ebb46a"
+   },
+   {
+    "id": 4,
+    "label": "tinggi",
+    "color": "#d77a3c"
+   },
+   {
+    "id": 5,
+    "label": "sangat tinggi",
+    "color": "#b5432f"
+   }
+  ],
+  "levels": [
+   {
+    "id": "unit",
+    "label": "per blok 5 km",
+    "type": "geojson",
+    "file": "units.geojson",
+    "minZoom": 0,
+    "maxZoom": 10
+   },
+   {
+    "id": "coarse",
+    "label": "sel 500 m",
+    "type": "tiles",
+    "url": "tiles/coarse/{z}/{x}/{y}.png",
+    "minZoom": 11,
+    "maxZoom": 12,
+    "minNativeZoom": 9,
+    "maxNativeZoom": 12
+   },
+   {
+    "id": "fine",
+    "label": "sel 100 m",
+    "type": "tiles",
+    "url": "tiles/fine/{z}/{x}/{y}.png",
+    "minZoom": 13,
+    "maxZoom": 18,
+    "minNativeZoom": 13,
+    "maxNativeZoom": 15
+   }
+  ],
+  "bounds": [
+   [
+    -1.66426759451476,
+    103.62965117602799
+   ],
+   [
+    -1.0672160403787707,
+    104.22253926354688
+   ]
+  ],
+  "hillshade": {
+   "url": "tiles/hillshade/{z}/{x}/{y}.png",
+   "minZoom": 11,
+   "maxZoom": 18,
+   "minNativeZoom": 11,
+   "maxNativeZoom": 14,
+   "azimuth": 315,
+   "altitude": 45,
+   "exaggeration": 15.0,
+   "gain": 1.2,
+   "note": "Bayangan relief dari FABDEM; sinar dari barat laut; relief diperbesar 15x dan kontras diregangkan otomatis (relief gambut sangat landai; kesalahan vertikal DEM sebanding dengan relief)."
+  },
+  "class_scheme": "5 kelas dari batas tetap (kuintil teoretis rata-rata dua peringkat terhadap riwayat: 0.32, 0.45, 0.55, 0.68); kelas relatif, bukan ambang absolut",
+  "unmapped": "tanpa warna = bukan gambut, air, atau terbangun (tidak dinilai)",
+  "confidence": {
+   "cap": 0,
+   "cap_label": "rendah",
+   "note": "batas dari skill walk-forward terburuk -0.04: rendah",
+   "legend": [
+    {
+     "label": "tinggi",
+     "style": "pekat"
+    },
+    {
+     "label": "sedang",
+     "style": "agak transparan"
+    },
+    {
+     "label": "rendah",
+     "style": "transparan dan diarsir"
+    }
+   ]
+  },
+  "boundaries": {
+   "canals": "canals.geojson"
+  },
+  "disclaimer": "Indeks relatif, bukan peluang kebakaran. Kelas dari ambang acuan tetap; kepercayaan ditunjukkan oleh transparansi dan arsiran.",
+  "note": "Indeks relatif, bukan peluang kebakaran. Arah dan bobot komponen adalah asumsi; uji kepekaan sebelum dipakai untuk klaim."
+ },
+ "hotspots": {
+  "file": "hotspots_recent.geojson",
+  "n": 4616,
+  "days": 7,
+  "date_max": "2026-11-02",
+  "note": "Tanggal WIB; satelit Suomi NPP 375 m (NASA FIRMS)."
+ },
+ "fire": {
+  "file": "fire_cells.geojson",
+  "issue_date": "2026-11-02",
+  "horizons": [
+   1,
+   3
+  ],
+  "top_fraction": 0.05,
+  "n_top": 215,
+  "n_cells": 4303,
+  "expected_cells_h1": 6.3,
+  "primary_key": "p1",
+  "skill_ok": true,
+  "cap_class": 1,
+  "metrics": {
+   "pr_auc_model": 0.16,
+   "pr_auc_klim": 0.0138,
+   "pr_auc_persist": 0.1304,
+   "skill_brier": 0.1083,
+   "periode_uji": "2025-11-03 s/d 2026-11-01"
+  }
+ },
+ "dryness": {
+  "file": "dry_cells.geojson",
+  "issue_date": "2026-11-16",
+  "n_cells": 4303,
+  "skill_ok": false,
+  "cap_class": 0,
+  "n_stasiun": 11,
+  "p14_rata2": 0.5938,
+  "metrics": {
+   "h7": {
+    "skill_mae": null,
+    "cakupan_q10_q90": null,
+    "skill_brier": null,
+    "n_uji": null
+   },
+   "h14": {
+    "skill_mae": null,
+    "cakupan_q10_q90": null,
+    "skill_brier": null,
+    "n_uji": null
+   }
+  }
+ },
+ "drivers": [
+  {
+   "id": "stasiun",
+   "title": "Sensor muka air (SiTMAT)",
+   "status": "tersedia",
+   "detail": "42 stasiun"
+  },
+  {
+   "id": "hujan",
+   "title": "Hujan (GSMaP, CHIRPS)",
+   "status": "tersedia",
+   "detail": "per sel"
+  },
+  {
+   "id": "kelembapan",
+   "title": "Indeks kelembapan tanah",
+   "status": "tersedia",
+   "detail": "ERA5-Land 0–7 cm (reanalisis, bukan pengamatan gambut)"
+  },
+  {
+   "id": "ndmi",
+   "title": "NDMI Sentinel-2",
+   "status": "tersedia",
+   "detail": "komposit bulanan per sel"
+  },
+  {
+   "id": "enso",
+   "title": "ENSO dan IOD (DMI)",
+   "status": "tersedia",
+   "detail": "indeks bulanan"
+  },
+  {
+   "id": "topografi",
+   "title": "Topografi (FABDEM) dan kanal",
+   "status": "tersedia",
+   "detail": "grid 100 m, grid induk equal-area"
+  },
+  {
+   "id": "lulc",
+   "title": "Tutupan lahan (WorldCover)",
+   "status": "tersedia",
+   "detail": "2021, tanpa kelas sawit"
+  },
+  {
+   "id": "hotspot",
+   "title": "Titik api VIIRS",
+   "status": "tersedia",
+   "detail": "4616 titik, sampai 2026-11-02"
+  },
+  {
+   "id": "kering_sel",
+   "title": "Prakiraan pengeringan per sel (7–14 hari)",
+   "status": "tersedia",
+   "detail": "4303 sel; kepercayaan rendah"
+  }
+ ],
+ "attribution": [
+  "Muka air dan stasiun: SiTMAT (KLH/BRGM), diambil dengan jeda sopan; data dapat berubah atau terkoreksi.",
+  "(c) OpenStreetMap contributors (ODbL); kanal dan batas gambut/KHG dari BRGM BlueBook 2026. Peta dasar: OpenStreetMap (tile standar; patuhi kebijakan tile OSM, ganti lewat manifest.basemap bila lalu lintas besar).",
+  "Tutupan lahan: ESA WorldCover 10 m 2021 (CC BY 4.0).",
+  "Titik api: NRT/standar VIIRS 375 m Active Fire (VNP14IMG) dari NASA LANCE/FIRMS, doi:10.5067/FIRMS/VIIRS/VNP14IMGT_NRT.002; ikuti ketentuan sitasi dan penafian NASA LANCE/FIRMS saat membagikan ulang.",
+  "FABDEM is produced using Copernicus WorldDEM-30 (c) DLR e.V. (CC BY-NC-SA 4.0), Hawker dkk. 2022.",
+  "Hujan: JAXA GSMaP (Global Rainfall Map in Near-Real-Time) dan CHIRPS; citra: Copernicus Sentinel-1/2."
+ ],
+ "disclaimer": "Prototipe riset. Bukan peringatan resmi. Prediksi belum dikalibrasi; baca status validasi dan kelas kepercayaan sebelum memakai hasilnya."
+}

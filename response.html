@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="origin-when-cross-origin">
+<title>Respons: laporan lapangan dan penilaian · GEOFLAME (prototipe)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body class="fullmap">
+<header class="topbar"><a class="brand" href="index.html"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#EBB46A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span><b>GEOFLAME</b><small class="tagline">Platform geospasial berbasis AI untuk memantau, memprediksi, dan merespons kebakaran gambut dengan lebih cepat, lebih tepat, dan lebih efektif</small></span></a><nav class="topnav" aria-label="Menu utama"><a href="index.html">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html" class="active" aria-current="page">Respons</a><a href="petugas.html">Petugas</a><a href="about.html">Tentang</a><a href="team.html">Tim</a><a class="nav-cta" href="lapor.html">Lapor</a></nav></header>
+<div id="map"></div>
+<div id="north">&#9650;<br>U</div>
+<div id="legendbox" style="bottom:84px"></div>
+<div id="panel">
+  <h1 id="title">Respons: laporan lapangan dan penilaian</h1>
+  <div class="small" id="subtitle">Apa yang ditambahkan laporan warga dan petugas pada pengamatan satelit, tugas pemeriksaan dari prediksi, dan apakah prediksi terbukti.</div>
+  <div class="meta" id="meta"></div>
+  <div id="badge" class="badge warn">Memuat data...</div>
+  <div class="sect">
+    <b>Bandingkan</b><br>
+    <label><input type="radio" name="mode" id="mode-sat"> Hanya satelit</label>
+    <label style="margin-left:10px"><input type="radio" name="mode" id="mode-all" checked> Satelit + laporan lapangan</label>
+  </div>
+  <div class="sect">
+    <b>Rentang waktu:</b> <span id="range">–</span><br>
+    <input id="end" type="range" min="0" max="0" step="1" value="0" style="width:100%" aria-label="Tanggal akhir rentang">
+    <label>Panjang rentang <select id="span"><option value="7">7 hari</option><option value="14" selected>14 hari</option><option value="30">30 hari</option><option value="0">semua</option></select></label>
+  </div>
+  <div id="summary"></div>
+  <div class="sect field-only">
+    <b>Lapisan</b><br>
+    <label><input type="checkbox" id="chk-tasks" checked> Tugas pemeriksaan (terbitan terakhir)</label><br>
+    <label><input type="checkbox" id="chk-top"> Sel berpeluang tertinggi (prediksi)</label><br>
+    <label><input type="checkbox" id="chk-sekat"> Sekat kanal</label><br>
+    <label><input type="checkbox" id="chk-water"> Muka air lapangan</label>
+  </div>
+  <div id="tasksum" class="box"></div>
+  <div id="scores" class="box"></div>
+  <details><summary>Atribusi dan penafian</summary><div id="attrib" class="small"></div></details>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="response.js"></script>
+<script src="i18n-en.js" defer></script>
+<script src="i18n.js" defer></script>
+</body>
+</html>

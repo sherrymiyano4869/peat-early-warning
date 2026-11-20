@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Petugas: tugas pemeriksaan · GEOFLAME (prototipe)</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body class="petugas">
+<header class="topbar"><a class="brand" href="index.html"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#EBB46A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z"/><path d="M11 21c2 2 5 2.5 8 0"/></svg><span><b>GEOFLAME</b><small class="tagline">Platform geospasial berbasis AI untuk memantau, memprediksi, dan merespons kebakaran gambut dengan lebih cepat, lebih tepat, dan lebih efektif</small></span></a><nav class="topnav" aria-label="Menu utama"><a href="index.html">Beranda</a><a href="monitoring.html">Monitoring</a><a href="prediction.html">Prediksi</a><a href="response.html">Respons</a><a href="petugas.html" class="active" aria-current="page">Petugas</a><a href="about.html">Tentang</a><a href="team.html">Tim</a><a class="nav-cta" href="lapor.html">Lapor</a></nav></header>
+<main class="pt-wrap">
+  <div class="pt-head">
+    <div><div class="small" id="pt-date">–</div><h1>Tugas pemeriksaan</h1></div>
+    <span class="pt-count" id="pt-count">–</span>
+  </div>
+  <div class="pt-filters" role="group" aria-label="Saring tugas">
+    <button type="button" data-f="all" aria-pressed="true">Semua</button>
+    <button type="button" data-f="open" aria-pressed="false">Terbuka</button>
+    <button type="button" data-f="done" aria-pressed="false">Selesai</button>
+  </div>
+  <div id="pt-banner" class="pt-banner" hidden></div>
+  <div class="pt-list" id="pt-list" aria-live="polite">Memuat tugas...</div>
+  <p class="pt-note">Kejadian yang teramati (api, asap) dilaporkan lewat formulir KoboCollect. Status di sini hanya catatan kunjungan. Alasan dan peluang tiap tugas sengaja tidak ditampilkan agar pemeriksa tetap buta terhadap prediksi.</p>
+</main>
+
+<div class="pt-sheet" id="pt-sheet" hidden>
+  <div class="pt-panel" role="dialog" aria-modal="true" aria-labelledby="pt-sheet-title">
+    <h2 id="pt-sheet-title">Status tugas</h2>
+    <div role="radiogroup" aria-label="Status lapangan" id="pt-opts" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="pt-visit-box">
+      <label for="pt-visit">Waktu kunjungan (WIB)</label>
+      <input id="pt-visit" type="datetime-local">
+    </div>
+    <label for="pt-note-in">Catatan (opsional, tanpa nama orang)</label>
+    <textarea id="pt-note-in" rows="2" maxlength="280" placeholder="mis. akses lewat kanal, jalan terputus"></textarea>
+    <div id="pt-token-box" hidden>
+      <label for="pt-token">Kunci tim (PEAT_API_TOKEN)</label>
+      <input id="pt-token" type="password" autocomplete="off">
+    </div>
+    <div class="pt-err" id="pt-err" role="alert"></div>
+    <div class="pt-btns">
+      <button type="button" class="pt-btn" id="pt-cancel">Batal</button>
+      <button type="button" class="pt-btn primary" id="pt-save" style="flex:2 1 0">Simpan status</button>
+    </div>
+  </div>
+</div>
+<script src="api.js"></script>
+<script src="petugas.js"></script>
+<script src="i18n-en.js" defer></script>
+<script src="i18n.js" defer></script>
+</body>
+</html>
