@@ -3,6 +3,7 @@
 #
 #   ./publish_pages.sh --dry-run     # hanya membangun salinan dan melaporkan ukuran; TIDAK mengirim apa pun
 #   ./publish_pages.sh               # tanya konfirmasi, lalu kirim paksa ke cabang gh-pages (cabang khusus, sejarahnya satu commit)
+#   ./publish_pages.sh --yes         # sama, tanpa konfirmasi (dipakai update_respons.sh terjadwal)
 #
 # Yang dikirim: seluruh isi webmap/ TERMASUK webmap/data/ (peta, tile, response.json), karena git main mengabaikan webmap/data.
 # Yang TIDAK tersentuh: cabang main dan semua berkas di luar webmap/. Hasil: https://<akun>.github.io/<repo>/
@@ -10,7 +11,8 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-DRY=0; [[ "${1:-}" == "--dry-run" ]] && DRY=1
+DRY=0; YES=0
+case "${1:-}" in --dry-run) DRY=1 ;; --yes) YES=1 ;; esac   # --yes: tanpa konfirmasi (untuk update_respons.sh terjadwal)
 REMOTE="$(git remote get-url origin)"
 SLUG="$(echo "$REMOTE" | sed -E 's#^(git@github.com:|https://github.com/)##; s#\.git$##')"
 OWNER="${SLUG%%/*}"; REPO="${SLUG##*/}"
@@ -32,8 +34,10 @@ if [[ $DRY -eq 1 ]]; then echo "(dry-run: tidak ada yang dikirim)"; exit 0; fi
 
 echo
 echo "Ini akan MENERBITKAN isi di atas ke internet publik dan menimpa cabang gh-pages."
-read -r -p "Lanjut? ketik 'ya': " ANS
-[[ "$ANS" == "ya" ]] || { echo "Dibatalkan."; exit 1; }
+if [[ $YES -eq 1 ]]; then echo "(--yes: tanpa konfirmasi)"; else
+  read -r -p "Lanjut? ketik 'ya': " ANS
+  [[ "$ANS" == "ya" ]] || { echo "Dibatalkan."; exit 1; }
+fi
 
 NAME="$(git config user.name)"; MAIL="$(git config user.email)"
 cd "$SITE"
