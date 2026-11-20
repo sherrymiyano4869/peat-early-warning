@@ -44,19 +44,24 @@ unset KOBO_TOKEN
 AFTER="$(last_sha)"
 
 if [[ $FORCE -eq 0 && -n "$BEFORE" && "$BEFORE" == "$AFTER" ]]; then
-  echo "Tidak ada laporan baru atau berubah di Kobo; berhenti (tanpa olah ulang dan tanpa terbit)."
-  exit 0
+  echo "Tidak ada laporan baru atau berubah di Kobo (olah ulang dilewati)."
+else
+  echo "-- 17 buku besar kejadian"
+  "$PY" scripts/17_event_ledger.py
+  echo "-- 20 ekspor response.json"
+  "$PY" scripts/20_export_response.py
 fi
 
-echo "-- 17 buku besar kejadian"
-"$PY" scripts/17_event_ledger.py
-echo "-- 20 ekspor response.json"
-"$PY" scripts/20_export_response.py
-
-if [[ $PUBLISH -eq 1 ]]; then
+# terbitkan bila response.json berbeda dari yang terakhir diterbitkan (mis. jalan sebelumnya --no-publish)
+STAMP=outputs/logs/.respons_published.sha256
+CUR="$(sha256sum webmap/data/response.json | cut -d' ' -f1)"
+if [[ $PUBLISH -eq 0 ]]; then
+  echo "(--no-publish: tidak diterbitkan)"
+elif [[ $FORCE -eq 0 && -f "$STAMP" && "$(cat "$STAMP")" == "$CUR" ]]; then
+  echo "response.json sama dengan yang sudah terbit; tidak menerbitkan."
+else
   echo "-- terbitkan ke GitHub Pages"
   ./publish_pages.sh --yes
-else
-  echo "(--no-publish: tidak diterbitkan)"
+  echo "$CUR" > "$STAMP"
 fi
 echo "== selesai $(date '+%F %T') | log: $LOG"

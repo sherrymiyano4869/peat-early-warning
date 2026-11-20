@@ -49,6 +49,9 @@ def normalize(df: pd.DataFrame, max_gps_m: float = 50.0, max_delay_days: float =
         "has_photo": _text(_col(df, "foto")).notna(), "muka_air_cm": -num(_col(df, "kedalaman_cm")), "titik_acuan": _text(_col(df, "titik_acuan")),
         "kondisi_sekat": _text(_col(df, "kondisi_sekat")).str.lower(), "jenis_tindakan": _text(_col(df, "jenis_tindakan")).str.lower(),
         "id_tugas": _text(_col(df, "id_tugas")).str.upper()})
+    # Peta pemilih lokasi Kobo/Enketo bisa memberi bujur "berputar" (mis. -256.0 = 104.0 setelah +360) bila peta digeser melewati garis tanggal.
+    wrap = out["lon"].abs() > 180
+    out.loc[wrap, "lon"] = (out.loc[wrap, "lon"] + 180) % 360 - 180
     out["observed_utc"] = out["observed_utc"].fillna(out["submitted_utc"])
     out["submitted_utc"] = out["submitted_utc"].fillna(out["observed_utc"])
     out["date"] = (out["observed_utc"] + pd.Timedelta(hours=7)).dt.normalize()
